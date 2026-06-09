@@ -21,6 +21,12 @@
 - [x] Émission JSONL robuste aux apostrophes/accents (lignes JSON valides)
 - [ ] Commit + PR sur feat/app-mode-contract
 
+## P2 — Robustesse
+- [x] `datetime.utcnow()` → `datetime.now(timezone.utc)` (fait dans _emit.py)
+- [x] Estimation coût/temps pré-lancement (résumé de confirmation)
+- [x] `--verbose` clarifié en --mode parallel (limite documentée)
+- [x] Confirmation app-mode unifiée sur `_ask.py` (fin du timeout 10 min codé en dur)
+
 ## Suite (hors périmètre de cette PR)
 - AuditViewer : runner headless + UI de visualisation/pilotage
 - Test bout-en-bout : `/audit-report Notion --depth quick`

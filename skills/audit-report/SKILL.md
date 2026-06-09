@@ -363,6 +363,17 @@ Avant de lancer les recherches parallèles, effectuer une reconnaissance rapide 
 
 Une fois `_recon.json` écrit, **toujours** présenter les résultats de la reconnaissance et demander confirmation avant de lancer la recherche complète.
 
+**Estimation coût/temps (à calculer et afficher avant de lancer)** : donner à l'utilisateur un ordre de
+grandeur du volume de recherche pour qu'il décide en connaissance de cause.
+- Nombre de dimensions `NB_DIM` : `quick` = 4, `full` = 7 (+1 par option `--esg`/`--rh`).
+- Recherches estimées `N` ≈ `recon(3) + NB_DIM × r + factcheck(≈8) + swot(2 si --swot)`,
+  où `r` ≈ 2 en `quick`, ≈ 5 en `full`. (Ex : full sans option ≈ **3 + 35 + 8 = ~46 recherches** ;
+  quick ≈ **3 + 8 = ~11**.)
+- Durée approximative `T` : `--mode parallel` ≈ 5-12 min (full) / 2-4 min (quick) ; `sequential`/`solo`
+  ≈ 2-3× plus long. `--brief` ≈ moitié d'un `quick`.
+
+Afficher la ligne `• Estimation : ~{N} recherches, ~{T} min` dans le résumé ci-dessous.
+
 **Si `APP_MODE=false`** (mode Claude Code — défaut) : utiliser `AskUserQuestion` avec ce résumé :
 
 ```
@@ -374,46 +385,34 @@ Reconnaissance terminée pour : {SUBJECT}
 • Mots-clés   : {search_keywords}
 • Langue srcs : {language_sources}
 • Mode        : {MODE} — {DEPTH}
+• Estimation  : ~{N} recherches, ~{T} min
 
 Souhaitez-vous lancer la recherche approfondie ?
 ```
 
 Options à proposer : "Lancer la recherche" / "Ajuster le focus" / "Annuler"
 
-**Si `APP_MODE=true`** (mode AuditViewer) : écrire `_question.json` et attendre `_answer.json` :
+**Si `APP_MODE=true`** (mode AuditViewer) : utiliser le helper `_ask.py` (timeout, écriture atomique,
+cycle de vie géré — voir « Mode --app-mode »). Composer le même résumé que ci-dessus, **estimation incluse** :
 
 ```bash
-python3 -c "
-import json
-recon = json.load(open('$OUTPUT_DIR/_recon.json'))
-q = {
-  'id': 'confirm_research',
-  'text': 'Reconnaissance terminée pour : ' + recon.get('subject','') + '\n\n• Type     : ' + recon.get('subject_type','') + '\n• Secteur  : ' + recon.get('sector','') + '\n• Acteurs  : ' + ', '.join(recon.get('key_players',[])[:4]) + '\n• Langue   : ' + recon.get('language_sources','') + '\n\nSouhaitez-vous lancer la recherche approfondie ?',
-  'options': [
-    {'value': 'launch', 'label': 'Lancer la recherche'},
-    {'value': 'adjust', 'label': 'Ajuster le focus'},
-    {'value': 'cancel', 'label': 'Annuler'}
-  ]
-}
-with open('$OUTPUT_DIR/_question.json', 'w') as f: json.dump(q, f, ensure_ascii=False)
-"
-# Attendre la réponse (timeout 10 min)
-ANSWER=$(python3 -c "
-import json, time, os
-for _ in range(1200):
-    if os.path.exists('$OUTPUT_DIR/_answer.json'):
-        ans = json.load(open('$OUTPUT_DIR/_answer.json'))
-        os.remove('$OUTPUT_DIR/_answer.json')
-        print(ans['value'])
-        break
-    time.sleep(0.5)
-" 2>/dev/null)
+SUMMARY="Reconnaissance terminée pour : $SUBJECT
+• Type       : <subject_type>
+• Secteur    : <sector>
+• Acteurs    : <key_players>
+• Estimation : ~<N> recherches, ~<T> min
+Lancer la recherche approfondie ?"
+python3 "$OUTPUT_DIR/_emit.py" question --id confirm_research
+ANSWER=$(python3 "$OUTPUT_DIR/_ask.py" confirm_research "$SUMMARY" \
+  "launch=Lancer la recherche|adjust=Ajuster le focus|cancel=Annuler")
+python3 "$OUTPUT_DIR/_emit.py" answer --id confirm_research --value "$ANSWER"
 ```
 
 Dans les deux modes, les valeurs possibles sont `launch` (ou "Lancer la recherche"), `adjust`, `cancel` :
 - **"Lancer la recherche"** / `launch` → continuer à l'étape 2 telle quelle
 - **"Ajuster le focus"** / `adjust` → poser une question de suivi pour préciser les dimensions à approfondir ou exclure, mettre à jour `_recon.json` en conséquence, puis continuer
 - **"Annuler"** / `cancel` → arrêter ici, conserver `_recon.json`
+- **`__timeout__`** (APP_MODE, pas de réponse dans le délai) → traiter comme `cancel` : émettre `error --message timeout` et arrêter proprement
 
 ### Étape 2 — Recherche par dimension
 
@@ -435,7 +434,12 @@ Toujours inclure l'URL et la date de publication. Exemple : `CA 2024 : 588 M€ 
 
 **Si `--mode solo`** : ne pas spawner de sous-agents du tout. Le skill effectue lui-même, directement et en séquence, toutes les WebSearch/WebFetch et écritures de fichiers pour chaque dimension. Pour chaque dimension, annoncer `▶ [Dimension]…`, effectuer les recherches (voir instructions de l'agent correspondant ci-dessous — appliquer les mêmes requêtes et le même plan de contenu), écrire le fichier, puis afficher `✓ [Dimension] — résumé d'une ligne`. Les instructions des agents ci-dessous servent de guide de contenu ; en mode solo elles sont exécutées directement sans délégation.
 
-**Si `--verbose`** (applicable à tous les modes) : avant chaque WebSearch ou WebFetch, afficher la requête en cours ; après chaque source consultée, noter le titre, l'URL et les 1-2 informations clés retenues. En mode solo, afficher également les données clés extraites à la fin de chaque dimension.
+**Si `--verbose`** : avant chaque WebSearch ou WebFetch, afficher la requête en cours ; après chaque source consultée, noter le titre, l'URL et les 1-2 informations clés retenues. En mode solo, afficher également les données clés extraites à la fin de chaque dimension.
+
+> **Limite en `--mode parallel`** : les WebSearch/WebFetch s'exécutent **dans les sous-agents**, donc le
+> contexte principal ne peut pas afficher chaque requête en direct. En parallel, `--verbose` se limite aux
+> événements de dimension + au résumé verbeux que chaque agent renvoie en fin de tâche. Pour un suivi
+> requête-par-requête en temps réel, utiliser `--mode sequential` ou `--mode solo`.
 
 **Si `APP_MODE=true`** (tous les modes) : émettre les événements de dimension depuis le **contexte
 principal** pour que l'UI suive la progression — y compris en `--mode parallel` où les sous-agents
