@@ -34,9 +34,22 @@
 - [ ] Commit + PR
 - [ ] Vérif visuelle navigateur (à faire par l'utilisateur ou via screenshot)
 
-## AuditViewer V2 (à venir)
-- [ ] Runner headless (claude -p vs Agent SDK — à trancher)
-- [ ] Pilotage : lancer un audit, répondre aux questions, cancel/pause
+## AuditViewer V2 — Pilotage + config (fait)
+- [x] Runner headless : `claude -p` (binaire surchargeable via `CLAUDE_BIN`)
+- [x] Répertoire des audits configurable depuis l'UI (env > fichier > défaut)
+  - [x] `AUDITS_ROOT` dynamique (scan + garde-fou path-traversal recalculés à chaud)
+  - [x] `GET`/`PUT /api/config` (mkdir récursif, vérif écriture, persistance atomique, 409 si env)
+  - [x] Panneau Réglages ⚙ (champ pré-rempli, lecture seule si imposé par env)
+- [x] `POST /api/audits/launch` (slug déterministe TS, spawn detached, log `_runner.log`, 409 si en cours)
+- [x] `POST /api/audit/:slug/answer` (`_answer.json` atomique `{v,id,value}`)
+- [x] `POST /api/audit/:slug/control` (`_control.json` atomique ; `cancel` tue le process)
+- [x] `GET /api/audit/:slug/question` + `GET /api/audit/:slug/status`
+- [x] UI : bouton « Nouvel audit » + formulaire, modale de question (SSE), barre de contrôle
+- [x] typecheck + build verts
+- [x] Test du câblage via faux `CLAUDE_BIN` : launch→SSE→answer→complete OK,
+      control/cancel OK, garde-fou path-traversal OK (answer/control/question = 404)
+- [ ] Vérif visuelle navigateur (à faire par l'utilisateur)
+- [ ] Test avec un audit réel `claude -p` (à faire par l'utilisateur)
 
 ## Skill — correctifs notés
 - [ ] event `audit_start --options` : émettre `[]` au lieu de `none` quand aucune option

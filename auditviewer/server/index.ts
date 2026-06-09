@@ -3,11 +3,42 @@ import cors from "cors";
 import fs from "node:fs";
 import fsp from "node:fs/promises";
 import path from "node:path";
+import { spawn, type ChildProcess } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import type { AuditSummary, Manifest } from "../shared/contract.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 3001;
+// Binaire du runner headless (surchargeable pour les tests via CLAUDE_BIN).
+const CLAUDE_BIN = process.env.CLAUDE_BIN || "claude";
+
+/**
+ * Slug déterministe, réplique de la règle Python du skill (SKILL.md étape 0) :
+ * NFKD → ASCII (accents retirés) → non-alphanumérique = "-" → trim/compression
+ * des tirets → minuscules → défaut "sujet".
+ */
+function slugify(subject: string): string {
+  const ascii = subject
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "") // diacritiques combinants
+    .replace(/[^\x00-\x7f]/g, ""); // tout reste non-ASCII
+  const s = ascii
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+  return s || "sujet";
+}
+
+/** Processus runner en cours, indexés par slug. */
+const running = new Map<string, ChildProcess>();
+
+/** Écrit un JSON atomiquement (.tmp + rename) dans un dossier d'audit. */
+async function writeJsonAtomic(dir: string, file: string, data: unknown): Promise<void> {
+  const target = path.join(dir, file);
+  const tmp = `${target}.tmp`;
+  await fsp.writeFile(tmp, JSON.stringify(data));
+  await fsp.rename(tmp, target);
+}
 
 // Racine où chercher ET écrire les dossiers d'audit. Un dossier d'audit = un
 // répertoire contenant _manifest.json ou _recon.json.
@@ -109,10 +140,30 @@ async function summarize(dir: string): Promise<AuditSummary> {
 async function resolveAuditDir(slug: string): Promise<string | null> {
   const audits = await findAudits();
   const match = audits.find((a) => a.slug === slug);
-  if (!match) return null;
-  const resolved = path.resolve(match.dir);
-  if (!resolved.startsWith(auditsRoot())) return null; // garde-fou
-  return resolved;
+  if (match) {
+    const resolved = path.resolve(match.dir);
+    if (!resolved.startsWith(auditsRoot())) return null; // garde-fou
+    return resolved;
+  }
+  // Audit fraîchement lancé : le dossier existe mais n'a pas encore de
+  // _manifest.json / _recon.json. On le résout par nom (basename), avec le
+  // même garde-fou path-traversal.
+  return resolveDirByName(slug);
+}
+
+/** Résout un dossier d'audit par son nom de base directement sous la racine. */
+async function resolveDirByName(slug: string): Promise<string | null> {
+  if (!/^[A-Za-z0-9_.-]+$/.test(slug)) return null; // pas de séparateur de chemin
+  const root = auditsRoot();
+  const resolved = path.resolve(root, slug);
+  if (!resolved.startsWith(root)) return null; // garde-fou
+  try {
+    const stat = await fsp.stat(resolved);
+    if (stat.isDirectory()) return resolved;
+  } catch {
+    /* absent */
+  }
+  return null;
 }
 
 const app = express();
@@ -160,6 +211,144 @@ app.put("/api/config", async (req, res) => {
 
 app.get("/api/audits", async (_req, res) => {
   res.json(await findAudits());
+});
+
+// ---------------------------------------------------------------------------
+// Pilotage V2 : lancer un audit, répondre aux questions, contrôler le runner.
+// ---------------------------------------------------------------------------
+
+// Lance un audit headless via `claude -p`. Écrit dans <auditsRoot>/<slug>.
+app.post("/api/audits/launch", async (req, res) => {
+  const body = req.body as {
+    subject?: unknown;
+    depth?: unknown;
+    mode?: unknown;
+    lang?: unknown;
+    options?: unknown;
+  };
+  const subject = typeof body.subject === "string" ? body.subject.trim() : "";
+  if (!subject) {
+    return res.status(400).json({ error: "subject manquant" });
+  }
+  const slug = slugify(subject);
+  const dirName = `audit-${slug}`;
+  if (running.has(dirName)) {
+    return res.status(409).json({ error: "Un audit avec ce slug est déjà en cours." });
+  }
+
+  const root = auditsRoot();
+  const dir = path.join(root, dirName);
+  try {
+    await fsp.mkdir(dir, { recursive: true });
+  } catch {
+    return res.status(500).json({ error: `Impossible de créer ${dir}` });
+  }
+
+  // Construit la commande slash du skill.
+  const flags: string[] = [];
+  const depth = body.depth === "quick" || body.depth === "full" ? body.depth : null;
+  if (depth) flags.push(`--depth ${depth}`);
+  const mode =
+    body.mode === "parallel" || body.mode === "sequential" || body.mode === "solo"
+      ? body.mode
+      : null;
+  if (mode) flags.push(`--mode ${mode}`);
+  const lang = typeof body.lang === "string" && body.lang.trim() ? body.lang.trim() : null;
+  if (lang) flags.push(`--lang ${lang}`);
+  if (Array.isArray(body.options)) {
+    for (const o of body.options) {
+      if (o === "swot" || o === "esg" || o === "rh") flags.push(`--${o}`);
+    }
+  }
+  const prompt = `/audit-report ${subject} ${flags.join(" ")} --app-mode --output ${dir}`.replace(
+    /\s+/g,
+    " ",
+  );
+
+  let child: ChildProcess;
+  try {
+    const log = fs.openSync(path.join(dir, "_runner.log"), "a");
+    child = spawn(CLAUDE_BIN, ["-p", prompt], {
+      cwd: dir,
+      detached: true,
+      stdio: ["ignore", log, log],
+    });
+  } catch {
+    return res
+      .status(500)
+      .json({ error: `Échec du lancement de "${CLAUDE_BIN}". Vérifiez CLAUDE_BIN.` });
+  }
+
+  child.on("error", () => running.delete(dirName));
+  child.on("exit", () => running.delete(dirName));
+  if (child.pid === undefined) {
+    return res
+      .status(500)
+      .json({ error: `Échec du lancement de "${CLAUDE_BIN}". Vérifiez CLAUDE_BIN.` });
+  }
+  running.set(dirName, child);
+  child.unref();
+  res.json({ slug: dirName, pid: child.pid });
+});
+
+// Écrit la réponse à une question (atomique) : { v, id, value }.
+app.post("/api/audit/:slug/answer", async (req, res) => {
+  const dir = await resolveAuditDir(req.params.slug);
+  if (!dir) return res.status(404).json({ error: "audit introuvable" });
+  const body = req.body as { value?: unknown; id?: unknown };
+  if (body.value === undefined) {
+    return res.status(400).json({ error: "value manquante" });
+  }
+  const id = typeof body.id === "string" ? body.id : undefined;
+  await writeJsonAtomic(dir, "_answer.json", { v: 1, id, value: body.value });
+  res.json({ ok: true });
+});
+
+// Écrit un ordre de contrôle (atomique) : { v, action, dimension? }.
+app.post("/api/audit/:slug/control", async (req, res) => {
+  const dir = await resolveAuditDir(req.params.slug);
+  if (!dir) return res.status(404).json({ error: "audit introuvable" });
+  const body = req.body as { action?: unknown; dimension?: unknown };
+  const action = body.action;
+  if (action !== "cancel" && action !== "pause" && action !== "resume" && action !== "rerun") {
+    return res.status(400).json({ error: "action invalide" });
+  }
+  const dimension = typeof body.dimension === "string" ? body.dimension : undefined;
+  await writeJsonAtomic(dir, "_control.json", { v: 1, action, dimension });
+  if (action === "cancel") {
+    const child = running.get(req.params.slug);
+    if (child?.pid) {
+      try {
+        process.kill(-child.pid); // tue le groupe (detached)
+      } catch {
+        try {
+          child.kill();
+        } catch {
+          /* déjà mort */
+        }
+      }
+      running.delete(req.params.slug);
+    }
+  }
+  res.json({ ok: true });
+});
+
+// Question en attente, ou { question: null }.
+app.get("/api/audit/:slug/question", async (req, res) => {
+  const dir = await resolveAuditDir(req.params.slug);
+  if (!dir) return res.status(404).json({ error: "audit introuvable" });
+  try {
+    const raw = await fsp.readFile(path.join(dir, "_question.json"), "utf-8");
+    res.type("application/json").send(raw);
+  } catch {
+    res.json({ question: null });
+  }
+});
+
+// État du runner pour un slug.
+app.get("/api/audit/:slug/status", (req, res) => {
+  const child = running.get(req.params.slug);
+  res.json({ running: !!child, pid: child?.pid });
 });
 
 // Fichiers JSON structurés (manifest / data / sources / recon).

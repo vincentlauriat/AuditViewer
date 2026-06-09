@@ -12,6 +12,10 @@ import { Sources } from "./components/Sources.tsx";
 import { Timeline } from "./components/Timeline.tsx";
 import { Markdown } from "./components/Markdown.tsx";
 import { Settings } from "./components/Settings.tsx";
+import { NewAudit } from "./components/NewAudit.tsx";
+import { QuestionModal } from "./components/QuestionModal.tsx";
+import { ControlBar } from "./components/ControlBar.tsx";
+import type { Question } from "../shared/contract.ts";
 
 type Tab = "synthese" | "dimensions" | "sources" | "timeline" | "rapport";
 
@@ -22,6 +26,7 @@ export function App() {
   const [audits, setAudits] = useState<AuditSummary[]>([]);
   const [slug, setSlug] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showNew, setShowNew] = useState(false);
 
   const reloadAudits = () =>
     api.audits().then((a) => {
@@ -40,6 +45,9 @@ export function App() {
         <h1 className="brand">
           <span className="brand-mark">◎</span> AuditViewer
         </h1>
+        <button className="new-audit-btn" onClick={() => setShowNew(true)}>
+          + Nouvel audit
+        </button>
         <div className="sidebar-label">Audits</div>
         <ul className="audit-list">
           {audits.map((a) => (
@@ -66,6 +74,16 @@ export function App() {
       {showSettings ? (
         <Settings onClose={() => setShowSettings(false)} onSaved={reloadAudits} />
       ) : null}
+      {showNew ? (
+        <NewAudit
+          onClose={() => setShowNew(false)}
+          onLaunched={(s) => {
+            setShowNew(false);
+            setSlug(s);
+            reloadAudits();
+          }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -76,6 +94,7 @@ function AuditView({ slug }: { slug: string }) {
   const [sources, setSources] = useState<Source[]>([]);
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [tab, setTab] = useState<Tab>("synthese");
+  const [question, setQuestion] = useState<Question | null>(null);
 
   useEffect(() => {
     setManifest(null);
@@ -83,10 +102,26 @@ function AuditView({ slug }: { slug: string }) {
     setSources([]);
     setEvents([]);
     setTab("synthese");
+    setQuestion(null);
     api.manifest(slug).then(setManifest).catch(() => {});
     api.data(slug).then(setData).catch(() => {});
     api.sources(slug).then((s) => setSources(s.sources ?? [])).catch(() => {});
-    const unsub = subscribeEvents(slug, (ev) => setEvents((prev) => [...prev, ev]));
+    // Récupère une éventuelle question déjà en attente (audit déjà bloqué).
+    api
+      .question(slug)
+      .then((q) => setQuestion("question" in q ? null : q))
+      .catch(() => {});
+    const unsub = subscribeEvents(slug, (ev) => {
+      setEvents((prev) => [...prev, ev]);
+      if (ev.type === "question") {
+        api
+          .question(slug)
+          .then((q) => setQuestion("question" in q ? null : q))
+          .catch(() => {});
+      } else if (ev.type === "answer") {
+        setQuestion(null);
+      }
+    });
     return unsub;
   }, [slug]);
 
@@ -106,7 +141,34 @@ function AuditView({ slug }: { slug: string }) {
     manifest?.files?.filter((f) => f.kind === "dimension").map((f) => f.name) ??
     [];
 
-  if (!manifest) return <div className="empty">Chargement de l'audit…</div>;
+  const finished = events.some(
+    (e) => e.type === "audit_complete" || e.type === "audit_canceled",
+  );
+
+  // Audit fraîchement lancé : pas encore de manifest, mais on suit déjà la
+  // timeline live, la barre de contrôle et les questions.
+  if (!manifest) {
+    if (!events.length) return <div className="empty">Chargement de l'audit…</div>;
+    return (
+      <>
+        <header className="audit-header">
+          <div className="ah-top">
+            <h2>{slug}</h2>
+            <span className="pill">{finished ? "terminé" : "en cours"}</span>
+            {!finished ? <ControlBar slug={slug} /> : null}
+          </div>
+          <div className="progress">
+            <div className="progress-bar" style={{ width: `${progress}%` }} />
+            <span className="progress-label">{progress}%</span>
+          </div>
+        </header>
+        <section className="content">
+          <Timeline events={events} />
+        </section>
+        {question && !finished ? <QuestionModal slug={slug} question={question} /> : null}
+      </>
+    );
+  }
 
   return (
     <>
@@ -116,6 +178,7 @@ function AuditView({ slug }: { slug: string }) {
           <span className={`pill ${statusPill(manifest.status)}`}>
             {running ? "en cours" : manifest.status}
           </span>
+          {running ? <ControlBar slug={slug} /> : null}
         </div>
         <div className="ah-meta">
           {manifest.subject_type ? <span>{manifest.subject_type}</span> : null}
@@ -157,6 +220,7 @@ function AuditView({ slug }: { slug: string }) {
         {tab === "timeline" && <Timeline events={events} />}
         {tab === "rapport" && <Markdown slug={slug} file={manifest.report_file ?? "RAPPORT_COMPLET.md"} />}
       </section>
+      {question && running ? <QuestionModal slug={slug} question={question} /> : null}
     </>
   );
 }

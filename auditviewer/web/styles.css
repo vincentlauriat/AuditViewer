@@ -197,3 +197,58 @@ a:hover { text-decoration: underline; }
   font-size: 13px;
 }
 .btn-ghost:hover { color: var(--text); }
+.btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-danger {
+  background: none;
+  border: 1px solid var(--ko);
+  color: var(--ko);
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 13px;
+}
+.btn-danger:hover { background: var(--ko); color: #fff; }
+.btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* New audit button */
+.new-audit-btn {
+  width: 100%;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: #fff;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+.new-audit-btn:hover { filter: brightness(1.08); }
+
+/* Form rows */
+.field-row { display: flex; gap: 12px; margin-top: 14px; }
+.field-row > div { flex: 1; }
+.field-checks { display: flex; gap: 16px; margin-top: 14px; }
+.check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
+select.field-input { appearance: none; }
+
+/* Control bar (audit header) */
+.control-bar { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+/* Question modal */
+.question-text { font-size: 15px; line-height: 1.5; margin: 0 0 16px; }
+.question-options { display: flex; flex-direction: column; gap: 8px; }
+.btn-option {
+  text-align: left;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 11px 14px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 14px;
+}
+.btn-option:hover { border-color: var(--accent); }
+.btn-option:disabled { opacity: 0.5; cursor: not-allowed; }
+.question-free { display: flex; gap: 10px; }
+.question-free .field-input { flex: 1; }

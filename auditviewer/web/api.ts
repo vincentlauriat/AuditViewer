@@ -3,7 +3,10 @@ import type {
   AuditData,
   AuditEvent,
   AuditSummary,
+  ControlAction,
+  LaunchRequest,
   Manifest,
+  QuestionFile,
   SourcesFile,
 } from "../shared/contract.ts";
 
@@ -38,6 +41,16 @@ export const api = {
   config: () => j<AppConfig>("/api/config"),
   setConfig: (auditsRoot: string) =>
     send<AppConfig>("/api/config", "PUT", { auditsRoot }),
+  launch: (req: LaunchRequest) =>
+    send<{ slug: string; pid: number }>("/api/audits/launch", "POST", req),
+  question: (slug: string) =>
+    j<QuestionFile>(`/api/audit/${slug}/question`),
+  answer: (slug: string, value: string, id?: string) =>
+    send<{ ok: true }>(`/api/audit/${slug}/answer`, "POST", { value, id }),
+  control: (slug: string, action: ControlAction, dimension?: string) =>
+    send<{ ok: true }>(`/api/audit/${slug}/control`, "POST", { action, dimension }),
+  status: (slug: string) =>
+    j<{ running: boolean; pid?: number }>(`/api/audit/${slug}/status`),
 };
 
 /** S'abonne au flux d'événements SSE d'un audit. Renvoie une fonction de désabonnement. */
