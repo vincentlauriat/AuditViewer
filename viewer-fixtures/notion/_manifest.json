@@ -1,0 +1,31 @@
+{
+  "v": 1,
+  "subject": "Notion",
+  "subject_type": "company",
+  "slug": "notion",
+  "output_dir": "/Users/vincent/Documents/GitHub/SkillAuditReport/viewer-fixtures/notion",
+  "audit_date": "2026-06-09",
+  "depth": "quick",
+  "mode": "solo",
+  "options": [],
+  "status": "complete",
+  "dimensions": [
+    {"key": "historique", "file": "01_HISTORIQUE.md", "status": "done", "sources_count": 6},
+    {"key": "marche", "file": "02_MARCHE.md", "status": "done", "sources_count": 4},
+    {"key": "concurrence", "file": "05_CONCURRENCE.md", "status": "done", "sources_count": 5},
+    {"key": "financier", "file": "06_FINANCIER.md", "status": "done", "sources_count": 6}
+  ],
+  "files": [
+    {"name": "00_RESUME_EXECUTIF.md", "kind": "summary"},
+    {"name": "01_HISTORIQUE.md", "kind": "dimension"},
+    {"name": "02_MARCHE.md", "kind": "dimension"},
+    {"name": "05_CONCURRENCE.md", "kind": "dimension"},
+    {"name": "06_FINANCIER.md", "kind": "dimension"},
+    {"name": "_factcheck.md", "kind": "factcheck"},
+    {"name": "RAPPORT_COMPLET.md", "kind": "report"}
+  ],
+  "sources_count": 14,
+  "data_file": "_data.json",
+  "sources_file": "_sources.json",
+  "report_file": "RAPPORT_COMPLET.md"
+}

@@ -1,0 +1,19 @@
+{
+  "v": 1,
+  "sources": [
+    {"id": 1, "url": "https://www.cnbc.com/2025/09/18/notion-launches-ai-agent-as-it-crosses-500-million-in-annual-revenue.html", "title": "Notion crosses $500M ARR, launches AI agent — CNBC", "tag": "Presse", "date": "2025-09", "dimensions": ["financier", "historique"], "stale": false},
+    {"id": 2, "url": "https://sacra.com/c/notion/", "title": "Notion revenue, valuation & funding — Sacra", "tag": "Analyste", "date": "2025-12", "dimensions": ["financier"], "stale": false},
+    {"id": 3, "url": "https://getlatka.com/companies/notion", "title": "Notion Revenue 2025: $600M ARR — getLatka", "tag": "Analyste", "date": "2025-12", "dimensions": ["financier"], "stale": false},
+    {"id": 4, "url": "https://www.mordorintelligence.com/industry-reports/global-business-productivity-software-market", "title": "Business Productivity Software Market — Mordor Intelligence", "tag": "Analyste", "date": "2025-01", "dimensions": ["marche"], "stale": false},
+    {"id": 5, "url": "https://en.wikipedia.org/wiki/Notion_(productivity_software)", "title": "Notion (productivity software) — Wikipedia", "tag": "Presse", "date": "2026-01", "dimensions": ["historique", "concurrence"], "stale": false},
+    {"id": 6, "url": "https://www.simple.ink/blog/notion-stats", "title": "Notion Statistics: Growth, Revenue & More — simple.ink", "tag": "Analyste", "date": "2024-06", "dimensions": ["financier", "marche"], "stale": false},
+    {"id": 7, "url": "https://zapier.com/blog/best-notion-alternatives/", "title": "The 9 best Notion alternatives 2026 — Zapier", "tag": "Presse", "date": "2026-01", "dimensions": ["concurrence"], "stale": false},
+    {"id": 8, "url": "https://research.contrary.com/company/notion", "title": "Notion Business Breakdown & Founding Story — Contrary Research", "tag": "Analyste", "date": "2025-06", "dimensions": ["historique", "financier"], "stale": false},
+    {"id": 9, "url": "https://techcrunch.com/2024/02/09/notion-acquires-privacy-focused-productivity-platform-skiff/", "title": "Notion acquires Skiff — TechCrunch", "tag": "Presse", "date": "2024-02", "dimensions": ["historique"], "stale": true},
+    {"id": 10, "url": "https://www.saastr.com/notion-and-growing-into-your-10b-valuation-a-masterclass-in-patience/", "title": "Notion at $11 Billion — SaaStr", "tag": "Analyste", "date": "2025-12", "dimensions": ["financier"], "stale": false},
+    {"id": 11, "url": "https://taptwicedigital.com/stats/notion", "title": "10 Notion Statistics (2025) — taptwicedigital", "tag": "Analyste", "date": "2025-06", "dimensions": ["financier"], "stale": false},
+    {"id": 12, "url": "https://finance.yahoo.com/news/business-productivity-software-market-analysis-080900762.html", "title": "Business Productivity Software Market Analysis 2025 — Yahoo Finance", "tag": "Presse", "date": "2025-06", "dimensions": ["marche"], "stale": false},
+    {"id": 13, "url": "https://zapier.com/blog/coda-vs-notion/", "title": "Coda vs Notion — Zapier", "tag": "Presse", "date": "2026-01", "dimensions": ["concurrence"], "stale": false},
+    {"id": 14, "url": "https://www.thebusinessresearchcompany.com/report/productivity-software-global-market-report", "title": "Productivity Software Global Market Report — TBRC", "tag": "Analyste", "date": "2025-06", "dimensions": ["marche"], "stale": false}
+  ]
+}
