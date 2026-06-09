@@ -21,6 +21,22 @@
 - [x] Émission JSONL robuste aux apostrophes/accents (lignes JSON valides)
 - [ ] Commit + PR sur feat/app-mode-contract
 
-## Suite (hors périmètre de cette PR)
-- AuditViewer : runner headless + UI de visualisation/pilotage
-- Test bout-en-bout : `/audit-report Notion --depth quick`
+## Test bout-en-bout (fait)
+- [x] Audit Notion réel en --app-mode → fixtures `viewer-fixtures/notion/`
+- [x] Contrat validé : 39 events valides, manifest complete, data/sources structurés
+
+## AuditViewer V1 — Visualisation (en cours)
+- [x] Backend Express : /api/audits, manifest/data/sources/file, SSE events
+- [x] Frontend Vite/React : sidebar, header+progress, onglets Synthèse/Dimensions/Sources/Timeline/Rapport
+- [x] Composants : Kpis, Sources, Timeline, Markdown ; types partagés contrat v1
+- [x] npm install + typecheck + build (verts)
+- [x] Vérif endpoints sur fixtures Notion (audits/manifest/data/sources/file/SSE + garde-fou path-traversal)
+- [ ] Commit + PR
+- [ ] Vérif visuelle navigateur (à faire par l'utilisateur ou via screenshot)
+
+## AuditViewer V2 (à venir)
+- [ ] Runner headless (claude -p vs Agent SDK — à trancher)
+- [ ] Pilotage : lancer un audit, répondre aux questions, cancel/pause
+
+## Skill — correctifs notés
+- [ ] event `audit_start --options` : émettre `[]` au lieu de `none` quand aucune option
