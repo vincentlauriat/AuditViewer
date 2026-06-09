@@ -46,8 +46,14 @@ Un dossier `audit-{sujet}/` contenant :
 | `08_ESG.md` | *(si `--esg`)* Bilan carbone, objectifs net zéro, notations ESG, controverses |
 | `09_SWOT.md` | *(si `--swot`)* Matrice SWOT complète avec implications stratégiques |
 | `10_RH.md` | *(si `--rh`)* Effectifs, culture, Glassdoor, recrutements, organisation |
-| `_data.json` | Chiffres clés structurés extraits du rapport (revenus, valorisation, capacité…) |
+| `_data.json` | Chiffres clés structurés (`kpis[]` générique + sections optionnelles) — lu par l'UI |
+| `_sources.json` | Index structuré des sources (URL, tag, date, fraîcheur) — lu par l'UI |
+| `_manifest.json` | Index canonique des artefacts produits + statut — référence pour l'AuditViewer |
 | `CHANGELOG.md` | *(mode mise à jour)* Ce qui a changé depuis la version précédente |
+
+**Artefacts du contrat machine** *(si `--app-mode`)* : `_events.jsonl` (flux d'événements versionné),
+`_control.json` (pilotage UI → skill : cancel/pause/rerun), `_question.json`/`_answer.json` (dialogue),
+`_emit.py`/`_ctl.py`/`_ask.py` (helpers). Voir « Mode --app-mode : contrat machine v1 ».
 
 ## Options
 
@@ -72,60 +78,126 @@ Un dossier `audit-{sujet}/` contenant :
 
 ## Instructions d'exécution
 
-### Mode --app-mode : protocole événements
+### Mode --app-mode : contrat machine v1
 
-Quand `APP_MODE=true`, à chaque étape clé, écrire une ligne JSON dans `$OUTPUT_DIR/_events.jsonl` avec cette commande Bash :
+Quand `APP_MODE=true`, le skill expose un **contrat machine versionné** (`"v": 1`) permettant à
+une application (AuditViewer) d'**observer** et de **piloter** l'audit via des fichiers dans `$OUTPUT_DIR`.
+Tous les artefacts JSON portent le champ `"v": 1`.
 
-```bash
-python3 -c "
-import json, datetime
-e = {'t': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), 'type': '$TYPE'}
-if '$STEP': e['step'] = '$STEP'
-if '$LABEL': e['label'] = '$LABEL'
-if '$FILE': e['file'] = '$FILE'
-if '$QUERY': e['query'] = '$QUERY'
-with open('$OUTPUT_DIR/_events.jsonl', 'a') as f: f.write(json.dumps(e) + '\n')
-" 2>/dev/null || true
+**Spécification de référence** : `PLAN.md` à la racine du dépôt du skill décrit chaque artefact.
+
+#### Installation des helpers (une seule fois, au tout début si APP_MODE)
+
+Pour garantir une émission **fiable** (robuste aux apostrophes, accents, sauts de ligne), écrire trois
+helpers Python dans `$OUTPUT_DIR` via le tool `Write`, puis les appeler partout au lieu d'interpoler du JSON.
+
+`$OUTPUT_DIR/_emit.py` — émet un événement (type + paires `--clé valeur` en argv) :
+```python
+import sys, json, os, datetime
+out = os.environ.get("AUDIT_OUT") or os.path.dirname(os.path.abspath(__file__))
+a = sys.argv[1:]
+ev = {"v": 1,
+      "ts": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+      "type": a[0] if a else "unknown"}
+i = 1
+while i < len(a):
+    ev[a[i].lstrip("-")] = a[i + 1] if i + 1 < len(a) else ""
+    i += 2
+with open(os.path.join(out, "_events.jsonl"), "a", encoding="utf-8") as f:
+    f.write(json.dumps(ev, ensure_ascii=False) + "\n")
 ```
 
-Types d'événements à émettre :
-- `step_start` + `step` + `label` : début d'une étape (recon, historique, marche, technique, tarification, concurrence, financier, futur, resume, complet)
-- `search` + `query` : avant chaque WebSearch
-- `source` + `url` + `title` : après chaque WebFetch retenant la source
-- `file_written` + `file` : après chaque Write d'un fichier `.md` ou `.json`
-- `step_done` + `step` : fin d'une étape
-- `audit_complete` : tout à la fin
+`$OUTPUT_DIR/_ctl.py` — consomme une commande de pilotage si présente (imprime l'action ou rien) :
+```python
+import sys, json, os
+out = os.environ.get("AUDIT_OUT") or os.path.dirname(os.path.abspath(__file__))
+p = os.path.join(out, "_control.json")
+if os.path.exists(p):
+    try:
+        c = json.load(open(p, encoding="utf-8"))
+    except Exception:
+        c = {}
+    os.remove(p)  # consommé
+    act = c.get("action", "")
+    if act:
+        print(act + ((":" + c["dimension"]) if c.get("dimension") else ""))
+```
 
-**Questions interactives en --app-mode** : au lieu de `AskUserQuestion`, écrire `_question.json` et attendre `_answer.json` :
-
-```bash
-# Écrire la question
-python3 -c "
-import json
-q = {
-  'id': 'confirm_research',
-  'text': '''TEXTE DE LA QUESTION''',
-  'options': [
-    {'value': 'launch', 'label': 'Lancer la recherche'},
-    {'value': 'adjust', 'label': 'Ajuster le focus'},
-    {'value': 'cancel', 'label': 'Annuler'}
-  ]
-}
-with open('$OUTPUT_DIR/_question.json', 'w') as f: json.dump(q, f, ensure_ascii=False)
-" && python3 -c "
-import json, time, os
-for _ in range(1200):  # timeout 10 min
-    if os.path.exists('$OUTPUT_DIR/_answer.json'):
-        with open('$OUTPUT_DIR/_answer.json') as f:
-            ans = json.load(f)
-        print(ans['value'])
-        os.remove('$OUTPUT_DIR/_answer.json')
-        break
+`$OUTPUT_DIR/_ask.py` — écrit une question, attend une réponse atomique, applique un timeout :
+```python
+import sys, json, os, time
+out = os.environ.get("AUDIT_OUT") or os.path.dirname(os.path.abspath(__file__))
+qid, text, opts_csv = sys.argv[1], sys.argv[2], sys.argv[3]
+timeout = int(sys.argv[4]) if len(sys.argv) > 4 else 1800  # 30 min
+options = []
+for tok in opts_csv.split("|"):
+    val, _, lab = tok.partition("=")
+    options.append({"value": val, "label": lab or val})
+q = {"v": 1, "id": qid, "text": text, "options": options}
+qp, ap = os.path.join(out, "_question.json"), os.path.join(out, "_answer.json")
+json.dump(q, open(qp, "w", encoding="utf-8"), ensure_ascii=False)
+deadline = time.time() + timeout
+while time.time() < deadline:
+    if os.path.exists(ap):
+        try:
+            ans = json.load(open(ap, encoding="utf-8"))
+        except Exception:
+            time.sleep(0.3); continue  # écriture partielle, on réessaie
+        os.remove(ap)
+        if os.path.exists(qp):
+            os.remove(qp)  # question consommée
+        print(ans.get("value", ""))
+        sys.exit(0)
     time.sleep(0.5)
-"
+# timeout → on retire la question et on signale l'expiration
+if os.path.exists(qp):
+    os.remove(qp)
+print("__timeout__")
 ```
 
-La valeur retournée (`launch`, `adjust`, `cancel`, etc.) détermine la suite du flux.
+Définir `AUDIT_OUT` pour tous les appels : `export AUDIT_OUT="$OUTPUT_DIR"`.
+
+#### Événements `_events.jsonl` (append-only, une ligne JSON par event)
+
+Émettre via `python3 "$OUTPUT_DIR/_emit.py" <type> [--clé valeur ...]`. Types :
+- `audit_start` `--subject … --depth … --mode … --options … --output_dir …`
+- `phase_start` / `phase_done` `--phase <recon|research|factcheck|swot|summary|assembly|finalize> --label …`
+- `dimension_start` / `dimension_done` `--dimension <clé> --label … [--status done --sources_count N --summary …]`
+  (dimensions : `historique, marche, technique, tarification, concurrence, financier, futur, esg, rh`)
+- `progress` `--done N --total M --pct P`
+- `search` `--query …` *(si `--verbose`)*
+- `source` `--url … --title … --tag <Officielle|Analyste|Presse>` *(si `--verbose`)*
+- `file_written` `--file …`
+- `question` `--id …` / `answer` `--id … --value …`
+- `error` `[--phase …] [--dimension …] --message …`
+- `audit_complete` `--files_count N --sources_count M --status complete`
+- `audit_canceled` `--reason …`
+
+**Émission par dimension (clé)** : en `--mode parallel`, le **contexte principal** émet
+`dimension_start` juste avant de dispatcher chaque agent et `dimension_done` dès qu'un fichier de
+dimension est écrit — les sous-agents restent muets, mais l'UI suit la progression en continu.
+Émettre aussi un `progress` après chaque dimension terminée.
+
+#### Pilotage `_control.json` (UI → skill)
+
+Aux **points de contrôle** (après chaque dimension, et avant l'assemblage), lire une éventuelle commande :
+```bash
+ACTION=$(python3 "$OUTPUT_DIR/_ctl.py")
+```
+- `cancel` → émettre `audit_canceled --reason user`, écrire `_manifest.json` avec `status: canceled`, s'arrêter proprement.
+- `pause` → boucler en relisant `_ctl.py` jusqu'à recevoir `resume` (ou `cancel`).
+- `rerun:<dimension>` → relancer uniquement la dimension nommée (surtout utile en post-audit).
+
+#### Questions interactives (remplace `AskUserQuestion` quand APP_MODE)
+
+```bash
+ANSWER=$(python3 "$OUTPUT_DIR/_ask.py" confirm_research \
+  "Reconnaissance terminée — lancer la recherche approfondie ?" \
+  "launch=Lancer la recherche|adjust=Ajuster le focus|cancel=Annuler")
+python3 "$OUTPUT_DIR/_emit.py" answer --id confirm_research --value "$ANSWER"
+```
+La valeur (`launch`, `adjust`, `cancel`) détermine la suite. **`__timeout__`** (pas de réponse dans le
+délai, défaut 30 min) est traité comme `cancel` : émettre `error --message timeout` puis arrêter proprement.
 
 ### Étape 0 — Parse des arguments
 
@@ -202,13 +274,52 @@ Extraire depuis les args :
 - `WATCH` : `true` si `--watch` est présent (défaut : `false`)
 - `APP_MODE` : `true` si `--app-mode` est présent (défaut : `false`)
 
-**Détection du mode mise à jour** : si `OUTPUT_DIR` existe déjà et contient des fichiers `.md`, informer l'utilisateur et demander via `AskUserQuestion` :
-- "Mettre à jour le rapport existant" → continuer normalement, produire `CHANGELOG.md` en fin d'audit comparant les différences clés
-- "Repartir de zéro" → vider `OUTPUT_DIR` et recommencer
+**Conflits d'options** : `--brief` est **exclusif** des dimensions optionnelles. Si `--brief` est
+combiné à `--swot`/`--esg`/`--rh`/`--watch`, ignorer ces dernières et avertir :
+`⚠️ --brief ignore --swot/--esg/--rh (mode synthèse 1 page)`.
+
+**Slug déterministe du dossier** : le dossier par défaut est `./audit-{slug}/`, où `{slug}` est calculé
+de façon reproductible (l'UI doit pouvoir le prédire) — minuscules, accents retirés, tout caractère
+non alphanumérique → `-`, tirets multiples compressés, tirets de bord supprimés :
+```bash
+SLUG=$(python3 -c "
+import sys, unicodedata, re
+s = unicodedata.normalize('NFKD', sys.argv[1]).encode('ascii','ignore').decode()
+s = re.sub(r'[^a-zA-Z0-9]+','-', s).strip('-').lower()
+print(s or 'sujet')
+" "$SUBJECT")
+OUTPUT_DIR="${OUTPUT_DIR:-./audit-$SLUG}"
+```
+Exemples : `Tesla Model Y` → `tesla-model-y`, `Société Générale` → `societe-generale`.
+
+**Années dynamiques** : ne jamais coder les années en dur dans les requêtes. Calculer une fois :
+```bash
+YEAR=$(date +%Y); PREV=$((YEAR-1)); NEXT=$((YEAR+1))
+```
+Dans toutes les recherches ci-dessous, `{YEAR}` = année courante, `{PREV}` = année précédente,
+`{NEXT}` = année suivante. (Les exemples écrits `2024 2025` sont illustratifs — utiliser `{PREV} {YEAR}`.)
+
+**Détection du mode mise à jour** : si `OUTPUT_DIR` existe déjà et contient des fichiers `.md`, demander
+quoi faire. **Si `APP_MODE=false`** : via `AskUserQuestion`. **Si `APP_MODE=true`** : via `_ask.py` :
+```bash
+UPD=$(python3 "$OUTPUT_DIR/_ask.py" update_mode \
+  "Un audit existe déjà dans ce dossier — que faire ?" \
+  "update=Mettre à jour|scratch=Repartir de zéro|cancel=Annuler")
+```
+- `update` / "Mettre à jour" → continuer, produire `CHANGELOG.md` en fin d'audit (différences clés)
+- `scratch` / "Repartir de zéro" → vider `OUTPUT_DIR` et recommencer
+- `cancel` / `__timeout__` → arrêter
 
 Créer le dossier de sortie :
 ```bash
 mkdir -p "$OUTPUT_DIR"
+```
+
+**Si `APP_MODE=true`** : créer les helpers `_emit.py`, `_ctl.py`, `_ask.py` dans `$OUTPUT_DIR`
+(voir « Mode --app-mode »), exporter `AUDIT_OUT="$OUTPUT_DIR"`, puis émettre :
+```bash
+python3 "$OUTPUT_DIR/_emit.py" audit_start --subject "$SUBJECT" --depth "$DEPTH" \
+  --mode "$MODE" --options "$OPTIONS_CSV" --output_dir "$OUTPUT_DIR"
 ```
 
 Annoncer le sujet et le plan à l'utilisateur.
@@ -220,7 +331,7 @@ Avant de lancer les recherches parallèles, effectuer une reconnaissance rapide 
 1. Lancer 2-3 recherches WebSearch larges pour comprendre le sujet :
    - `"{SUBJECT} overview company market"`
    - `"{SUBJECT} wikipedia history"`
-   - `"{SUBJECT} latest news 2024 2025"`
+   - `"{SUBJECT} latest news {PREV} {YEAR}"`
 
 2. Lire les 2-3 sources les plus pertinentes pour établir :
    - Le type de sujet (entreprise, produit, secteur, technologie)
@@ -326,6 +437,15 @@ Toujours inclure l'URL et la date de publication. Exemple : `CA 2024 : 588 M€ 
 
 **Si `--verbose`** (applicable à tous les modes) : avant chaque WebSearch ou WebFetch, afficher la requête en cours ; après chaque source consultée, noter le titre, l'URL et les 1-2 informations clés retenues. En mode solo, afficher également les données clés extraites à la fin de chaque dimension.
 
+**Si `APP_MODE=true`** (tous les modes) : émettre les événements de dimension depuis le **contexte
+principal** pour que l'UI suive la progression — y compris en `--mode parallel` où les sous-agents
+restent muets. Pour chaque dimension de la liste retenue (`DEPTH`), dans l'ordre :
+1. avant de dispatcher / commencer : `python3 "$OUTPUT_DIR/_emit.py" dimension_start --dimension <clé> --label "<Label>"`
+2. dès que le fichier `NN_*.md` est écrit : `python3 "$OUTPUT_DIR/_emit.py" dimension_done --dimension <clé> --status done` puis émettre `file_written --file NN_*.md` et un `progress --done D --total T --pct P`.
+3. **point de contrôle** : lire `ACTION=$(python3 "$OUTPUT_DIR/_ctl.py")` et traiter `cancel`/`pause`/`resume`/`rerun:<dim>` comme spécifié dans « Mode --app-mode ». En `--mode parallel`, vérifier le contrôle après chaque salve d'agents.
+
+Clés de dimension : `historique, marche, technique, tarification, concurrence, financier, futur` (+ `esg`, `rh` si activés).
+
 ---
 
 #### Agent HISTORIQUE
@@ -354,7 +474,7 @@ Produire `01_HISTORIQUE.md` avec :
 **Objectif** : Analyser le marché dans lequel évolue le sujet.
 
 Recherches à effectuer :
-- `"{SUBJECT} market size TAM SAM 2024 2025"`
+- `"{SUBJECT} market size TAM SAM {PREV} {YEAR}"`
 - `"{SUBJECT} market trends growth forecast"`
 - `"{SUBJECT} market geography regions"`
 - `"{SUBJECT} industry regulation compliance"`
@@ -400,7 +520,7 @@ Produire `03_TECHNIQUE.md` avec :
 **Objectif** : Cartographier précisément les modèles de prix.
 
 Recherches à effectuer :
-- `"{SUBJECT} pricing plans tiers 2024 2025"`
+- `"{SUBJECT} pricing plans tiers {PREV} {YEAR}"`
 - `"{SUBJECT} pricing model freemium subscription"`
 - `"{SUBJECT} price increase history"`
 - `"{SUBJECT} pricing compared to competitors"`
@@ -423,7 +543,7 @@ Produire `04_TARIFICATION.md` avec :
 **Objectif** : Cartographier l'environnement concurrentiel complet.
 
 Recherches à effectuer :
-- `"{SUBJECT} competitors alternatives 2024"`
+- `"{SUBJECT} competitors alternatives {YEAR}"`
 - `"{SUBJECT} market share vs competitors"`
 - `"{SUBJECT} competitive advantage differentiation"`
 - `"{SUBJECT} SWOT analysis"`
@@ -446,7 +566,7 @@ Produire `05_CONCURRENCE.md` avec :
 **Objectif** : Analyser la situation financière et les métriques clés.
 
 Recherches à effectuer :
-- `"{SUBJECT} revenue ARR MRR growth 2023 2024 2025"`
+- `"{SUBJECT} revenue ARR MRR growth {PREV} {YEAR}"`
 - `"{SUBJECT} funding valuation investors"`
 - `"{SUBJECT} IPO financials annual report"`
 - `"{SUBJECT} profitability EBITDA margin"`
@@ -469,7 +589,7 @@ Produire `06_FINANCIER.md` avec :
 **Objectif** : Projeter les perspectives d'évolution.
 
 Recherches à effectuer :
-- `"{SUBJECT} roadmap future plans 2025 2026"`
+- `"{SUBJECT} roadmap future plans {YEAR} {NEXT}"`
 - `"{SUBJECT} upcoming features launches"`
 - `"{SUBJECT} strategic vision CEO interview"`
 - `"{SUBJECT} market outlook predictions analysts"`
@@ -491,7 +611,7 @@ Produire `07_FUTUR.md` avec :
 **Objectif** : Évaluer la dimension environnementale, sociale et de gouvernance.
 
 Recherches à effectuer :
-- `"{SUBJECT} ESG rating score MSCI Sustainalytics 2024 2025"`
+- `"{SUBJECT} ESG rating score MSCI Sustainalytics {PREV} {YEAR}"`
 - `"{SUBJECT} carbon footprint emissions net zero target"`
 - `"{SUBJECT} sustainability report CSR"`
 - `"{SUBJECT} ESG controversy scandal governance"`
@@ -513,7 +633,7 @@ Produire `08_ESG.md` avec :
 **Objectif** : Analyser la dimension humaine et organisationnelle.
 
 Recherches à effectuer :
-- `"{SUBJECT} employees headcount growth 2023 2024 2025"`
+- `"{SUBJECT} employees headcount growth {PREV} {YEAR}"`
 - `"{SUBJECT} Glassdoor review culture CEO approval"`
 - `"{SUBJECT} LinkedIn jobs hiring trend"`
 - `"{SUBJECT} layoffs restructuring organization"`
@@ -668,7 +788,16 @@ Date : {date}
 
 ### Étape 4 — Assemblage du rapport complet
 
-Générer `RAPPORT_COMPLET.md` en fusionnant tous les fichiers dans l'ordre :
+**Assemblage conditionnel** : ne fusionner que les fichiers **réellement présents** dans `$OUTPUT_DIR`
+(en `--depth quick`, seules 4 dimensions existent ; ESG/SWOT/RH dépendent des options). Lister
+dynamiquement les fichiers existants, dans l'ordre canonique ci-dessous, et n'inclure dans la table des
+matières que les sections produites — ne jamais référencer un fichier absent.
+
+```bash
+ls "$OUTPUT_DIR" | grep -E '^[0-9]{2}_.*\.md$' | sort
+```
+
+Générer `RAPPORT_COMPLET.md` en fusionnant les fichiers présents dans cet ordre :
 
 ```
 # Rapport d'Audit Complet — {SUBJECT}
@@ -677,69 +806,69 @@ Générer `RAPPORT_COMPLET.md` en fusionnant tous les fichiers dans l'ordre :
 **Sources consultées** : {nombre total}
 
 ---
-[Table des matières avec liens]
+[Table des matières — uniquement les sections présentes, avec liens]
 
 ---
 [Contenu de 00_RESUME_EXECUTIF.md]
-[Séparateur]
-[Contenu de 01_HISTORIQUE.md]
-[Séparateur]
-[Contenu de 02_MARCHE.md]
-[Séparateur]
-[Contenu de 03_TECHNIQUE.md]
-[Séparateur]
-[Contenu de 04_TARIFICATION.md]
-[Séparateur]
-[Contenu de 05_CONCURRENCE.md]
-[Séparateur]
-[Contenu de 06_FINANCIER.md]
-[Séparateur]
-[Contenu de 07_FUTUR.md]
-[Séparateur — si --esg]
-[Contenu de 08_ESG.md]
-[Séparateur — si --swot]
-[Contenu de 09_SWOT.md]
-[Séparateur — si --rh]
-[Contenu de 10_RH.md]
+[Pour chaque fichier NN_*.md présent, dans l'ordre 01→10 : séparateur + contenu]
+  01_HISTORIQUE · 02_MARCHE · 03_TECHNIQUE · 04_TARIFICATION ·
+  05_CONCURRENCE · 06_FINANCIER · 07_FUTUR · 08_ESG · 09_SWOT · 10_RH
 
 ---
 ## Index des sources
-[Liste consolidée et dédupliquée de toutes les sources]
+[Liste consolidée et dédupliquée — voir _sources.json (source de vérité structurée)]
 ```
 
 ### Étape 4b — Génération de `_data.json`
 
-Extraire les chiffres clés structurés de l'ensemble du rapport et les écrire dans `_data.json` :
+Extraire les chiffres clés structurés de l'ensemble du rapport et les écrire dans `_data.json`.
+Le schéma est **générique** : un tableau `kpis` flexible (adapté à tout type de sujet) + des sections
+typées **optionnelles** présentes seulement si pertinentes pour le `subject_type`.
 
 ```json
 {
+  "v": 1,
   "subject": "...",
+  "subject_type": "company|product|market|technology|sector",
   "as_of": "YYYY-MM-DD",
-  "financials": {
-    "revenue": {"value": null, "unit": "M€", "year": null, "growth_pct": null},
-    "ebitda": {"value": null, "unit": "M€", "year": null},
-    "net_income": {"value": null, "unit": "M€", "year": null},
-    "market_cap": {"value": null, "unit": "M€", "date": null}
-  },
-  "operations": {
-    "employees": {"value": null, "year": null},
-    "countries": null,
-    "capacity_mw": null
-  },
-  "market": {
-    "tam": {"value": null, "unit": null, "year": null},
-    "market_share_pct": null
-  },
-  "competitors_count": null,
-  "sources_count": null
+  "kpis": [
+    {"key": "revenue", "label": "Chiffre d'affaires", "value": 588, "unit": "M€",
+     "period": "2024", "source_id": 3, "estimated": false}
+  ],
+  "financials": {"revenue": null, "ebitda": null, "net_income": null, "market_cap": null},
+  "market": {"tam": null, "market_share_pct": null},
+  "sources_count": null,
+  "competitors_count": null
 }
 ```
 
-Laisser `null` si la donnée n'a pas été trouvée. Ne pas inventer de valeur.
+- `kpis[]` est la **source primaire** lue par l'UI : chaque entrée porte sa `period`, son `unit`, un
+  lien `source_id` vers `_sources.json`, et `estimated` (officiel vs estimation).
+- Les sections `financials`/`market` sont des **commodités optionnelles** — n'inclure que les champs
+  trouvés ; pour un produit/marché, ajouter plutôt des `kpis` ad hoc (`users`, `mau`, `cagr`…).
+- Laisser `null` (ou omettre) si la donnée n'a pas été trouvée. **Ne pas inventer de valeur.**
+
+### Étape 4b-bis — Génération de `_sources.json`
+
+Écrire l'index des sources sous forme **structurée** (lue par l'UI pour afficher badges/fraîcheur) :
+
+```json
+{
+  "v": 1,
+  "sources": [
+    {"id": 1, "url": "https://…", "title": "…", "tag": "Officielle|Analyste|Presse",
+     "date": "YYYY-MM", "dimensions": ["financier", "marche"], "stale": false}
+  ]
+}
+```
+
+- `id` est référencé par `_data.json.kpis[].source_id`.
+- `dimensions` liste les sections qui ont cité la source (déduplication : une URL = une entrée).
+- `stale: true` si la source date de plus d'un an par rapport à `as_of`.
 
 ### Étape 4c — Déduplication des sources + "Sources à surveiller"
 
-Dans `RAPPORT_COMPLET.md`, l'index des sources final doit être **dédupliqué** : si une URL apparaît dans plusieurs sections, ne la lister qu'une fois, en indiquant les sections qui l'ont citée.
+Dans `RAPPORT_COMPLET.md`, l'index des sources final doit être **dédupliqué** : si une URL apparaît dans plusieurs sections, ne la lister qu'une fois, en indiquant les sections qui l'ont citée. (`_sources.json` est la source de vérité structurée correspondante.)
 
 **Si `--watch`** (ou toujours recommandé) : ajouter une section finale dans `RAPPORT_COMPLET.md` :
 
@@ -795,6 +924,49 @@ with open('$OUTPUT_DIR/_recon.json', 'w') as f: json.dump(d, f, ensure_ascii=Fal
 ```
 
 Ce fichier contient : `subject`, `subject_type`, `key_players`, `sector`, `search_keywords`, `language_sources`, `audit_date`, `depth`, `sources_count`.
+
+### Étape 5b — Manifest canonique `_manifest.json`
+
+Écrire un **index canonique** des artefacts produits — c'est le fichier que l'AuditViewer lit pour
+connaître l'état final de l'audit (ne pas se fier à la numérotation, qui peut comporter des trous quand
+seules certaines options sont activées) :
+
+```json
+{
+  "v": 1,
+  "subject": "...",
+  "subject_type": "...",
+  "slug": "...",
+  "output_dir": "...",
+  "audit_date": "YYYY-MM-DD",
+  "depth": "quick|full",
+  "mode": "parallel|sequential|solo",
+  "options": ["swot", "esg"],
+  "status": "complete|partial|canceled",
+  "dimensions": [
+    {"key": "historique", "file": "01_HISTORIQUE.md", "status": "done", "sources_count": 12}
+  ],
+  "files": [
+    {"name": "00_RESUME_EXECUTIF.md", "kind": "summary"},
+    {"name": "RAPPORT_COMPLET.md", "kind": "report"}
+  ],
+  "sources_count": 34,
+  "data_file": "_data.json",
+  "sources_file": "_sources.json",
+  "report_file": "RAPPORT_COMPLET.md"
+}
+```
+
+- `status: complete` si toutes les dimensions attendues ont produit leur fichier ; `partial` si certaines
+  ont échoué ; `canceled` si interrompu via `_control.json`.
+- `dimensions[]` reflète l'état réel (une dimension manquante a `status: "missing"` ou est absente).
+
+**Si `APP_MODE=true`** : après l'écriture du manifest, émettre l'événement de clôture :
+```bash
+python3 "$OUTPUT_DIR/_emit.py" audit_complete --files_count "$N_FILES" \
+  --sources_count "$TOTAL_SOURCES" --status complete
+```
+En `--brief`, le manifest a `status: complete` avec `files` réduit à `BRIEF.md`.
 
 ---
 
