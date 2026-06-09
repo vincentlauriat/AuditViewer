@@ -83,6 +83,36 @@ export interface AuditEvent {
   [k: string]: unknown;
 }
 
+// Configuration serveur : racine des audits (lecture + écriture).
+export interface AppConfig {
+  auditsRoot: string;
+  source: "env" | "file" | "default";
+  editable: boolean;
+}
+
+// --- Pilotage V2 ---
+
+export type ControlAction = "cancel" | "pause" | "resume" | "rerun";
+
+export interface LaunchRequest {
+  subject: string;
+  depth?: "quick" | "full";
+  mode?: "parallel" | "sequential" | "solo";
+  lang?: string;
+  options?: string[]; // sous-ensemble de "swot" | "esg" | "rh"
+}
+
+// _question.json écrit par le skill : { v, id, text, options }.
+export interface Question {
+  v?: number;
+  id: string;
+  text: string;
+  options?: string[];
+}
+
+// Réponse de GET /api/audit/:slug/question.
+export type QuestionFile = Question | { question: null };
+
 // Résumé d'un audit pour la liste (dérivé du manifest ou du recon).
 export interface AuditSummary {
   slug: string;

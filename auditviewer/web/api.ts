@@ -1,8 +1,12 @@
 import type {
+  AppConfig,
   AuditData,
   AuditEvent,
   AuditSummary,
+  ControlAction,
+  LaunchRequest,
   Manifest,
+  QuestionFile,
   SourcesFile,
 } from "../shared/contract.ts";
 
@@ -10,6 +14,18 @@ const j = async <T>(url: string): Promise<T> => {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`${r.status} ${url}`);
   return (await r.json()) as T;
+};
+
+/** POST/PUT JSON ; lève une Error avec le message serveur si !ok. */
+const send = async <T>(url: string, method: string, body: unknown): Promise<T> => {
+  const r = await fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = (await r.json().catch(() => ({}))) as T & { error?: string };
+  if (!r.ok) throw new Error(data.error || `${r.status} ${url}`);
+  return data;
 };
 
 export const api = {
@@ -22,6 +38,19 @@ export const api = {
     if (!r.ok) throw new Error(`${r.status} ${name}`);
     return r.text();
   },
+  config: () => j<AppConfig>("/api/config"),
+  setConfig: (auditsRoot: string) =>
+    send<AppConfig>("/api/config", "PUT", { auditsRoot }),
+  launch: (req: LaunchRequest) =>
+    send<{ slug: string; pid: number }>("/api/audits/launch", "POST", req),
+  question: (slug: string) =>
+    j<QuestionFile>(`/api/audit/${slug}/question`),
+  answer: (slug: string, value: string, id?: string) =>
+    send<{ ok: true }>(`/api/audit/${slug}/answer`, "POST", { value, id }),
+  control: (slug: string, action: ControlAction, dimension?: string) =>
+    send<{ ok: true }>(`/api/audit/${slug}/control`, "POST", { action, dimension }),
+  status: (slug: string) =>
+    j<{ running: boolean; pid?: number }>(`/api/audit/${slug}/status`),
 };
 
 /** S'abonne au flux d'événements SSE d'un audit. Renvoie une fonction de désabonnement. */
