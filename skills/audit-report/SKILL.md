@@ -316,8 +316,12 @@ mkdir -p "$OUTPUT_DIR"
 ```
 
 **Si `APP_MODE=true`** : créer les helpers `_emit.py`, `_ctl.py`, `_ask.py` dans `$OUTPUT_DIR`
-(voir « Mode --app-mode »), exporter `AUDIT_OUT="$OUTPUT_DIR"`, puis émettre :
+(voir « Mode --app-mode »), exporter `AUDIT_OUT="$OUTPUT_DIR"`, puis émettre l'event de départ.
+`OPTIONS_CSV` = liste des options activées séparées par des virgules (ex. `swot,esg`), ou **chaîne
+vide** `""` si aucune — ne jamais écrire `none`. Le `_manifest.json` final portera la même info en
+tableau JSON (`[]` si aucune), qui reste la source de vérité lue par l'UI.
 ```bash
+OPTIONS_CSV=""   # ex. "swot,esg,rh" selon les flags activés ; vide si aucun
 python3 "$OUTPUT_DIR/_emit.py" audit_start --subject "$SUBJECT" --depth "$DEPTH" \
   --mode "$MODE" --options "$OPTIONS_CSV" --output_dir "$OUTPUT_DIR"
 ```
