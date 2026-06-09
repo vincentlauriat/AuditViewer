@@ -1,0 +1,39 @@
+{"v": 1, "ts": "2026-06-09T20:56:41Z", "type": "audit_start", "subject": "Notion", "depth": "quick", "mode": "solo", "options": "none", "output_dir": "/Users/vincent/Documents/GitHub/SkillAuditReport/viewer-fixtures/notion"}
+{"v": 1, "ts": "2026-06-09T20:56:46Z", "type": "phase_start", "phase": "recon", "label": "Reconnaissance initiale"}
+{"v": 1, "ts": "2026-06-09T20:57:26Z", "type": "file_written", "file": "_recon.json"}
+{"v": 1, "ts": "2026-06-09T20:57:26Z", "type": "phase_done", "phase": "recon", "label": "Reconnaissance initiale"}
+{"v": 1, "ts": "2026-06-09T20:57:37Z", "type": "question", "id": "confirm_research"}
+{"v": 1, "ts": "2026-06-09T20:57:37Z", "type": "answer", "id": "confirm_research", "value": "launch"}
+{"v": 1, "ts": "2026-06-09T20:57:42Z", "type": "phase_start", "phase": "research", "label": "Recherche par dimension"}
+{"v": 1, "ts": "2026-06-09T20:57:42Z", "type": "dimension_start", "dimension": "historique", "label": "Historique"}
+{"v": 1, "ts": "2026-06-09T20:58:30Z", "type": "dimension_done", "dimension": "historique", "label": "Historique", "status": "done", "sources_count": "6", "summary": "14 jalons de 2013 a 2025, 4 acquisitions, pivot Kyoto 2015"}
+{"v": 1, "ts": "2026-06-09T20:58:30Z", "type": "file_written", "file": "01_HISTORIQUE.md"}
+{"v": 1, "ts": "2026-06-09T20:58:30Z", "type": "progress", "done": "1", "total": "4", "pct": "25"}
+{"v": 1, "ts": "2026-06-09T20:58:30Z", "type": "dimension_start", "dimension": "marche", "label": "Marché"}
+{"v": 1, "ts": "2026-06-09T20:59:11Z", "type": "dimension_done", "dimension": "marche", "label": "Marché", "status": "done", "sources_count": "4", "summary": "TAM 62-100 Md$ CAGR ~14-16 pct, collaboration ~28 pct du marche"}
+{"v": 1, "ts": "2026-06-09T20:59:11Z", "type": "file_written", "file": "02_MARCHE.md"}
+{"v": 1, "ts": "2026-06-09T20:59:11Z", "type": "progress", "done": "2", "total": "4", "pct": "50"}
+{"v": 1, "ts": "2026-06-09T20:59:11Z", "type": "dimension_start", "dimension": "concurrence", "label": "Concurrence"}
+{"v": 1, "ts": "2026-06-09T20:59:51Z", "type": "dimension_done", "dimension": "concurrence", "label": "Concurrence", "status": "done", "sources_count": "5", "summary": "8 concurrents mappes, menace n1 Microsoft Loop+Copilot"}
+{"v": 1, "ts": "2026-06-09T20:59:51Z", "type": "file_written", "file": "05_CONCURRENCE.md"}
+{"v": 1, "ts": "2026-06-09T20:59:51Z", "type": "progress", "done": "3", "total": "4", "pct": "75"}
+{"v": 1, "ts": "2026-06-09T20:59:51Z", "type": "dimension_start", "dimension": "financier", "label": "Financier"}
+{"v": 1, "ts": "2026-06-09T21:00:29Z", "type": "dimension_done", "dimension": "financier", "label": "Financier", "status": "done", "sources_count": "6", "summary": "ARR ~600M$ fin 2025, valo 11 Md$ tender, ~50 pct ARR IA"}
+{"v": 1, "ts": "2026-06-09T21:00:29Z", "type": "file_written", "file": "06_FINANCIER.md"}
+{"v": 1, "ts": "2026-06-09T21:00:29Z", "type": "progress", "done": "4", "total": "4", "pct": "100"}
+{"v": 1, "ts": "2026-06-09T21:00:29Z", "type": "phase_done", "phase": "research", "label": "Recherche par dimension"}
+{"v": 1, "ts": "2026-06-09T21:00:33Z", "type": "phase_start", "phase": "factcheck", "label": "Vérification croisée"}
+{"v": 1, "ts": "2026-06-09T21:00:51Z", "type": "file_written", "file": "_factcheck.md"}
+{"v": 1, "ts": "2026-06-09T21:00:51Z", "type": "phase_done", "phase": "factcheck", "label": "Vérification croisée"}
+{"v": 1, "ts": "2026-06-09T21:00:51Z", "type": "phase_start", "phase": "summary", "label": "Résumé exécutif"}
+{"v": 1, "ts": "2026-06-09T21:01:15Z", "type": "file_written", "file": "00_RESUME_EXECUTIF.md"}
+{"v": 1, "ts": "2026-06-09T21:01:15Z", "type": "phase_done", "phase": "summary", "label": "Résumé exécutif"}
+{"v": 1, "ts": "2026-06-09T21:01:15Z", "type": "phase_start", "phase": "assembly", "label": "Assemblage du rapport"}
+{"v": 1, "ts": "2026-06-09T21:02:02Z", "type": "file_written", "file": "RAPPORT_COMPLET.md"}
+{"v": 1, "ts": "2026-06-09T21:02:02Z", "type": "file_written", "file": "_data.json"}
+{"v": 1, "ts": "2026-06-09T21:02:02Z", "type": "file_written", "file": "_sources.json"}
+{"v": 1, "ts": "2026-06-09T21:02:02Z", "type": "phase_done", "phase": "assembly", "label": "Assemblage du rapport"}
+{"v": 1, "ts": "2026-06-09T21:02:07Z", "type": "phase_start", "phase": "finalize", "label": "Finalisation"}
+{"v": 1, "ts": "2026-06-09T21:02:30Z", "type": "file_written", "file": "_manifest.json"}
+{"v": 1, "ts": "2026-06-09T21:02:30Z", "type": "phase_done", "phase": "finalize", "label": "Finalisation"}
+{"v": 1, "ts": "2026-06-09T21:02:30Z", "type": "audit_complete", "files_count": "12", "sources_count": "14", "status": "complete"}
