@@ -11,6 +11,7 @@ import { Kpis } from "./components/Kpis.tsx";
 import { Sources } from "./components/Sources.tsx";
 import { Timeline } from "./components/Timeline.tsx";
 import { Markdown } from "./components/Markdown.tsx";
+import { Settings } from "./components/Settings.tsx";
 
 type Tab = "synthese" | "dimensions" | "sources" | "timeline" | "rapport";
 
@@ -20,12 +21,16 @@ const statusPill = (s?: string) =>
 export function App() {
   const [audits, setAudits] = useState<AuditSummary[]>([]);
   const [slug, setSlug] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
-  useEffect(() => {
+  const reloadAudits = () =>
     api.audits().then((a) => {
       setAudits(a);
-      if (a.length && !slug) setSlug(a[0].slug);
+      setSlug((cur) => cur ?? (a.length ? a[0].slug : null));
     });
+
+  useEffect(() => {
+    reloadAudits();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -53,8 +58,14 @@ export function App() {
           ))}
           {!audits.length ? <li className="empty">Aucun audit trouvé.</li> : null}
         </ul>
+        <button className="settings-btn" onClick={() => setShowSettings(true)} title="Réglages">
+          <span aria-hidden>⚙</span> Réglages
+        </button>
       </aside>
       <main className="main">{slug ? <AuditView slug={slug} /> : <div className="empty">Sélectionnez un audit.</div>}</main>
+      {showSettings ? (
+        <Settings onClose={() => setShowSettings(false)} onSaved={reloadAudits} />
+      ) : null}
     </div>
   );
 }

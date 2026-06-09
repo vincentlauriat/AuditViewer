@@ -83,6 +83,13 @@ export interface AuditEvent {
   [k: string]: unknown;
 }
 
+// Configuration serveur : racine des audits (lecture + écriture).
+export interface AppConfig {
+  auditsRoot: string;
+  source: "env" | "file" | "default";
+  editable: boolean;
+}
+
 // Résumé d'un audit pour la liste (dérivé du manifest ou du recon).
 export interface AuditSummary {
   slug: string;
