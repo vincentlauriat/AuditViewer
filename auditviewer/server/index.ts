@@ -230,6 +230,10 @@ app.post("/api/audits/launch", async (req, res) => {
   if (!subject) {
     return res.status(400).json({ error: "subject manquant" });
   }
+  // Garde-fou : pas de retour ligne / caractère de contrôle, longueur raisonnable.
+  if (subject.length > 200 || Array.from(subject).some((c) => c.charCodeAt(0) < 0x20)) {
+    return res.status(400).json({ error: "subject invalide" });
+  }
   const slug = slugify(subject);
   const dirName = `audit-${slug}`;
   if (running.has(dirName)) {
@@ -260,10 +264,18 @@ app.post("/api/audits/launch", async (req, res) => {
       if (o === "swot" || o === "esg" || o === "rh") flags.push(`--${o}`);
     }
   }
-  const prompt = `/audit-report ${subject} ${flags.join(" ")} --app-mode --output ${dir}`.replace(
-    /\s+/g,
-    " ",
-  );
+  // Le sujet est entouré de guillemets et échappé : un sujet contenant des "--flags"
+  // reste UN seul argument pour le skill et ne peut pas injecter d'options.
+  const q = (s: string) => `"${s.replace(/"/g, '\\"')}"`;
+  const parts = [
+    "/audit-report",
+    q(subject),
+    ...flags,
+    "--app-mode",
+    "--output",
+    q(dir),
+  ];
+  const prompt = parts.join(" ");
 
   let child: ChildProcess;
   try {

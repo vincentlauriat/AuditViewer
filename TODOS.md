@@ -52,4 +52,5 @@
 - [ ] Test avec un audit réel `claude -p` (à faire par l'utilisateur)
 
 ## Skill — correctifs notés
-- [ ] event `audit_start --options` : émettre `[]` au lieu de `none` quand aucune option
+- [x] event `audit_start --options` : CSV ou vide (jamais `none`) — précisé dans SKILL.md
+- [x] Durcissement launch : sujet quoté/échappé (anti-injection d'arguments) + validation
