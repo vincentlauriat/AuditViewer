@@ -54,6 +54,7 @@ a:hover { text-decoration: underline; }
 .ah-top { display: flex; align-items: center; gap: 14px; }
 .ah-top h2 { margin: 0; font-size: 24px; }
 .ah-meta { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px; color: var(--muted); font-size: 13px; }
+.legacy-tag { color: var(--warn); border: 1px solid var(--warn); border-radius: 6px; padding: 0 6px; font-size: 11px; }
 
 .pill { font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel-2); text-transform: capitalize; }
 .pill.ok { color: var(--ok); border-color: var(--ok); }

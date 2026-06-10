@@ -4,9 +4,11 @@ import type {
   AuditEvent,
   AuditSummary,
   ControlAction,
+  FilesList,
   LaunchRequest,
   Manifest,
   QuestionFile,
+  Recon,
   SourcesFile,
 } from "../shared/contract.ts";
 
@@ -31,6 +33,8 @@ const send = async <T>(url: string, method: string, body: unknown): Promise<T> =
 export const api = {
   audits: () => j<AuditSummary[]>("/api/audits"),
   manifest: (slug: string) => j<Manifest>(`/api/audit/${slug}/manifest`),
+  recon: (slug: string) => j<Recon>(`/api/audit/${slug}/recon`),
+  files: (slug: string) => j<FilesList>(`/api/audit/${slug}/files`),
   data: (slug: string) => j<AuditData>(`/api/audit/${slug}/data`),
   sources: (slug: string) => j<SourcesFile>(`/api/audit/${slug}/sources`),
   file: async (slug: string, name: string): Promise<string> => {
