@@ -381,6 +381,19 @@ jsonRoute("data", "_data.json");
 jsonRoute("sources", "_sources.json");
 jsonRoute("recon", "_recon.json");
 
+// Liste des fichiers du dossier d'audit — permet d'afficher les audits "legacy"
+// qui n'ont pas de _manifest.json (on déduit dimensions/résumé/rapport des .md présents).
+app.get("/api/audit/:slug/files", async (req, res) => {
+  const dir = await resolveAuditDir(req.params.slug);
+  if (!dir) return res.status(404).json({ error: "audit introuvable" });
+  try {
+    const entries = await fsp.readdir(dir, { withFileTypes: true });
+    res.json({ files: entries.filter((e) => e.isFile()).map((e) => e.name) });
+  } catch {
+    res.status(500).json({ error: "lecture du dossier impossible" });
+  }
+});
+
 // Contenu d'un fichier markdown du dossier (lecture seule, nom validé).
 app.get("/api/audit/:slug/file/:name", async (req, res) => {
   const dir = await resolveAuditDir(req.params.slug);

@@ -113,6 +113,24 @@ export interface Question {
 // Réponse de GET /api/audit/:slug/question.
 export type QuestionFile = Question | { question: null };
 
+// _recon.json — métadonnées de reconnaissance (présent même sur les audits "legacy"
+// générés avant le contrat v1, qui n'ont pas de _manifest.json).
+export interface Recon {
+  subject?: string;
+  subject_type?: string;
+  sector?: string;
+  key_players?: string[];
+  audit_date?: string;
+  depth?: string;
+  sources_count?: number;
+  [k: string]: unknown;
+}
+
+// Liste des fichiers d'un dossier d'audit (GET /api/audit/:slug/files).
+export interface FilesList {
+  files: string[];
+}
+
 // Résumé d'un audit pour la liste (dérivé du manifest ou du recon).
 export interface AuditSummary {
   slug: string;

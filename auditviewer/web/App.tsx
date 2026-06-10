@@ -4,6 +4,7 @@ import type {
   AuditEvent,
   AuditSummary,
   Manifest,
+  Recon,
   Source,
 } from "../shared/contract.ts";
 import { api, subscribeEvents } from "./api.ts";
@@ -90,27 +91,44 @@ export function App() {
 
 function AuditView({ slug }: { slug: string }) {
   const [manifest, setManifest] = useState<Manifest | null>(null);
+  const [recon, setRecon] = useState<Recon | null>(null);
+  const [files, setFiles] = useState<string[]>([]);
   const [data, setData] = useState<AuditData | null>(null);
   const [sources, setSources] = useState<Source[]>([]);
   const [events, setEvents] = useState<AuditEvent[]>([]);
+  const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("synthese");
   const [question, setQuestion] = useState<Question | null>(null);
 
   useEffect(() => {
     setManifest(null);
+    setRecon(null);
+    setFiles([]);
     setData(null);
     setSources([]);
     setEvents([]);
+    setLoading(true);
     setTab("synthese");
     setQuestion(null);
-    api.manifest(slug).then(setManifest).catch(() => {});
-    api.data(slug).then(setData).catch(() => {});
-    api.sources(slug).then((s) => setSources(s.sources ?? [])).catch(() => {});
-    // Récupère une éventuelle question déjà en attente (audit déjà bloqué).
-    api
-      .question(slug)
-      .then((q) => setQuestion("question" in q ? null : q))
-      .catch(() => {});
+    let cancelled = false;
+    void (async () => {
+      const [m, r, f, d, s, q] = await Promise.allSettled([
+        api.manifest(slug),
+        api.recon(slug),
+        api.files(slug),
+        api.data(slug),
+        api.sources(slug),
+        api.question(slug),
+      ]);
+      if (cancelled) return;
+      if (m.status === "fulfilled") setManifest(m.value);
+      if (r.status === "fulfilled") setRecon(r.value);
+      if (f.status === "fulfilled") setFiles(f.value.files);
+      if (d.status === "fulfilled") setData(d.value);
+      if (s.status === "fulfilled") setSources(s.value.sources ?? []);
+      if (q.status === "fulfilled" && !("question" in q.value)) setQuestion(q.value);
+      setLoading(false);
+    })();
     const unsub = subscribeEvents(slug, (ev) => {
       setEvents((prev) => [...prev, ev]);
       if (ev.type === "question") {
@@ -122,82 +140,78 @@ function AuditView({ slug }: { slug: string }) {
         setQuestion(null);
       }
     });
-    return unsub;
+    return () => {
+      cancelled = true;
+      unsub();
+    };
   }, [slug]);
+
+  // Modèle de vue unifié : manifest si présent, sinon synthèse depuis recon + fichiers.
+  const mdFiles = files.filter((f) => /\.md$/i.test(f));
+  const dimFiles =
+    manifest?.dimensions?.map((d) => d.file) ??
+    mdFiles.filter((f) => /^\d{2}_/.test(f) && !/^00_/.test(f)).sort();
+  const summaryFile = files.find((f) => /^00_.*\.md$/i.test(f));
+  const reportFile = manifest?.report_file ?? files.find((f) => /^RAPPORT_COMPLET\.md$/i.test(f));
+  const subject = manifest?.subject ?? recon?.subject ?? slug;
+  const subjectType = manifest?.subject_type ?? recon?.subject_type;
+  const depth = manifest?.depth ?? recon?.depth;
+  const auditDate = manifest?.audit_date ?? recon?.audit_date;
+  const sourcesCount = manifest?.sources_count ?? recon?.sources_count ?? sources.length;
+  const options = manifest?.options ?? [];
+
+  const liveFinished = events.some(
+    (e) => e.type === "audit_complete" || e.type === "audit_canceled",
+  );
+  const liveRunning = events.length > 0 && !liveFinished;
+  const running = manifest
+    ? manifest.status !== "complete" && manifest.status !== "canceled"
+    : liveRunning;
+  const status = manifest?.status ?? (liveRunning ? "en cours" : "archivé");
 
   const progress = useMemo(() => {
     const last = [...events].reverse().find((e) => e.type === "progress");
     if (last) return Number(last.pct) || 0;
-    if (manifest?.status === "complete") return 100;
+    if (!running) return 100;
     return 0;
-  }, [events, manifest]);
+  }, [events, running]);
 
-  const running = manifest
-    ? manifest.status !== "complete" && manifest.status !== "canceled"
-    : !events.some((e) => e.type === "audit_complete" || e.type === "audit_canceled");
-
-  const dimFiles =
-    manifest?.dimensions?.map((d) => d.file) ??
-    manifest?.files?.filter((f) => f.kind === "dimension").map((f) => f.name) ??
-    [];
-
-  const finished = events.some(
-    (e) => e.type === "audit_complete" || e.type === "audit_canceled",
-  );
-
-  // Audit fraîchement lancé : pas encore de manifest, mais on suit déjà la
-  // timeline live, la barre de contrôle et les questions.
-  if (!manifest) {
-    if (!events.length) return <div className="empty">Chargement de l'audit…</div>;
-    return (
-      <>
-        <header className="audit-header">
-          <div className="ah-top">
-            <h2>{slug}</h2>
-            <span className="pill">{finished ? "terminé" : "en cours"}</span>
-            {!finished ? <ControlBar slug={slug} /> : null}
-          </div>
-          <div className="progress">
-            <div className="progress-bar" style={{ width: `${progress}%` }} />
-            <span className="progress-label">{progress}%</span>
-          </div>
-        </header>
-        <section className="content">
-          <Timeline events={events} />
-        </section>
-        {question && !finished ? <QuestionModal slug={slug} question={question} /> : null}
-      </>
-    );
+  if (loading) return <div className="empty">Chargement de l'audit…</div>;
+  if (!manifest && !recon && !mdFiles.length && !events.length) {
+    return <div className="empty">Audit vide ou illisible.</div>;
   }
+
+  const showProgress = running || events.length > 0;
 
   return (
     <>
       <header className="audit-header">
         <div className="ah-top">
-          <h2>{manifest.subject}</h2>
-          <span className={`pill ${statusPill(manifest.status)}`}>
-            {running ? "en cours" : manifest.status}
-          </span>
+          <h2>{subject}</h2>
+          <span className={`pill ${statusPill(manifest?.status)}`}>{running ? "en cours" : status}</span>
           {running ? <ControlBar slug={slug} /> : null}
         </div>
         <div className="ah-meta">
-          {manifest.subject_type ? <span>{manifest.subject_type}</span> : null}
-          <span>profondeur : {manifest.depth}</span>
-          <span>mode : {manifest.mode}</span>
-          <span>{manifest.audit_date}</span>
-          <span>{manifest.sources_count ?? sources.length} sources</span>
-          {manifest.options?.length ? <span>options : {manifest.options.join(", ")}</span> : null}
+          {subjectType ? <span>{subjectType}</span> : null}
+          {depth ? <span>profondeur : {depth}</span> : null}
+          {manifest?.mode ? <span>mode : {manifest.mode}</span> : null}
+          {auditDate ? <span>{auditDate}</span> : null}
+          <span>{sourcesCount} sources</span>
+          {options.length ? <span>options : {options.join(", ")}</span> : null}
+          {!manifest ? <span className="legacy-tag">format legacy</span> : null}
         </div>
-        <div className="progress">
-          <div className="progress-bar" style={{ width: `${progress}%` }} />
-          <span className="progress-label">{progress}%</span>
-        </div>
+        {showProgress ? (
+          <div className="progress">
+            <div className="progress-bar" style={{ width: `${progress}%` }} />
+            <span className="progress-label">{progress}%</span>
+          </div>
+        ) : null}
       </header>
 
       <nav className="tabs">
         {([
           ["synthese", "Synthèse"],
-          ["dimensions", "Dimensions"],
+          ["dimensions", `Dimensions (${dimFiles.length})`],
           ["sources", `Sources (${sources.length})`],
           ["timeline", `Timeline (${events.length})`],
           ["rapport", "Rapport"],
@@ -212,13 +226,22 @@ function AuditView({ slug }: { slug: string }) {
         {tab === "synthese" && (
           <>
             {data ? <Kpis data={data} sources={sources} /> : null}
-            <Markdown slug={slug} file="00_RESUME_EXECUTIF.md" />
+            {summaryFile ? (
+              <Markdown slug={slug} file={summaryFile} />
+            ) : (
+              <div className="empty">Pas de résumé exécutif.</div>
+            )}
           </>
         )}
         {tab === "dimensions" && <Dimensions slug={slug} files={dimFiles} />}
         {tab === "sources" && <Sources sources={sources} />}
         {tab === "timeline" && <Timeline events={events} />}
-        {tab === "rapport" && <Markdown slug={slug} file={manifest.report_file ?? "RAPPORT_COMPLET.md"} />}
+        {tab === "rapport" &&
+          (reportFile ? (
+            <Markdown slug={slug} file={reportFile} />
+          ) : (
+            <div className="empty">Pas de rapport complet.</div>
+          ))}
       </section>
       {question && running ? <QuestionModal slug={slug} question={question} /> : null}
     </>
