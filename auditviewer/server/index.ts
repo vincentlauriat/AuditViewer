@@ -3,6 +3,7 @@ import cors from "cors";
 import fs from "node:fs";
 import fsp from "node:fs/promises";
 import path from "node:path";
+import os from "node:os";
 import { spawn, type ChildProcess } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import type { AuditSummary, Manifest } from "../shared/contract.ts";
@@ -46,10 +47,9 @@ async function writeJsonAtomic(dir: string, file: string, data: unknown): Promis
 // Résolution dynamique par ordre de priorité :
 //   1. variable d'env AUDITS_ROOT (prioritaire, non écrasable depuis l'UI),
 //   2. fichier de config local `.auditviewer.config.json` ({ auditsRoot }),
-//   3. défaut : `../viewer-fixtures` du dépôt.
-const REPO_ROOT = path.resolve(__dirname, "..", "..");
+//   3. défaut : ~/Documents/Research (dossier où sont rangés les audits).
 const CONFIG_PATH = path.resolve(__dirname, "..", ".auditviewer.config.json");
-const DEFAULT_ROOT = path.join(REPO_ROOT, "viewer-fixtures");
+const DEFAULT_ROOT = path.join(os.homedir(), "Documents", "Research");
 const ENV_ROOT = process.env.AUDITS_ROOT
   ? path.resolve(process.env.AUDITS_ROOT)
   : null;
