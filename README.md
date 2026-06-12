@@ -1,62 +1,76 @@
-# SkillAuditReport
+# AuditViewer — Mono-repo
 
-Dépôt de gestion du skill **`audit-report`** — recherche exhaustive sur un sujet et génération d'un dossier d'audit complet (marché, concurrence, financier, technique, historique, futur, tarification), comme un cabinet de conseil stratégique.
+Ce dépôt regroupe trois projets autour du skill **`audit-report`** :
 
-Ce skill est compatible avec **Claude Code** et **Gemini Code Assist / Antigravity**.
+| Dossier | Rôle |
+|---|---|
+| `skills/audit-report/` | Skill d'audit IA (Claude Code / Gemini) |
+| `web/` | Interface web de visualisation et de pilotage (Node + React) |
+| `mac/` | App macOS native (SwiftUI) |
+
+Les audits produits par le skill suivent le **contrat machine v1** (`_events.jsonl`, `_manifest.json`, `_data.json`, `_sources.json`) — `web/` et `mac/` lisent ce contrat.
 
 ![Audit-Report : votre partenaire de conseil stratégique IA](images/Audit-Report__AI_Strategic_Consulting.png)
 
-## Contenu
+---
 
-```
-skills/
-  audit-report/
-    SKILL.md        # Définition du skill (instructions d'exécution)
-install.sh          # Installe/lie le skill pour Claude ou Gemini
-```
+## 1 — Skill `audit-report`
 
-## Le skill en bref
-
-`/audit-report <sujet> [options]` produit un dossier `audit-{sujet}/` contenant un résumé exécutif, 7 dimensions d'analyse (historique, marché, technique, tarification, concurrence, financier, futur), un fact-check croisé, un rapport fusionné et des données structurées (`_data.json`).
-
-*   **Claude Code :** Supporte l'orchestration multi-agents en `--mode parallel` ou `--mode sequential` (via l'outil `Agent`).
-*   **Gemini / Antigravity :** S'exécute de manière optimale en `--mode solo` (toutes les recherches et écritures sont réalisées séquentiellement dans le contexte principal de l'agent, tirant parti de son très grand contexte).
-
-Dimensions optionnelles : `--swot`, `--esg`, `--rh`. Voir l'aide complète via `/audit-report --help`.
-
-## Installation
-
-Ce dépôt est la **source de vérité** du skill. Sur la machine de développement, un lien symbolique est créé vers ce dépôt : éditer le `SKILL.md` ici met à jour le skill instantanément.
-
-### Pour Claude Code
+`/audit-report <sujet> [options]` produit un dossier `audit-{sujet}/` avec résumé exécutif, 7 dimensions d'analyse, fact-check et données structurées.
 
 ```bash
-./install.sh            # Crée le symlink dans ~/.claude/skills/audit-report
-./install.sh --copy     # Copie le skill au lieu de créer un lien
+./install.sh            # symlink dans ~/.claude/skills/audit-report
+./install.sh --gemini   # symlink dans ~/.gemini/config/skills/audit-report
+./install.sh --copy     # copie au lieu de lien
 ```
 
-### Pour Gemini Code Assist / Antigravity
+Voir [`skills/audit-report/SKILL.md`](skills/audit-report/SKILL.md) pour la référence complète.
+
+## 2 — Viewer web (`web/`)
+
+Interface de visualisation et de pilotage des audits.
 
 ```bash
-./install.sh --gemini   # Crée le symlink dans ~/.gemini/config/skills/audit-report
-./install.sh --gemini --copy # Copie le skill au lieu de créer un lien
+cd web
+npm install
+npm run dev    # backend :3001 + frontend :5173
 ```
 
-## Développement
+Pour les fixtures de dev incluses dans ce dépôt :
 
-1. Éditer `skills/audit-report/SKILL.md`.
-2. Tester dans votre environnement (Claude : `/audit-report Notion --depth quick` ; Gemini : demander l'exécution du skill `audit-report`).
-3. Commiter et pousser.
+```bash
+AUDITS_ROOT=../viewer-fixtures npm run dev
+```
+
+Voir [`web/README.md`](web/README.md) pour les détails (V2 pilotage, endpoints, fake runner…).
+
+## 3 — App macOS (`mac/`)
+
+Client natif SwiftUI (macOS 15+) qui lit les mêmes dossiers d'audit.
+
+```bash
+cd mac
+swift build              # compilation rapide
+./build.sh               # build complet (copie les bundles web)
+open build/AuditViewer.app
+```
+
+Voir [`mac/README.md`](mac/README.md) et [`mac/ARCHITECTURE.md`](mac/ARCHITECTURE.md).
+
+---
 
 ## Contrat Machine V1
 
-Le skill implémente un **contrat machine déterministe et versionné** : flux d'événements en temps réel (`_events.jsonl`), canal de pilotage bidirectionnel (`_control.json`), cycle question/réponse durci et sorties structurées canoniques (`_manifest.json`, `_data.json`, `_sources.json`).
+Le skill implémente un contrat déterministe et versionné : flux d'événements temps réel, canal de pilotage bidirectionnel, cycle question/réponse et sorties structurées canoniques.
 
 ![SkillAuditReport — Contrat Machine V1](images/SkillAuditReport___Contrat_Machine_V1.png)
 
-Ce contrat garantit que l'AuditViewer (ou tout autre outil de pilotage) peut observer et contrôler le skill sans ambiguïté. Voir [ARCHITECTURE.md](ARCHITECTURE.md) pour le détail des flux.
+Voir [ARCHITECTURE.md](ARCHITECTURE.md) pour le détail des flux.
+
+## Fixtures de développement
+
+`viewer-fixtures/` contient l'audit Notion de référence (contrat machine v1 complet), utilisable immédiatement via `AUDITS_ROOT=../viewer-fixtures`.
 
 ## Licence
 
 Voir [LICENSE](LICENSE).
-

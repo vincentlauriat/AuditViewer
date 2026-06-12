@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Carte</title>
+    <style>
+        :root { color-scheme: light dark; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+        }
+        #canvas { display: block; width: 100vw; height: 100vh; cursor: grab; }
+        #canvas.dragging { cursor: grabbing; }
+
+        #legend {
+            position: fixed;
+            top: 14px;
+            left: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 16px;
+            padding: 9px 13px;
+            border-radius: 9px;
+            font-size: 11px;
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
+            color: #333;
+            user-select: none;
+        }
+        body[data-theme="dark"] #legend {
+            background: rgba(40, 40, 45, 0.7);
+            color: #ddd;
+            box-shadow: 0 1px 8px rgba(0, 0, 0, 0.4);
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+        #empty {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+            font-style: italic;
+            opacity: 0.55;
+            display: none;
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <canvas id="canvas"></canvas>
+    <div id="legend"></div>
+    <div id="empty">Aucune donnée à afficher.</div>
+    <script src="graph.js"></script>
+</body>
+</html>

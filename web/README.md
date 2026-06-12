@@ -19,13 +19,17 @@ Interface de **visualisation et de pilotage** des audits produits par le skill
 ## Démarrer
 
 ```bash
-cd auditviewer
+cd web
 npm install
 npm run dev          # backend :3001 + frontend :5173 (proxy /api)
 ```
 
-Puis ouvrir http://localhost:5173. Par défaut, `AUDITS_ROOT` pointe sur `../viewer-fixtures/`
-(contient l'audit Notion de référence).
+Puis ouvrir http://localhost:5173. Par défaut, `AUDITS_ROOT` pointe sur `~/Documents/Research`.
+Pour les fixtures de développement incluses dans ce dépôt :
+
+```bash
+AUDITS_ROOT=../viewer-fixtures npm run dev  # fixtures du mono-repo
+```
 
 Pointer ailleurs (override par variable d'env, prioritaire) :
 
@@ -43,7 +47,7 @@ Résolution par ordre de priorité :
 
 1. variable d'env `AUDITS_ROOT` (si définie, **prioritaire et non modifiable** depuis l'UI) ;
 2. fichier de config local `.auditviewer.config.json` (`{ "auditsRoot": "/chemin/absolu" }`, gitignore) ;
-3. défaut : `../viewer-fixtures/`.
+3. défaut : `~/Documents/Research`.
 
 Endpoints :
 

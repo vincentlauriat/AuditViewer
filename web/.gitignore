@@ -3,3 +3,5 @@ dist/
 *.log
 .vite/
 .auditviewer.config.json
+.omc/
+.claude/
