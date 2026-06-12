@@ -8,6 +8,9 @@
 # Ancré à la racine pour ne PAS exclure skills/audit-report/ (le skill lui-même)
 /audit-*/
 
+# Fixtures de développement locales (données d'audit, ne pas publier)
+/viewer-fixtures/
+
 # Artefacts macOS / éditeurs
 .DS_Store
 *.swp
