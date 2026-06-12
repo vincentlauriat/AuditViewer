@@ -62,6 +62,9 @@ Statuts : `complete | partial | canceled`.
 - **10. Conflits d'options** : `--brief` est exclusif des dimensions optionnelles (`--swot/--esg/--rh` ignorés avec avertissement).
 - **11. Slug déterministe** : minuscules, translittération ASCII (sans accents), non-alphanum → `-`, compression/trim des tirets. Snippet Python canonique. Dossier = `audit-{slug}`.
 - **12. Numérotation à trous** documentée (l'UI lit `_manifest.json`, pas la numérotation).
+- **13. Mappings d'outils génériques** : Remplacement des références directes aux outils de Claude (`Write`, `Edit`, `WebSearch`, `WebFetch`, `AskUserQuestion`) par des concepts génériques pour permettre le mapping automatique par d'autres modèles.
+- **14. Mode Solo Intelligent** : Règles d'auto-fallback pour le `--mode solo` dans les environnements ne supportant pas de sous-agents textuels (ex: Gemini Code Assist / Antigravity).
+- **15. Script d'installation multi-plateforme** : Mise à jour de `install.sh` avec le flag `--gemini` pour l'installation locale.
 
 ## P2 (différé)
 - `datetime.utcnow()` → `datetime.now(timezone.utc)` (fait au passage dans `_emit.py`).
@@ -73,3 +76,4 @@ Tous les artefacts JSON portent `"v": 1`. Toute évolution incrémente `v`.
 ## Hors périmètre (Viewer, étape suivante)
 Runner headless (`claude -p` vs Agent SDK), rendu markdown, UI de pilotage.
 Décision pressentie : Agent SDK pour le streaming, `_events.jsonl` + `_control.json` en canal fichier de secours.
+

@@ -54,3 +54,10 @@
 ## Skill — correctifs notés
 - [x] event `audit_start --options` : CSV ou vide (jamais `none`) — précisé dans SKILL.md
 - [x] Durcissement launch : sujet quoté/échappé (anti-injection d'arguments) + validation
+
+## Compatibilité Multi-Plateforme (Claude & Gemini)
+- [x] 1. Rendre SKILL.md agnostique des outils propriétaires (concepts génériques)
+- [x] 2. Implémenter le fallback automatique --mode solo si pas de support d'Agent (Gemini)
+- [x] 3. Mettre à jour install.sh avec support --gemini (symlinks dans ~/.gemini/config/skills)
+- [x] 4. Tester de bout en bout l'audit Yealink en mode solo sur Gemini (OK)
+

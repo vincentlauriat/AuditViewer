@@ -253,3 +253,83 @@ select.field-input { appearance: none; }
 .btn-option:disabled { opacity: 0.5; cursor: not-allowed; }
 .question-free { display: flex; gap: 10px; }
 .question-free .field-input { flex: 1; }
+
+/* Theme clair */
+html.theme-light {
+  --bg: #f0f2f7;
+  --panel: #ffffff;
+  --panel-2: #e6e9f0;
+  --border: #c8cdd9;
+  --text: #1a1d27;
+  --muted: #6b7280;
+  --accent: #3d6fe8;
+  --ok: #1a9e6e;
+  --warn: #c07a10;
+  --ko: #d43a44;
+  --off: #3d6fe8;
+  --ana: #7c4fcc;
+  --press: #2a91a0;
+}
+
+/* Boutons theme toggle */
+.theme-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+.theme-btn {
+  flex: 1;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 6px 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 11px;
+}
+.theme-btn:hover { color: var(--text); }
+.theme-btn.active { color: var(--text); border-color: var(--accent); }
+
+/* Graph */
+.graph-wrap {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 220px);
+  min-height: 400px;
+  overflow: hidden;
+}
+.graph-wrap svg { display: block; }
+
+.graph-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 13px;
+  max-width: 280px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  z-index: 10;
+}
+.gt-label { font-size: 13px; font-weight: 600; line-height: 1.4; word-break: break-word; }
+.gt-tag { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.gt-url { font-size: 11px; color: var(--accent); margin-top: 3px; }
+.gt-hint { font-size: 10px; color: var(--muted); margin-top: 6px; opacity: 0.7; }
+
+.graph-legend {
+  position: absolute;
+  bottom: 12px;
+  left: 16px;
+  display: flex;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.gl-center { color: var(--accent); }
+.gl-dim { color: var(--accent); opacity: 0.6; }
+.gl-off { color: var(--off); }
+.gl-ana { color: var(--ana); }
+.gl-press { color: var(--press); }
+.gl-trunc { color: var(--warn); }
+.gl-count { color: var(--muted); margin-left: auto; }

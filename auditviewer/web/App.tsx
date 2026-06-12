@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTheme } from "./useTheme.ts";
+import type { Theme } from "./useTheme.ts";
 import type {
   AuditData,
   AuditEvent,
@@ -16,9 +18,10 @@ import { Settings } from "./components/Settings.tsx";
 import { NewAudit } from "./components/NewAudit.tsx";
 import { QuestionModal } from "./components/QuestionModal.tsx";
 import { ControlBar } from "./components/ControlBar.tsx";
+import { Graph } from "./components/Graph.tsx";
 import type { Question } from "../shared/contract.ts";
 
-type Tab = "synthese" | "dimensions" | "sources" | "timeline" | "rapport";
+type Tab = "synthese" | "dimensions" | "sources" | "timeline" | "rapport" | "graphe";
 
 const statusPill = (s?: string) =>
   s === "complete" ? "ok" : s === "canceled" ? "ko" : s === "partial" ? "warn" : "";
@@ -28,6 +31,7 @@ export function App() {
   const [slug, setSlug] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showNew, setShowNew] = useState(false);
+  const [theme, setTheme] = useTheme();
 
   const reloadAudits = () =>
     api.audits().then((a) => {
@@ -70,6 +74,13 @@ export function App() {
         <button className="settings-btn" onClick={() => setShowSettings(true)} title="Réglages">
           <span aria-hidden>⚙</span> Réglages
         </button>
+        <div className="theme-row">
+          {(["dark", "auto", "light"] as Theme[]).map(t => (
+            <button key={t} className={`theme-btn${theme === t ? " active" : ""}`} onClick={() => setTheme(t)}>
+              {t === "dark" ? "Sombre" : t === "light" ? "Clair" : "Auto"}
+            </button>
+          ))}
+        </div>
       </aside>
       <main className="main">{slug ? <AuditView slug={slug} /> : <div className="empty">Sélectionnez un audit.</div>}</main>
       {showSettings ? (
@@ -99,6 +110,7 @@ function AuditView({ slug }: { slug: string }) {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("synthese");
   const [question, setQuestion] = useState<Question | null>(null);
+  const [focusDimFile, setFocusDimFile] = useState<string | undefined>();
 
   useEffect(() => {
     setManifest(null);
@@ -215,6 +227,7 @@ function AuditView({ slug }: { slug: string }) {
           ["sources", `Sources (${sources.length})`],
           ["timeline", `Timeline (${events.length})`],
           ["rapport", "Rapport"],
+          ["graphe", "Graphe"],
         ] as [Tab, string][]).map(([id, label]) => (
           <button key={id} className={tab === id ? "active" : ""} onClick={() => setTab(id)}>
             {label}
@@ -233,7 +246,7 @@ function AuditView({ slug }: { slug: string }) {
             )}
           </>
         )}
-        {tab === "dimensions" && <Dimensions slug={slug} files={dimFiles} />}
+        {tab === "dimensions" && <Dimensions slug={slug} files={dimFiles} open={focusDimFile} />}
         {tab === "sources" && <Sources sources={sources} />}
         {tab === "timeline" && <Timeline events={events} />}
         {tab === "rapport" &&
@@ -242,15 +255,31 @@ function AuditView({ slug }: { slug: string }) {
           ) : (
             <div className="empty">Pas de rapport complet.</div>
           ))}
+        {tab === "graphe" && (
+          <Graph
+            manifest={manifest}
+            sources={sources}
+            dimFiles={dimFiles}
+            subject={subject}
+            onDimOpen={(key) => {
+              const file =
+                manifest?.dimensions?.find(d => d.key === key)?.file ??
+                dimFiles.find(f => f.replace(/^\d+_/, "").replace(/\.md$/i, "").toLowerCase() === key);
+              setFocusDimFile(file);
+              setTab("dimensions");
+            }}
+          />
+        )}
       </section>
       {question && running ? <QuestionModal slug={slug} question={question} /> : null}
     </>
   );
 }
 
-function Dimensions({ slug, files }: { slug: string; files: string[] }) {
+function Dimensions({ slug, files, open }: { slug: string; files: string[]; open?: string }) {
   const [active, setActive] = useState(files[0] ?? "");
   useEffect(() => setActive(files[0] ?? ""), [slug, files.join(",")]);
+  useEffect(() => { if (open) setActive(open); }, [open]);
   if (!files.length) return <div className="empty">Aucune dimension.</div>;
   return (
     <div className="dimensions">
