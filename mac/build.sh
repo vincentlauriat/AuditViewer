@@ -5,7 +5,7 @@ PROJ_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_NAME="AuditViewer"
 BUILD_DIR="$PROJ_DIR/.build/release"
 APP_BUNDLE="$PROJ_DIR/build/$APP_NAME.app"
-WEB_SRC="$PROJ_DIR/../MarkdownViewer/MarkdownViewer/Resources/web"
+WEB_SRC="$PROJ_DIR/../../MarkdownViewer/MarkdownViewer/Resources/web"
 
 echo "→ Compilation Swift…"
 cd "$PROJ_DIR"
