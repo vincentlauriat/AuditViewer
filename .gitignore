@@ -7,8 +7,6 @@
 # Dossiers de sortie d'audit générés par le skill (créés à la racine d'exécution)
 # Ancré à la racine pour ne PAS exclure skills/audit-report/ (le skill lui-même)
 /audit-*/
-/viewer-fixtures/
-/auditviewer/
 
 # Artefacts macOS / éditeurs
 .DS_Store

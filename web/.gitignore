@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.log
+.vite/
+.auditviewer.config.json
+.omc/
+.claude/

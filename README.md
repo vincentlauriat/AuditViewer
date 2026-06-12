@@ -1,40 +1,75 @@
-# SkillAuditReport
+# AuditViewer — Mono-repo
 
-Dépôt de gestion du skill Claude Code **`audit-report`** — recherche exhaustive sur un sujet et génération d'un dossier d'audit complet (marché, concurrence, financier, technique, historique, futur, tarification), comme un cabinet de conseil stratégique.
+Ce dépôt regroupe trois projets autour du skill **`audit-report`** :
 
-## Contenu
+| Dossier | Rôle |
+|---|---|
+| `skills/audit-report/` | Skill d'audit IA (Claude Code / Gemini) |
+| `web/` | Interface web de visualisation et de pilotage (Node + React) |
+| `mac/` | App macOS native (SwiftUI) |
 
-```
-skills/
-  audit-report/
-    SKILL.md        # Définition du skill (instructions d'exécution)
-install.sh          # Installe/lie le skill dans ~/.claude/skills
-```
+Les audits produits par le skill suivent le **contrat machine v1** (`_events.jsonl`, `_manifest.json`, `_data.json`, `_sources.json`) — `web/` et `mac/` lisent ce contrat.
 
-## Le skill en bref
+![Audit-Report : votre partenaire de conseil stratégique IA](images/Audit-Report__AI_Strategic_Consulting.png)
 
-`/audit-report <sujet> [options]` produit un dossier `audit-{sujet}/` contenant un résumé exécutif, 7 dimensions d'analyse (historique, marché, technique, tarification, concurrence, financier, futur), un fact-check croisé, un rapport fusionné et des données structurées (`_data.json`).
+---
 
-Dimensions optionnelles : `--swot`, `--esg`, `--rh`. Modes d'exécution : `--mode parallel|sequential|solo`. Voir l'aide complète via `/audit-report --help`.
+## 1 — Skill `audit-report`
 
-## Installation
-
-Ce dépôt est la **source de vérité** du skill. Sur la machine de développement, `~/.claude/skills/audit-report` est un lien symbolique vers `skills/audit-report/` de ce dépôt : éditer le `SKILL.md` ici met à jour le skill instantanément.
-
-Pour installer sur une autre machine :
+`/audit-report <sujet> [options]` produit un dossier `audit-{sujet}/` avec résumé exécutif, 7 dimensions d'analyse, fact-check et données structurées.
 
 ```bash
-git clone git@github.com:vincentlauriat/SkillAuditReport.git
-cd SkillAuditReport
-./install.sh            # crée le symlink ~/.claude/skills/audit-report
-./install.sh --copy     # copie le skill au lieu de créer un lien
+./install.sh            # symlink dans ~/.claude/skills/audit-report
+./install.sh --gemini   # symlink dans ~/.gemini/config/skills/audit-report
+./install.sh --copy     # copie au lieu de lien
 ```
 
-## Développement
+Voir [`skills/audit-report/SKILL.md`](skills/audit-report/SKILL.md) pour la référence complète.
 
-1. Éditer `skills/audit-report/SKILL.md`.
-2. Tester dans Claude Code : `/audit-report Notion --depth quick`.
-3. Commiter et pousser.
+## 2 — Viewer web (`web/`)
+
+Interface de visualisation et de pilotage des audits.
+
+```bash
+cd web
+npm install
+npm run dev    # backend :3001 + frontend :5173
+```
+
+Pour les fixtures de dev incluses dans ce dépôt :
+
+```bash
+AUDITS_ROOT=../viewer-fixtures npm run dev
+```
+
+Voir [`web/README.md`](web/README.md) pour les détails (V2 pilotage, endpoints, fake runner…).
+
+## 3 — App macOS (`mac/`)
+
+Client natif SwiftUI (macOS 15+) qui lit les mêmes dossiers d'audit.
+
+```bash
+cd mac
+swift build              # compilation rapide
+./build.sh               # build complet (copie les bundles web)
+open build/AuditViewer.app
+```
+
+Voir [`mac/README.md`](mac/README.md) et [`mac/ARCHITECTURE.md`](mac/ARCHITECTURE.md).
+
+---
+
+## Contrat Machine V1
+
+Le skill implémente un contrat déterministe et versionné : flux d'événements temps réel, canal de pilotage bidirectionnel, cycle question/réponse et sorties structurées canoniques.
+
+![SkillAuditReport — Contrat Machine V1](images/SkillAuditReport___Contrat_Machine_V1.png)
+
+Voir [ARCHITECTURE.md](ARCHITECTURE.md) pour le détail des flux.
+
+## Fixtures de développement
+
+`viewer-fixtures/` contient l'audit Notion de référence (contrat machine v1 complet), utilisable immédiatement via `AUDITS_ROOT=../viewer-fixtures`.
 
 ## Licence
 

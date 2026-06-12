@@ -71,7 +71,7 @@ Un dossier `audit-{sujet}/` contenant :
 - `--esg` : ajoute une dimension ESG/Durabilité (`08_ESG.md`) après les 7 dimensions standard
 - `--rh` : ajoute une dimension RH/Culture (`10_RH.md`) (Glassdoor, LinkedIn, culture, recrutements)
 - `--watch` : inclut une section "Sources à surveiller" dans le rapport (5-8 URLs à bookmarker)
-- `--app-mode` : mode intégration application — émet des événements JSON dans `_events.jsonl` et gère les questions via `_question.json` / `_answer.json` au lieu de `AskUserQuestion`
+- `--app-mode` : mode intégration application — émet des événements JSON dans `_events.jsonl` et gère les questions via `_question.json` / `_answer.json` au lieu de l'outil de question utilisateur (`AskUserQuestion` ou `ask_question`)
 - `--help` : afficher la documentation complète du skill et stopper
 
 ---
@@ -89,7 +89,7 @@ Tous les artefacts JSON portent le champ `"v": 1`.
 #### Installation des helpers (une seule fois, au tout début si APP_MODE)
 
 Pour garantir une émission **fiable** (robuste aux apostrophes, accents, sauts de ligne), écrire trois
-helpers Python dans `$OUTPUT_DIR` via le tool `Write`, puis les appeler partout au lieu d'interpoler du JSON.
+helpers Python dans `$OUTPUT_DIR` via l'outil d'écriture de fichier de l'environnement (ex: `Write` ou `write_to_file`), puis les appeler partout au lieu d'interpoler du JSON.
 
 `$OUTPUT_DIR/_emit.py` — émet un événement (type + paires `--clé valeur` en argv) :
 ```python
@@ -188,7 +188,7 @@ ACTION=$(python3 "$OUTPUT_DIR/_ctl.py")
 - `pause` → boucler en relisant `_ctl.py` jusqu'à recevoir `resume` (ou `cancel`).
 - `rerun:<dimension>` → relancer uniquement la dimension nommée (surtout utile en post-audit).
 
-#### Questions interactives (remplace `AskUserQuestion` quand APP_MODE)
+#### Questions interactives (remplace l'outil de question utilisateur comme `AskUserQuestion` ou `ask_question` quand APP_MODE)
 
 ```bash
 ANSWER=$(python3 "$OUTPUT_DIR/_ask.py" confirm_research \
@@ -300,7 +300,7 @@ Dans toutes les recherches ci-dessous, `{YEAR}` = année courante, `{PREV}` = an
 `{NEXT}` = année suivante. (Les exemples écrits `2024 2025` sont illustratifs — utiliser `{PREV} {YEAR}`.)
 
 **Détection du mode mise à jour** : si `OUTPUT_DIR` existe déjà et contient des fichiers `.md`, demander
-quoi faire. **Si `APP_MODE=false`** : via `AskUserQuestion`. **Si `APP_MODE=true`** : via `_ask.py` :
+quoi faire. **Si `APP_MODE=false`** : via l'outil de question utilisateur (ex: `AskUserQuestion` ou `ask_question`). **Si `APP_MODE=true`** : via `_ask.py` :
 ```bash
 UPD=$(python3 "$OUTPUT_DIR/_ask.py" update_mode \
   "Un audit existe déjà dans ce dossier — que faire ?" \
@@ -332,7 +332,7 @@ Annoncer le sujet et le plan à l'utilisateur.
 
 Avant de lancer les recherches parallèles, effectuer une reconnaissance rapide pour cadrer le sujet :
 
-1. Lancer 2-3 recherches WebSearch larges pour comprendre le sujet :
+1. Lancer 2-3 recherches larges via l'outil de recherche de l'environnement (ex: `WebSearch` ou `search_web`) pour comprendre le sujet :
    - `"{SUBJECT} overview company market"`
    - `"{SUBJECT} wikipedia history"`
    - `"{SUBJECT} latest news {PREV} {YEAR}"`
@@ -359,15 +359,15 @@ Avant de lancer les recherches parallèles, effectuer une reconnaissance rapide 
 }
 ```
 
-**Gestion de l'ambiguïté — après reconnaissance uniquement** : ne jamais supposer qu'un sujet est inconnu ou mal orthographié avant d'avoir cherché. Si les résultats WebSearch identifient clairement le sujet (produit récent, entreprise, technologie), continuer sans poser de question. Ne demander une clarification via `AskUserQuestion` que si les recherches retournent **genuinement** plusieurs entités sans rapport portant le même nom (ex: "Jaguar" pourrait être la marque auto ou l'animal) ET qu'aucune n'est clairement dominante dans les résultats.
+**Gestion de l'ambiguïté — après reconnaissance uniquement** : ne jamais supposer qu'un sujet est inconnu ou mal orthographié avant d'avoir cherché. Si les résultats de recherche web (ex: `WebSearch` ou `search_web`) identifient clairement le sujet (produit récent, entreprise, technologie), continuer sans poser de question. Ne demander une clarification via l'outil de question utilisateur (ex: `AskUserQuestion` ou `ask_question`) que si les recherches retournent **genuinement** plusieurs entités sans rapport portant le même nom (ex: "Jaguar" pourrait être la marque auto ou l'animal) ET qu'aucune n'est clairement dominante dans les résultats.
 
-**Si `--verbose`** : après chaque WebSearch/WebFetch de l'étape 1, afficher les informations clés retenues et les URLs sélectionnées.
+**Si `--verbose`** : après chaque recherche web ou lecture de page (ex: `WebFetch` ou `read_url_content`) de l'étape 1, afficher les informations clés retenues et les URLs sélectionnées.
 
 ### Confirmation avant recherche approfondie
 
 Une fois `_recon.json` écrit, **toujours** présenter les résultats de la reconnaissance et demander confirmation avant de lancer la recherche complète.
 
-**Si `APP_MODE=false`** (mode Claude Code — défaut) : utiliser `AskUserQuestion` avec ce résumé :
+**Si `APP_MODE=false`** (mode standard) : utiliser l'outil de question utilisateur (ex: `AskUserQuestion` ou `ask_question`) avec ce résumé :
 
 ```
 Reconnaissance terminée pour : {SUBJECT}
@@ -433,13 +433,13 @@ Chaque agent reçoit le contexte de reconnaissance (`_recon.json`) et ses instru
 
 Toujours inclure l'URL et la date de publication. Exemple : `CA 2024 : 588 M€ [Officielle](https://voltalia.com/ir) *(mars 2025)*`
 
-**Si `--mode parallel`** (défaut) : lancer tous les agents en un seul message avec plusieurs appels `Agent` simultanés.
+**Si `--mode parallel`** (défaut) : si l'environnement supporte la création de sous-agents textuels (ex: Claude Code via l'outil `Agent`), lancer tous les agents en un seul message avec plusieurs appels `Agent` simultanés. Si l'environnement ne le supporte pas (ex: Gemini/Antigravity), basculer automatiquement sur le `--mode solo` et traiter les dimensions de manière séquentielle.
 
-**Si `--mode sequential`** : lancer chaque agent séquentiellement. Avant chaque agent, annoncer la dimension en cours (ex: `▶ Recherche Historique…`). Après chaque agent, afficher un résumé d'une ligne (ex: `✓ Historique — 12 jalons identifiés, données de 1998 à 2025`) avant de passer au suivant.
+**Si `--mode sequential`** : si supporté par l'environnement (ex: via l'outil `Agent`), lancer chaque agent séquentiellement. Avant chaque agent, annoncer la dimension en cours (ex: `▶ Recherche Historique…`). Après chaque agent, afficher un résumé d'une ligne (ex: `✓ Historique — 12 jalons identifiés, données de 1998 à 2025`) avant de passer au suivant. Si non supporté, basculer sur le `--mode solo`.
 
-**Si `--mode solo`** : ne pas spawner de sous-agents du tout. Le skill effectue lui-même, directement et en séquence, toutes les WebSearch/WebFetch et écritures de fichiers pour chaque dimension. Pour chaque dimension, annoncer `▶ [Dimension]…`, effectuer les recherches (voir instructions de l'agent correspondant ci-dessous — appliquer les mêmes requêtes et le même plan de contenu), écrire le fichier, puis afficher `✓ [Dimension] — résumé d'une ligne`. Les instructions des agents ci-dessous servent de guide de contenu ; en mode solo elles sont exécutées directement sans délégation.
+**Si `--mode solo`** : ne pas spawner de sous-agents du tout. Le skill effectue lui-même, directement et en séquence, toutes les recherches (ex: `WebSearch` ou `search_web`), lectures de pages (ex: `WebFetch` ou `read_url_content`/`read_browser_page`) et écritures de fichiers pour chaque dimension (via l'outil d'écriture approprié de l'environnement). Pour chaque dimension, annoncer `▶ [Dimension]…`, effectuer les recherches (voir instructions de l'agent correspondant ci-dessous — appliquer les mêmes requêtes et le même plan de contenu), écrire le fichier, puis afficher `✓ [Dimension] — résumé d'une ligne`. Les instructions des agents ci-dessous servent de guide de contenu ; en mode solo elles sont exécutées directement sans délégation.
 
-**Si `--verbose`** (applicable à tous les modes) : avant chaque WebSearch ou WebFetch, afficher la requête en cours ; après chaque source consultée, noter le titre, l'URL et les 1-2 informations clés retenues. En mode solo, afficher également les données clés extraites à la fin de chaque dimension.
+**Si `--verbose`** (applicable à tous les modes) : avant chaque recherche web ou lecture de page, afficher la requête en cours ; après chaque source consultée, noter le titre, l'URL et les 1-2 informations clés retenues. En mode solo, afficher également les données clés extraites à la fin de chaque dimension.
 
 **Si `APP_MODE=true`** (tous les modes) : émettre les événements de dimension depuis le **contexte
 principal** pour que l'UI suive la progression — y compris en `--mode parallel` où les sous-agents
@@ -669,7 +669,7 @@ Ne modifier pas les fichiers de dimension — `_factcheck.md` est un document de
 
 Une fois tous les fichiers de dimension produits, lancer un agent de synthèse SWOT qui **lit les fichiers déjà générés** (`01_HISTORIQUE.md` à `07_FUTUR.md`) pour en extraire les éléments SWOT sans relancer de recherches.
 
-L'agent peut effectuer 1-2 WebSearch ciblées uniquement si une information clé manque dans les sections existantes.
+L'agent peut effectuer 1-2 recherches ciblées (ex: `WebSearch` ou `search_web`) uniquement si une information clé manque dans les sections existantes.
 
 Produire `09_SWOT.md` avec la structure suivante :
 
