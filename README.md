@@ -52,6 +52,23 @@ Optional add-ons let you generate a dedicated **SWOT**, an **ESG / sustainabilit
 
 👉 See a real example and a guided walkthrough in **[the getting-started guide](docs/getting-started.md)**.
 
+## See it in action
+
+![The Summary tab — every key figure as a sourced, dated KPI card, with the executive summary below](images/screenshot-web-summary.png)
+
+<table>
+  <tr>
+    <td width="50%"><img src="images/screenshot-web-graph.png" alt="Knowledge map"><br><sub><b>Obsidian-style map</b> — the subject, its dimensions and ~180 sources, linked.</sub></td>
+    <td width="50%"><img src="images/screenshot-web-timeline.png" alt="Live timeline"><br><sub><b>Live timeline</b> — watch an audit run, event by event.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="images/screenshot-web-dimensions.png" alt="Dimension analysis"><br><sub><b>Dimension view</b> — structured analysis (here, the competitive landscape).</sub></td>
+    <td><img src="images/screenshot-web-report.png" alt="Full report"><br><sub><b>Full report</b> — assembled, ready to read or share.</sub></td>
+  </tr>
+</table>
+
+> Shown: the web viewer. The same audits open in the [native macOS app](mac/README.md).
+
 ## Who it's for
 
 - **Decision-makers & analysts** — due diligence before an investment, competitive monitoring, market studies. Get in minutes what normally takes days of desk research. → [Use cases](docs/use-cases.md)
@@ -105,10 +122,10 @@ npm install
 npm run dev    # backend on :3001, frontend on :5173 → open http://localhost:5173
 ```
 
-Want to try it immediately with bundled sample data?
+By default the viewer reads audits from `~/Documents/Research`. Point it elsewhere with `AUDITS_ROOT`:
 
 ```bash
-AUDITS_ROOT=../viewer-fixtures npm run dev
+AUDITS_ROOT=/path/to/your/audits npm run dev
 ```
 
 Details: [`web/README.md`](web/README.md).

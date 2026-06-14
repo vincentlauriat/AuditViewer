@@ -52,6 +52,23 @@ Les options supplémentaires vous permettent de générer une **analyse SWOT** d
 
 👉 Voir un exemple concret et une visite guidée dans le **[guide de démarrage](docs/fr/demarrage.md)**.
 
+## Aperçu
+
+![Onglet Synthèse — chaque chiffre clé en carte KPI sourcée et datée, avec le résumé exécutif en dessous](images/screenshot-web-summary.png)
+
+<table>
+  <tr>
+    <td width="50%"><img src="images/screenshot-web-graph.png" alt="Carte des liens"><br><sub><b>Carte façon Obsidian</b> — le sujet, ses dimensions et ~180 sources, reliés.</sub></td>
+    <td width="50%"><img src="images/screenshot-web-timeline.png" alt="Timeline en direct"><br><sub><b>Timeline en direct</b> — suivez un audit, événement par événement.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="images/screenshot-web-dimensions.png" alt="Analyse par dimension"><br><sub><b>Vue par dimension</b> — analyse structurée (ici, le paysage concurrentiel).</sub></td>
+    <td><img src="images/screenshot-web-report.png" alt="Rapport complet"><br><sub><b>Rapport complet</b> — assemblé, prêt à lire ou partager.</sub></td>
+  </tr>
+</table>
+
+> Vue : le visualiseur web. Les mêmes audits s'ouvrent dans l'[application macOS native](mac/README.md).
+
 ## Pour qui
 
 - **Décideurs et analystes** — due diligence avant un investissement, surveillance concurrentielle, études de marché. Obtenez en minutes ce qui prend normalement des jours de recherche. → [Cas d'usage](docs/fr/cas-usage.md)
@@ -105,10 +122,10 @@ npm install
 npm run dev    # backend sur :3001, frontend sur :5173 → ouvrir http://localhost:5173
 ```
 
-Vous voulez essayer immédiatement avec des données d'exemple fournies ?
+Par défaut, le visualiseur lit les audits depuis `~/Documents/Research`. Pointez ailleurs avec `AUDITS_ROOT` :
 
 ```bash
-AUDITS_ROOT=../viewer-fixtures npm run dev
+AUDITS_ROOT=/chemin/vers/vos/audits npm run dev
 ```
 
 Détails : [`web/README.md`](web/README.md).

@@ -84,9 +84,6 @@ Open **http://localhost:5173**. You can browse your audits, watch one run **live
 
 Just want to see what it looks like, with sample data included in the project?
 
-```bash
-AUDITS_ROOT=../viewer-fixtures npm run dev
-```
 
 ### macOS app — a native reading experience
 

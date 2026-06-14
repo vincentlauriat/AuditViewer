@@ -84,10 +84,6 @@ Ouvrez **http://localhost:5173**. Vous pouvez parcourir vos audits, en regarder 
 
 Vous voulez juste voir à quoi ça ressemble, avec des données d'exemple incluses dans le projet ?
 
-```bash
-AUDITS_ROOT=../viewer-fixtures npm run dev
-```
-
 ### Application macOS — une expérience de lecture native
 
 Sur un Mac (macOS 15+) avec la chaîne d'outils Swift :

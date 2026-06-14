@@ -31,11 +31,6 @@ npm run dev          # backend :3001 + frontend :5173 (proxy /api)
 ```
 
 Puis ouvrir http://localhost:5173. Par défaut, `AUDITS_ROOT` pointe sur `~/Documents/Research`.
-Pour les fixtures de développement incluses dans ce dépôt :
-
-```bash
-AUDITS_ROOT=../viewer-fixtures npm run dev  # fixtures du mono-repo
-```
 
 Pointer ailleurs (override par variable d'env, prioritaire) :
 
