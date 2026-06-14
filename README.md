@@ -8,7 +8,12 @@
 
 *🇫🇷 [Lire ce README en français](README.fr.md)*
 
+[![Latest release](https://img.shields.io/github/v/release/vincentlauriat/AuditViewer?color=7c3aed)](https://github.com/vincentlauriat/AuditViewer/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/vincentlauriat/AuditViewer/total?color=brightgreen)](https://github.com/vincentlauriat/AuditViewer/releases)
+[![Stars](https://img.shields.io/github/stars/vincentlauriat/AuditViewer)](https://github.com/vincentlauriat/AuditViewer/stargazers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Last commit](https://img.shields.io/github/last-commit/vincentlauriat/AuditViewer)](https://github.com/vincentlauriat/AuditViewer/commits)
+<br>
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Web-blue)
 ![Works with](https://img.shields.io/badge/AI-Claude%20Code%20%7C%20Gemini-7c3aed)
 
@@ -58,7 +63,7 @@ Optional add-ons let you generate a dedicated **SWOT**, an **ESG / sustainabilit
 
 ## See it in action
 
-![The Summary tab — every key figure as a sourced, dated KPI card, with the executive summary below](images/screenshot-web-summary.png)
+![AuditViewer in action — summary, knowledge map, live timeline, and the native macOS app](images/demo.gif)
 
 <table>
   <tr>

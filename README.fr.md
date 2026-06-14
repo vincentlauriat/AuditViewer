@@ -8,7 +8,12 @@
 
 *🇬🇧 [Read this README in English](README.md)*
 
+[![Latest release](https://img.shields.io/github/v/release/vincentlauriat/AuditViewer?color=7c3aed)](https://github.com/vincentlauriat/AuditViewer/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/vincentlauriat/AuditViewer/total?color=brightgreen)](https://github.com/vincentlauriat/AuditViewer/releases)
+[![Stars](https://img.shields.io/github/stars/vincentlauriat/AuditViewer)](https://github.com/vincentlauriat/AuditViewer/stargazers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Last commit](https://img.shields.io/github/last-commit/vincentlauriat/AuditViewer)](https://github.com/vincentlauriat/AuditViewer/commits)
+<br>
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Web-blue)
 ![Works with](https://img.shields.io/badge/AI-Claude%20Code%20%7C%20Gemini-7c3aed)
 
@@ -58,7 +63,7 @@ Les options supplémentaires vous permettent de générer une **analyse SWOT** d
 
 ## Aperçu
 
-![Onglet Synthèse — chaque chiffre clé en carte KPI sourcée et datée, avec le résumé exécutif en dessous](images/screenshot-web-summary.png)
+![AuditViewer en action — synthèse, carte des liens, timeline en direct et l'application macOS native](images/demo.gif)
 
 <table>
   <tr>
