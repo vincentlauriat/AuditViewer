@@ -8,6 +8,7 @@
 
 *🇫🇷 [Lire ce README en français](README.fr.md)*
 
+[![Website](https://img.shields.io/badge/website-auditviewer-7c3aed)](https://vincentlauriat.github.io/AuditViewer/)
 [![Latest release](https://img.shields.io/github/v/release/vincentlauriat/AuditViewer?color=7c3aed)](https://github.com/vincentlauriat/AuditViewer/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/vincentlauriat/AuditViewer/total?color=brightgreen)](https://github.com/vincentlauriat/AuditViewer/releases)
 [![Stars](https://img.shields.io/github/stars/vincentlauriat/AuditViewer)](https://github.com/vincentlauriat/AuditViewer/stargazers)
