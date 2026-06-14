@@ -2,7 +2,21 @@
 
 > **Nouveau ici ?** Ceci est l'**application Mac native** d'AuditViewer : la façon la plus confortable de **lire, comparer et explorer vos audits**, avec un rendu soigné et une carte des liens entre vos dossiers. Si vous découvrez le projet, commencez par la **[documentation générale](../docs/README.md)** ([🇬🇧 README](../README.md) · [🇫🇷 README](../README.fr.md)) : elle explique ce qu'est un audit et comment en produire un.
 >
-> La suite de ce document s'adresse à ceux qui veulent **compiler l'app depuis les sources**. Une version téléchargeable signée (`.dmg`) avec mises à jour automatiques est en préparation.
+> La suite de ce document s'adresse à ceux qui veulent **compiler l'app depuis les sources**.
+
+---
+
+## ⬇️ Télécharger
+
+[![Télécharger pour macOS](https://img.shields.io/badge/Télécharger-macOS%2015%2B-blue?logo=apple&style=for-the-badge)](https://github.com/vincentlauriat/AuditViewer/releases/latest)
+
+1. Téléchargez le `.dmg` depuis la **[dernière release](https://github.com/vincentlauriat/AuditViewer/releases/latest)**.
+2. Ouvrez-le et glissez **AuditViewer** dans **Applications**.
+3. Lancez l'app. Elle est **signée et notarisée par Apple** — aucun avertissement Gatekeeper.
+
+L'app se **met à jour automatiquement** (Sparkle) : les nouvelles versions sont proposées au lancement, ou via **AuditViewer ▸ Rechercher les mises à jour…**.
+
+> Prérequis pour lancer des audits depuis l'app : le CLI `claude` (voir [Prérequis](#prérequis)).
 
 ---
 

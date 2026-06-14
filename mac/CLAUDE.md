@@ -11,17 +11,27 @@ Le contenu dépend **directement du schéma de sortie de ce skill** (noms de fic
 Communiquer et documenter en **français**. Les libellés d'UI sont en français.
 
 ## Build & vérification
-- **Toujours** vérifier la compilation après modification : `swift build`.
-- Pour une app *fonctionnelle* (ressources web incluses), utiliser **`./build.sh`** — `swift build` seul
-  ne copie pas les bundles `web/` et `webgraph/`.
+Deux systèmes de build coexistent :
+- **Dev rapide (SwiftPM)** : `swift build` pour vérifier la compilation, puis **`./build.sh`** pour un
+  `.app` fonctionnel (`swift build` seul ne copie pas les bundles `web/` et `webgraph/`). Sparkle est
+  ABSENT de ce build (`#if canImport(Sparkle)` → faux), l'app se lance sans auto-update.
+- **Release distribuable (XcodeGen + Sparkle)** : `xcodegen generate` puis `xcodebuild`, orchestrés par
+  **`Scripts/release.sh <version>`** (signe, notarise, DMG, Sparkle, appcast). Voir aussi la doc de
+  distribution.
 - Vérifier le lancement : `open build/AuditViewer.app`.
 
 ## Pièges spécifiques à ce projet
-- **Bundle markdown partagé** : `web/` provient de `../MarkdownViewer/MarkdownViewer/Resources/web`
-  et sert AUSSI à l'app MarkdownViewer. **Ne pas y ajouter de code spécifique à AuditViewer.**
-  Tout asset propre à AuditViewer va dans `Sources/WebGraph/` (bundle `webgraph/`).
-- **`Sources/WebGraph` est exclu de la cible SwiftPM** (`exclude` dans `Package.swift`) car il contient
-  du HTML/JS. Si on ajoute un fichier web là, ne pas oublier qu'il n'est PAS compilé, seulement copié par `build.sh`.
+- **`Info.plist` est GÉNÉRÉ par XcodeGen** depuis `project.yml` (bloc `info.properties`). **Ne pas
+  l'éditer à la main** — modifier `project.yml` puis `xcodegen generate`. La version se change via
+  `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` dans `project.yml`.
+- **Ressources web vendorisées** : `Resources/web/` est une **copie** du bundle de rendu de MarkdownViewer
+  (MIT), embarquée pour rendre le repo autonome. Ne pas y mettre de code spécifique à AuditViewer ; tout
+  asset propre à AuditViewer va dans `Resources/webgraph/` (bundle `webgraph/`).
+- **`Resources/webgraph/`** (carte des liens, vanilla JS) et **`Resources/web/`** sont déclarés en
+  *folder references* dans `project.yml` et copiés dans `Contents/Resources/{web,webgraph}` — noms
+  attendus par `WebView.swift` / `GraphWebView.swift` (`Bundle.main.resourceURL`).
+- **Sparkle** : intégration isolée dans `Sources/Updater.swift`, entièrement sous `#if canImport(Sparkle)`.
+  Clé EdDSA partagée avec les autres apps (compte keychain `MarkdownViewer`).
 - **Sections virtuelles** = id négatifs (-1 à -5), gérées dans `AuditStore.loadSection` et `SidebarView`.
   Les sections réelles statiques sont id 0-11 (`Models.swift`), les dynamiques 100+.
 - **Dépendance au skill** : si les noms de fichiers (`00_*.md`, `_factcheck.md`, `_data.json`,

@@ -113,7 +113,11 @@ Details: [`web/README.md`](web/README.md).
 
 ### 3 — The macOS app
 
-Requires macOS 15+ and the Swift toolchain.
+[![Download for macOS](https://img.shields.io/badge/Download-macOS%2015%2B-blue?logo=apple&style=for-the-badge)](https://github.com/vincentlauriat/AuditViewer/releases/latest)
+
+**[Download the latest signed `.dmg`](https://github.com/vincentlauriat/AuditViewer/releases/latest)** — notarized by Apple, auto-updating (Sparkle). Drag it to Applications and you're done.
+
+Or build from source (macOS 15+, Swift toolchain):
 
 ```bash
 cd mac

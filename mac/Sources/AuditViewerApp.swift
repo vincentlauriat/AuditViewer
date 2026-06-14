@@ -14,6 +14,13 @@ struct AuditViewerApp: App {
             SettingsView()
         }
         .commands {
+            #if canImport(Sparkle)
+            // App menu — mises à jour (Sparkle, build release uniquement)
+            CommandGroup(after: .appInfo) {
+                CheckForUpdatesView(updater: UpdaterController.shared.controller.updater)
+            }
+            #endif
+
             // File
             CommandGroup(after: .newItem) {
                 Button("Ouvrir un dossier d'audit…") { store.openAuditFolder() }

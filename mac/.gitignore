@@ -4,3 +4,13 @@ build/
 .omc/
 .claude/
 *.xcuserstate
+
+# Généré par XcodeGen (régénérer avec `xcodegen generate`)
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+
+# Artefacts de release
+*.dmg
+*.zip
+.sparkle-tools/

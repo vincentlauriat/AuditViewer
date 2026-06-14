@@ -5,7 +5,7 @@ PROJ_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_NAME="AuditViewer"
 BUILD_DIR="$PROJ_DIR/.build/release"
 APP_BUNDLE="$PROJ_DIR/build/$APP_NAME.app"
-WEB_SRC="$PROJ_DIR/../../MarkdownViewer/MarkdownViewer/Resources/web"
+WEB_SRC="$PROJ_DIR/Resources/web"
 
 echo "→ Compilation Swift…"
 cd "$PROJ_DIR"
@@ -28,24 +28,21 @@ if [ -f "$PROJ_DIR/AppIcon.icns" ]; then
     echo "  ✓ Icône copiée"
 fi
 
-# Ressources web (depuis MarkdownViewer ou depuis Sources/)
+# Ressources web (rendu markdown) — vendorisées dans le repo
 if [ -d "$WEB_SRC" ]; then
     cp -r "$WEB_SRC" "$APP_BUNDLE/Contents/Resources/web"
-    echo "  ✓ Ressources web copiées depuis MarkdownViewer"
-elif [ -d "$PROJ_DIR/Sources/web" ]; then
-    cp -r "$PROJ_DIR/Sources/web" "$APP_BUNDLE/Contents/Resources/web"
-    echo "  ✓ Ressources web copiées depuis Sources/web"
+    echo "  ✓ Ressources web copiées"
 else
     echo "  ⚠ Ressources web introuvables — le rendu markdown ne fonctionnera pas"
     echo "    Attendu : $WEB_SRC"
 fi
 
 # Ressources de la carte/graphe (propres à AuditViewer)
-if [ -d "$PROJ_DIR/Sources/WebGraph" ]; then
-    cp -r "$PROJ_DIR/Sources/WebGraph" "$APP_BUNDLE/Contents/Resources/webgraph"
-    echo "  ✓ Ressources carte copiées depuis Sources/WebGraph"
+if [ -d "$PROJ_DIR/Resources/webgraph" ]; then
+    cp -r "$PROJ_DIR/Resources/webgraph" "$APP_BUNDLE/Contents/Resources/webgraph"
+    echo "  ✓ Ressources carte copiées"
 else
-    echo "  ⚠ Sources/WebGraph introuvable — la carte des liens ne fonctionnera pas"
+    echo "  ⚠ Resources/webgraph introuvable — la carte des liens ne fonctionnera pas"
 fi
 
 echo "→ Bundle produit : $APP_BUNDLE"

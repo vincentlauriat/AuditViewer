@@ -7,8 +7,7 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "AuditViewer",
-            path: "Sources",
-            exclude: ["WebGraph"]
+            path: "Sources"
         ),
     ]
 )

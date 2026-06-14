@@ -1,0 +1,69 @@
+name: AuditViewer
+options:
+  bundleIdPrefix: com.vincent
+  deploymentTarget:
+    macOS: "15.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+  groupSortPosition: top
+  xcodeVersion: "16.0"
+
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.9.1"
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    DEVELOPMENT_TEAM: "KFLACS69T9"
+    ENABLE_HARDENED_RUNTIME: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    ENABLE_APP_SANDBOX: NO
+    SWIFT_STRICT_CONCURRENCY: complete
+    MACOSX_DEPLOYMENT_TARGET: "15.0"
+
+targets:
+  AuditViewer:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources
+      - path: Resources/web
+        type: folder
+        buildPhase: resources
+      - path: Resources/webgraph
+        type: folder
+        buildPhase: resources
+      - path: AppIcon.icns
+        buildPhase: resources
+    dependencies:
+      - package: Sparkle
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: Audit Viewer
+        CFBundleName: AuditViewer
+        CFBundleIconFile: AppIcon
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        LSMinimumSystemVersion: "15.0"
+        NSHighResolutionCapable: true
+        NSPrincipalClass: NSApplication
+        NSSupportsAutomaticGraphicsSwitching: true
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        # Sparkle — flux de mise à jour automatique (clé EdDSA partagée avec les autres apps)
+        SUFeedURL: "https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/appcast.xml"
+        SUPublicEDKey: "9PD2SBwLL4XoycyAGzaE+gO7ctuxSfuFMMajiZdXhXQ="
+        SUEnableAutomaticChecks: true
+        SUScheduledCheckInterval: 86400
+        SUAutomaticallyUpdate: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vincent.AuditViewer
+        PRODUCT_NAME: AuditViewer
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        CODE_SIGN_IDENTITY: "Developer ID Application"
+        CODE_SIGN_STYLE: Manual
