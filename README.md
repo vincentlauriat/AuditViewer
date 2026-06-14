@@ -1,76 +1,174 @@
-# AuditViewer — Mono-repo
+# AuditViewer
 
-Ce dépôt regroupe trois projets autour du skill **`audit-report`** :
+**Turn any company, product, market or technology into a complete strategic dossier — in minutes, with one line.**
 
-| Dossier | Rôle |
-|---|---|
-| `skills/audit-report/` | Skill d'audit IA (Claude Code / Gemini) |
-| `web/` | Interface web de visualisation et de pilotage (Node + React) |
-| `mac/` | App macOS native (SwiftUI) |
+*🇫🇷 [Lire ce README en français](README.fr.md)*
 
-Les audits produits par le skill suivent le **contrat machine v1** (`_events.jsonl`, `_manifest.json`, `_data.json`, `_sources.json`) — `web/` et `mac/` lisent ce contrat.
-
-![Audit-Report : votre partenaire de conseil stratégique IA](images/Audit-Report__AI_Strategic_Consulting.png)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Web-blue)
+![Works with](https://img.shields.io/badge/AI-Claude%20Code%20%7C%20Gemini-7c3aed)
 
 ---
 
-## 1 — Skill `audit-report`
+You type a name — `Tesla`, `Notion`, `the LLM market`, `Société Générale`. A few minutes later you have a structured, sourced, fact-checked research dossier worth what a consulting firm would bill thousands for: history, market sizing, technology, pricing, competition, financials, outlook — each figure backed by a dated source.
 
-`/audit-report <sujet> [options]` produit un dossier `audit-{sujet}/` avec résumé exécutif, 7 dimensions d'analyse, fact-check et données structurées.
+AuditViewer is **an AI strategic-research assistant** made of three parts that work together:
+
+| Part | What it is | For whom |
+|---|---|---|
+| 🧠 **`audit-report` skill** | The engine. One command that researches a topic and writes a full dossier. | Anyone with Claude Code or Gemini |
+| 🌐 **Web viewer** | A browser app to launch, watch, and read audits live. | Users who prefer a web UI |
+| 🖥️ **macOS app** | A native Mac app to read, compare and explore audits as a knowledge map. | Mac users |
+
+![Audit-Report: your AI strategic-consulting partner](images/Audit-Report__AI_Strategic_Consulting.png)
+
+---
+
+## Why it exists
+
+Researching a company or a market properly is slow, repetitive work: dozens of searches, cross-checking numbers, chasing official filings, separating fact from hype, then assembling it all into something readable. AuditViewer does that legwork for you and hands back a **decision-ready document**, not a pile of browser tabs.
+
+It is built around one principle: **every number is sourced and dated.** The AI is explicitly instructed never to invent figures, to tag each source as *Official / Analyst / Press*, to flag data older than a year, and to cross-check the key numbers against at least two independent sources.
+
+## What you actually get
+
+Run one command and you get a folder of ready-to-read documents:
+
+| File | What's inside |
+|---|---|
+| **Executive summary** | One page: key facts, headline figures, verdict |
+| **History** | Origins, milestones, pivots, acquisitions, controversies |
+| **Market** | Market size (TAM/SAM/SOM), growth, geography, regulation |
+| **Technology** | Product, architecture, features, differentiators, patents |
+| **Pricing** | Price tiers, business model, sector comparison |
+| **Competition** | Competitive map, market shares, positioning, SWOT |
+| **Financials** | Revenue, funding, valuation, key metrics |
+| **Outlook** | Roadmap, weak signals, risks, scenarios |
+| **Full report** | Everything merged into one paginated, shareable document |
+
+Optional add-ons let you generate a dedicated **SWOT**, an **ESG / sustainability** chapter, an **HR & culture** chapter, or a single-page **brief**.
+
+👉 See a real example and a guided walkthrough in **[the getting-started guide](docs/getting-started.md)**.
+
+## Who it's for
+
+- **Decision-makers & analysts** — due diligence before an investment, competitive monitoring, market studies. Get in minutes what normally takes days of desk research. → [Use cases](docs/use-cases.md)
+- **Curious non-experts** — understand a company, a product or an industry without wading through jargon. The reports read like a briefing, not a spreadsheet.
+- **Developers & contributors** — the skill speaks a documented, versioned [machine contract](ARCHITECTURE.md) so you can build your own tools on top of it.
+
+---
+
+## How it works, in three steps
+
+1. **You ask.** `/audit-report Tesla` — optionally choosing depth, language, and extra chapters.
+2. **The AI investigates.** It does a quick reconnaissance, confirms the scope with you, then researches each dimension in parallel, fact-checks the key numbers, and assembles the report.
+3. **You read & explore.** Open the folder directly, or use the web viewer / Mac app to follow progress live, browse chapters, and see how audits connect to each other.
+
+A deeper, still-non-technical explanation lives in **[How it works](docs/how-it-works.md)**.
+
+---
+
+## Quick start
+
+> New to this? Start with the **[getting-started guide](docs/getting-started.md)** — it assumes no technical background.
+
+### 1 — The `audit-report` skill (the engine)
+
+Requires [Claude Code](https://claude.com/claude-code) or Gemini.
 
 ```bash
-./install.sh            # symlink dans ~/.claude/skills/audit-report
-./install.sh --gemini   # symlink dans ~/.gemini/config/skills/audit-report
-./install.sh --copy     # copie au lieu de lien
+./install.sh            # install for Claude Code (~/.claude/skills)
+./install.sh --gemini   # install for Gemini (~/.gemini/config/skills)
+./install.sh --copy     # copy instead of symlink
 ```
 
-Voir [`skills/audit-report/SKILL.md`](skills/audit-report/SKILL.md) pour la référence complète.
+Then, inside your AI assistant:
 
-## 2 — Viewer web (`web/`)
+```bash
+/audit-report Apple
+/audit-report "Tesla Model Y"
+/audit-report "the LLM market" --lang en
+/audit-report Notion --depth quick
+```
 
-Interface de visualisation et de pilotage des audits.
+Reference: [`skills/audit-report/SKILL.md`](skills/audit-report/SKILL.md).
+
+### 2 — The web viewer
+
+Requires [Node.js](https://nodejs.org/).
 
 ```bash
 cd web
 npm install
-npm run dev    # backend :3001 + frontend :5173
+npm run dev    # backend on :3001, frontend on :5173 → open http://localhost:5173
 ```
 
-Pour les fixtures de dev incluses dans ce dépôt :
+Want to try it immediately with bundled sample data?
 
 ```bash
 AUDITS_ROOT=../viewer-fixtures npm run dev
 ```
 
-Voir [`web/README.md`](web/README.md) pour les détails (V2 pilotage, endpoints, fake runner…).
+Details: [`web/README.md`](web/README.md).
 
-## 3 — App macOS (`mac/`)
+### 3 — The macOS app
 
-Client natif SwiftUI (macOS 15+) qui lit les mêmes dossiers d'audit.
+Requires macOS 15+ and the Swift toolchain.
 
 ```bash
 cd mac
-swift build              # compilation rapide
-./build.sh               # build complet (copie les bundles web)
+./build.sh
 open build/AuditViewer.app
 ```
 
-Voir [`mac/README.md`](mac/README.md) et [`mac/ARCHITECTURE.md`](mac/ARCHITECTURE.md).
+Details: [`mac/README.md`](mac/README.md).
 
 ---
 
-## Contrat Machine V1
+## Documentation
 
-Le skill implémente un contrat déterministe et versionné : flux d'événements temps réel, canal de pilotage bidirectionnel, cycle question/réponse et sorties structurées canoniques.
+| Guide | For |
+|---|---|
+| [Getting started](docs/getting-started.md) | Your first audit, step by step — no jargon |
+| [Use cases](docs/use-cases.md) | Concrete scenarios by profession |
+| [How it works](docs/how-it-works.md) | The concepts, in plain language |
+| [FAQ](docs/faq.md) | Common questions answered |
+| [Glossary](docs/glossary.md) | Every technical term, demystified |
+| [Architecture](ARCHITECTURE.md) | The machine contract, for developers |
 
-![SkillAuditReport — Contrat Machine V1](images/SkillAuditReport___Contrat_Machine_V1.png)
+French versions live under [`docs/fr/`](docs/fr/).
 
-Voir [ARCHITECTURE.md](ARCHITECTURE.md) pour le détail des flux.
+---
 
-## Fixtures de développement
+## Under the hood: the machine contract
 
-`viewer-fixtures/` contient l'audit Notion de référence (contrat machine v1 complet), utilisable immédiatement via `AUDITS_ROOT=../viewer-fixtures`.
+The three apps stay in sync because the skill writes its output as a **deterministic, versioned "machine contract" (v1)**: a real-time event stream (`_events.jsonl`), a two-way control channel (`_control.json`), an interactive question/answer cycle, and canonical structured outputs (`_manifest.json`, `_data.json`, `_sources.json`). Any tool that reads this contract can display or drive an audit.
 
-## Licence
+![Machine Contract v1](images/SkillAuditReport___Contrat_Machine_V1.png)
 
-Voir [LICENSE](LICENSE).
+Full specification: [ARCHITECTURE.md](ARCHITECTURE.md).
+
+### Repository layout
+
+| Folder | Role |
+|---|---|
+| `skills/audit-report/` | The AI audit skill (Claude Code / Gemini) |
+| `web/` | Web viewer & control UI (Node + React) |
+| `mac/` | Native macOS app (SwiftUI) |
+| `docs/` | User documentation (this guide set) |
+| `images/` | Illustrations used in the docs |
+
+### Cross-platform
+
+The same machine contract runs everywhere; only the internal execution engine differs.
+
+| Platform | Recommended mode | Mechanism |
+|---|---|---|
+| **Claude Code** | `parallel` or `sequential` | Multi-agent orchestration |
+| **Gemini / Antigravity** | `solo` | Single large-context run |
+
+---
+
+## License
+
+[MIT](LICENSE) © 2026 Vincent Lauriat.
