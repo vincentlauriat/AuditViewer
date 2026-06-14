@@ -114,7 +114,7 @@ cat > "$ROOT/appcast.xml" <<APPCAST
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
   <channel>
     <title>AuditViewer</title>
-    <link>https://raw.githubusercontent.com/$GH_REPO/main/appcast.xml</link>
+    <link>https://raw.githubusercontent.com/$GH_REPO/main/mac/appcast.xml</link>
     <description>AuditViewer release feed</description>
     <language>en</language>
     <item>

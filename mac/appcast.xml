@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>AuditViewer</title>
+    <link>https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/mac/appcast.xml</link>
+    <description>AuditViewer release feed</description>
+    <language>en</language>
+    <item>
+      <title>v1.0.0</title>
+      <pubDate>Sun, 14 Jun 2026 16:26:09 +0200</pubDate>
+      <sparkle:version>1</sparkle:version>
+      <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <sparkle:releaseNotesLink>https://github.com/vincentlauriat/AuditViewer/releases/tag/v1.0.0</sparkle:releaseNotesLink>
+      <enclosure
+        url="https://github.com/vincentlauriat/AuditViewer/releases/download/v1.0.0/AuditViewer-1.0.0.dmg"
+        type="application/octet-stream"
+        sparkle:edSignature="DxILw9nH4CpmJVN0CluDdBPICSb3Tgi3b1JbLaqwJPexdEhRdj8XTWj569wiKcAHF0aVoi0dw1axrhb5zDVmDQ==" length="4602927" />
+    </item>
+  </channel>
+</rss>

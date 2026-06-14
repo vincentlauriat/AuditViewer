@@ -40,7 +40,7 @@
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUFeedURL</key>
-	<string>https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/appcast.xml</string>
+	<string>https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/mac/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>9PD2SBwLL4XoycyAGzaE+gO7ctuxSfuFMMajiZdXhXQ=</string>
 	<key>SUScheduledCheckInterval</key>

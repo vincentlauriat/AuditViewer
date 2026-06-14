@@ -22,6 +22,8 @@ AuditViewer is **an AI strategic-research assistant** made of three parts that w
 
 ![Audit-Report: your AI strategic-consulting partner](images/Audit-Report__AI_Strategic_Consulting.png)
 
+> 🤝 **Works with Claude Code *and* Gemini — no lock-in.** The skill auto-detects your assistant: multi-agent parallel research on Claude, single-context "solo" mode on Gemini. Same report, either way.
+
 ---
 
 ## Why it exists

@@ -54,7 +54,7 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         # Sparkle — flux de mise à jour automatique (clé EdDSA partagée avec les autres apps)
-        SUFeedURL: "https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/appcast.xml"
+        SUFeedURL: "https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/mac/appcast.xml"
         SUPublicEDKey: "9PD2SBwLL4XoycyAGzaE+gO7ctuxSfuFMMajiZdXhXQ="
         SUEnableAutomaticChecks: true
         SUScheduledCheckInterval: 86400

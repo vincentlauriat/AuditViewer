@@ -36,7 +36,7 @@ Variables surchargeables : `SIGNING_IDENTITY`, `NOTARY_PROFILE`, `SPARKLE_ACCOUN
 
 ## Comment l'auto-update fonctionne
 
-- L'app embarque `SUFeedURL` → `https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/appcast.xml`.
+- L'app embarque `SUFeedURL` → `https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/mac/appcast.xml`.
 - Au lancement (et une fois par jour), Sparkle lit l'appcast, compare les versions, et propose la mise à jour.
 - L'utilisateur peut aussi déclencher la vérification via **AuditViewer ▸ Rechercher les mises à jour…**.
 - Chaque DMG est signé EdDSA : Sparkle refuse une mise à jour dont la signature ne correspond pas à `SUPublicEDKey`.
