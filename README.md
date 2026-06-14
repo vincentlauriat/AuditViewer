@@ -140,6 +140,17 @@ Details: [`web/README.md`](web/README.md).
 
 **[Download the latest signed `.dmg`](https://github.com/vincentlauriat/AuditViewer/releases/latest)** — notarized by Apple, auto-updating (Sparkle). Drag it to Applications and you're done.
 
+<table>
+  <tr>
+    <td width="50%"><img src="images/screenshot-mac-graph.png" alt="Native link map"><br><sub><b>Native knowledge map</b> — subject, sections, sources and key people.</sub></td>
+    <td width="50%"><img src="images/screenshot-mac-factcheck.png" alt="Fact-check"><br><sub><b>Fact-check</b> — key figures re-verified against independent sources.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="images/screenshot-mac-document.png" alt="Markdown rendering"><br><sub><b>Native Markdown</b> — rich rendering with tables and sections.</sub></td>
+    <td><img src="images/screenshot-mac-data.png" alt="Key figures"><br><sub><b>Key figures</b> — structured data extracted from the audit.</sub></td>
+  </tr>
+</table>
+
 Or build from source (macOS 15+, Swift toolchain):
 
 ```bash

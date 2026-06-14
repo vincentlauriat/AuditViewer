@@ -140,6 +140,17 @@ Détails : [`web/README.md`](web/README.md).
 
 **[Téléchargez le `.dmg` signé](https://github.com/vincentlauriat/AuditViewer/releases/latest)** — notarisé par Apple, avec mises à jour automatiques (Sparkle). Glissez-le dans Applications, c'est prêt.
 
+<table>
+  <tr>
+    <td width="50%"><img src="images/screenshot-mac-graph.png" alt="Carte des liens native"><br><sub><b>Carte de connaissance native</b> — sujet, sections, sources et acteurs clés.</sub></td>
+    <td width="50%"><img src="images/screenshot-mac-factcheck.png" alt="Vérification des faits"><br><sub><b>Vérification des faits</b> — chiffres clés recoupés avec des sources indépendantes.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="images/screenshot-mac-document.png" alt="Rendu Markdown"><br><sub><b>Markdown natif</b> — rendu riche avec tableaux et sections.</sub></td>
+    <td><img src="images/screenshot-mac-data.png" alt="Chiffres clés"><br><sub><b>Chiffres clés</b> — données structurées extraites de l'audit.</sub></td>
+  </tr>
+</table>
+
 Ou compilez depuis les sources (macOS 15+, chaîne d'outils Swift) :
 
 ```bash
