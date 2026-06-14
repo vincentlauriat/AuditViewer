@@ -106,7 +106,7 @@ L'application Mac ajoute une vue Markdown enrichie et une **carte de style Obsid
 
 | Vous voulez… | Ajoutez ceci |
 |---|---|
-| Le rapport en anglais | `--lang en` |
+| Le rapport en français | `--lang fr` |
 | Un audit plus rapide et léger | `--depth quick` |
 | Juste un résumé d'une page | `--brief` |
 | Une analyse SWOT dédiée | `--swot` |

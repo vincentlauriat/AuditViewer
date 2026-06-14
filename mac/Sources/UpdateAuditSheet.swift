@@ -121,8 +121,8 @@ struct UpdateAuditSheet: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Langue").font(.callout.weight(.medium))
                     Picker("", selection: $options.lang) {
-                        Text("Français").tag("fr")
                         Text("English").tag("en")
+                        Text("Français").tag("fr")
                     }
                     .pickerStyle(.segmented)
                     .frame(width: 160)

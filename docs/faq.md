@@ -23,7 +23,7 @@ Usually a few minutes. A `--depth quick` audit (~10 sources, 4 dimensions) is fa
 The skill is built to be trustworthy: every figure carries a **source link and a date**, sources are tagged **Official / Analyst / Press**, stale data is flagged, estimates are labelled as such, and the key numbers are **cross-checked against at least two independent sources**. It is instructed never to invent a figure. That said, treat it as an excellent first draft — for high-stakes decisions, verify the critical claims yourself using the provided sources.
 
 ### What languages can the report be in?
-By default the report is written in **French**; add `--lang en` for English. The AI reads sources in any language and writes the report in the one you ask for.
+By default the report is written in **English**; add `--lang fr` for French. The AI reads sources in any language and writes the report in the one you ask for.
 
 ### Which subjects work best?
 Companies, products, markets, technologies, and sectors — anything with a public footprint. Well-known subjects yield the richest audits. Very obscure or private subjects will produce thinner reports, and the skill will tell you when data isn't publicly available rather than guess.

@@ -87,7 +87,7 @@ Puis, dans votre assistant IA :
 ```bash
 /audit-report Apple
 /audit-report "Tesla Model Y"
-/audit-report "the LLM market" --lang en
+/audit-report "le marché des LLM" --lang fr
 /audit-report Notion --depth quick
 ```
 

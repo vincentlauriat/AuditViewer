@@ -59,7 +59,7 @@ Un dossier `audit-{sujet}/` contenant :
 
 - `--depth quick` : recherche accélérée, ~10 sources, rapport condensé
 - `--depth full` : recherche exhaustive (défaut), ~30+ sources, rapport complet
-- `--lang fr|en` : langue du rapport (défaut : fr)
+- `--lang en|fr` : langue du rapport (défaut : en)
 - `--output <path>` : dossier de sortie (défaut : `./audit-{sujet}/`)
 - `--focus <aspect>` : approfondir un aspect (ex: `--focus financier`)
 - `--verbose` : afficher le détail de chaque étape — requêtes lancées, sources retenues, résultats intermédiaires
@@ -239,7 +239,7 @@ FICHIERS PRODUITS
 
 OPTIONS
   --depth quick|full      Profondeur de recherche (défaut : full)
-  --lang fr|en            Langue du rapport (défaut : fr)
+  --lang en|fr            Langue du rapport (défaut : en)
   --output <path>         Dossier de sortie (défaut : ./audit-{sujet}/)
   --focus <aspect>        Approfondir un aspect spécifique
   --mode parallel|seq|solo  Agents en parallèle, séquentiels, ou sans sous-agents (défaut : parallel)
@@ -262,7 +262,7 @@ QUALITÉ
 Extraire depuis les args :
 - `SUBJECT` : le sujet à auditer (obligatoire)
 - `DEPTH` : `quick` ou `full` (défaut : `full`)
-- `LANG` : langue (défaut : `fr`)
+- `LANG` : langue (défaut : `en`)
 - `OUTPUT_DIR` : dossier de sortie (défaut : `./audit-{sujet-slug}/`)
 - `FOCUS` : aspect à approfondir (optionnel)
 - `VERBOSE` : `true` si `--verbose` est présent (défaut : `false`)
@@ -980,6 +980,6 @@ En `--brief`, le manifest a `status: complete` avec `files` réduit à `BRIEF.md
 - **Distinguer clairement** les données officielles des estimations.
 - **Ne pas inventer** de chiffres — écrire "données non disponibles publiquement" si une métrique est introuvable.
 - **Dater les informations** : toujours indiquer l'année/trimestre des données financières.
-- **Langue** : produire tout le rapport dans la langue demandée (`--lang`), même si les sources sont en anglais.
+- **Langue** : produire tout le rapport dans la langue demandée (`--lang`, défaut : anglais), même si les sources sont dans une autre langue. Utiliser `--lang fr` pour un rapport en français.
 - **Profondeur proportionnelle** : `quick` = 1-2 recherches par dimension, `full` = 4-6 recherches par dimension.
 - Si une dimension n'est pas applicable (ex: "tarification" pour un secteur régulé sans prix marché), l'indiquer clairement et adapter le fichier.

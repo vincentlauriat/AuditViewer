@@ -1,4 +1,10 @@
-# AuditViewer
+# AuditViewer — Visualiseur web
+
+> **Nouveau ici ?** Ce dossier est l'**interface web** d'AuditViewer : une application qui tourne dans votre navigateur pour **lancer des audits, suivre leur progression en direct et lire les rapports** — sans jamais toucher au terminal après l'installation. Si vous découvrez le projet, commencez plutôt par la **[documentation générale](../docs/README.md)** ([🇬🇧 README](../README.md) · [🇫🇷 README](../README.fr.md)) : elle explique ce qu'est un audit et comment l'obtenir.
+>
+> Démarrage express : `npm install` puis `npm run dev`, et ouvrez <http://localhost:5173>. La suite de ce document est une **référence technique** pour les développeurs.
+
+---
 
 Interface de **visualisation et de pilotage** des audits produits par le skill
 `audit-report` (contrat machine v1).

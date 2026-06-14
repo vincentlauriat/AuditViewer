@@ -1,4 +1,10 @@
-# Audit Viewer
+# AuditViewer — Application macOS
+
+> **Nouveau ici ?** Ceci est l'**application Mac native** d'AuditViewer : la façon la plus confortable de **lire, comparer et explorer vos audits**, avec un rendu soigné et une carte des liens entre vos dossiers. Si vous découvrez le projet, commencez par la **[documentation générale](../docs/README.md)** ([🇬🇧 README](../README.md) · [🇫🇷 README](../README.fr.md)) : elle explique ce qu'est un audit et comment en produire un.
+>
+> La suite de ce document s'adresse à ceux qui veulent **compiler l'app depuis les sources**. Une version téléchargeable signée (`.dmg`) avec mises à jour automatiques est en préparation.
+
+---
 
 Application macOS (SwiftUI) pour consulter, comparer et explorer les dossiers d'audit
 produits par le skill Claude Code **`audit-report`**.

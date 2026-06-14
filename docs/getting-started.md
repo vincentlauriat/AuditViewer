@@ -106,7 +106,7 @@ The Mac app adds a rich Markdown view and an **Obsidian-style map** that shows h
 
 | You want… | Add this |
 |---|---|
-| The report in English | `--lang en` |
+| The report in French | `--lang fr` |
 | A faster, lighter audit | `--depth quick` |
 | Just a one-page brief | `--brief` |
 | A dedicated SWOT analysis | `--swot` |

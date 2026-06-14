@@ -59,7 +59,7 @@ A fast pass that maps the product, its pricing, and its alternatives — without
 A technology, a trend, an industry you keep hearing about.
 
 ```bash
-/audit-report "retrieval-augmented generation" --lang en
+/audit-report "retrieval-augmented generation"
 ```
 
 A structured primer that goes well beyond a single search, with sources you can follow to go deeper.

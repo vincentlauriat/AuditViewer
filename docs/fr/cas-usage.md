@@ -59,7 +59,7 @@ Un passage rapide qui cartographie le produit, sa tarification et ses alternativ
 Une technologie, une tendance, une industrie dont vous entendez parler partout.
 
 ```bash
-/audit-report "retrieval-augmented generation" --lang en
+/audit-report "retrieval-augmented generation" --lang fr
 ```
 
 Une introduction structurée qui va bien au-delà d'une simple recherche, avec des sources que vous pouvez consulter pour approfondir.

@@ -2,7 +2,7 @@ import Foundation
 
 struct AuditOptions: Codable, Sendable {
     var depth: String   = "full"        // "quick" | "full"
-    var lang: String    = "fr"          // "fr" | "en"
+    var lang: String    = "en"          // "en" | "fr"
     var mode: String    = "parallel"    // "parallel" | "sequential" | "solo"
     var focus: String   = ""            // ex: "financier" (optionnel)
     var verbose: Bool   = false

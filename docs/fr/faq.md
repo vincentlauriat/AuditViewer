@@ -23,7 +23,7 @@ Généralement quelques minutes. Un audit `--depth quick` (~10 sources, 4 dimens
 Le skill est conçu pour être fiable : chaque chiffre porte un **lien vers sa source et une date**, les sources sont étiquetées **Officielle / Analyste / Presse**, les données périmées sont signalées, les estimations sont indiquées comme telles, et les chiffres clés sont **recoupés avec au moins deux sources indépendantes**. Le skill a pour consigne de ne jamais inventer un chiffre. Cela dit, considérez-le comme un excellent premier jet : pour une décision à fort enjeu, vérifiez vous-même les affirmations critiques à l'aide des sources fournies.
 
 ### Dans quelles langues le rapport peut-il être rédigé ?
-Par défaut, le rapport est rédigé en **français** ; ajoutez `--lang en` pour l'anglais. L'IA lit les sources dans n'importe quelle langue et rédige le rapport dans celle que vous demandez.
+Par défaut, le rapport est rédigé en **anglais** ; ajoutez `--lang fr` pour le français. L'IA lit les sources dans n'importe quelle langue et rédige le rapport dans celle que vous demandez.
 
 ### Quels sujets fonctionnent le mieux ?
 Les entreprises, produits, marchés, technologies et secteurs — tout ce qui a une présence publique. Les sujets bien connus donnent les audits les plus riches. Les sujets très obscurs ou privés produiront des rapports plus minces, et le skill vous dira quand une donnée n'est pas publiquement disponible plutôt que de la deviner.
