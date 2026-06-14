@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="images/og-banner.png" alt="AuditViewer" width="100%">
+</p>
+
 # AuditViewer
 
 **Turn any company, product, market or technology into a complete strategic dossier — in minutes, with one line.**
