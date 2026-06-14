@@ -18,8 +18,15 @@ let output = URL(fileURLWithPath: args[1])
 let iconPath = args.count >= 3 ? args[2] : nil
 
 let W: CGFloat = 1280, H: CGFloat = 640
-let image = NSImage(size: NSSize(width: W, height: H))
-image.lockFocus()
+
+// Rendu dans un bitmap de taille EXACTE (indépendant de la densité de l'écran,
+// sinon un écran Retina produirait un PNG 2×, trop lourd pour le social preview).
+guard let rep = NSBitmapImageRep(
+    bitmapDataPlanes: nil, pixelsWide: Int(W), pixelsHigh: Int(H),
+    bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+    colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { exit(1) }
+NSGraphicsContext.saveGraphicsState()
+NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
 
 // Fond dégradé diagonal (slate-900 → violet-700)
 let c1 = NSColor(srgbRed: 0.059, green: 0.090, blue: 0.165, alpha: 1) // #0f172a
@@ -67,11 +74,9 @@ drawLines(["AI audit skill  ·  web viewer  ·  native macOS app"],
 drawLines(["Works with Claude  &  Gemini"],
           font: .systemFont(ofSize: 24, weight: .bold), color: accent, x: textX, topY: 498)
 
-image.unlockFocus()
+NSGraphicsContext.restoreGraphicsState()
 
-guard let tiff = image.tiffRepresentation,
-      let bitmap = NSBitmapImageRep(data: tiff),
-      let png = bitmap.representation(using: .png, properties: [:]) else {
+guard let png = rep.representation(using: .png, properties: [:]) else {
     FileHandle.standardError.write(Data("failed to encode PNG\n".utf8))
     exit(1)
 }
