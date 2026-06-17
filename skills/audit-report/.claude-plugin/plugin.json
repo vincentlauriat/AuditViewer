@@ -1,0 +1,10 @@
+{
+    "name": "audit-report",
+    "version": "1.0.0",
+    "description": "Generate exhaustive audit dossiers on any company, product, technology, or market — like a strategy consulting firm.",
+    "author": "Vincent Lauriat",
+    "homepage": "https://github.com/vincentlauriat/AuditViewer/tree/main/skills/audit-report",
+    "skills": [
+        "."
+    ]
+}
