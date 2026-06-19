@@ -105,6 +105,15 @@ Une explication plus approfondie, toujours non-technique, se trouve dans **[Comm
 
 Nécessite [Claude Code](https://claude.com/claude-code) ou Gemini.
 
+**Option A — depuis Claude Code (recommandé), via le marketplace de plugins :**
+
+```bash
+/plugin marketplace add vincentlauriat/toolkit
+/plugin install audit-report@vincentlauriat-toolkit
+```
+
+**Option B — depuis le dépôt cloné, via le script d'installation :**
+
 ```bash
 ./install.sh            # installer pour Claude Code (~/.claude/skills)
 ./install.sh --gemini   # installer pour Gemini (~/.gemini/config/skills)
