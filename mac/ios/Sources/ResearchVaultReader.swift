@@ -9,10 +9,13 @@ import Foundation
 
 struct ResearchVaultReader: Sendable {
 
-    // MARK: - Chemin racine
+    // MARK: - Chemin racine (repli)
 
-    /// Retourne l'URL de `~/Documents/Research/` ou nil si introuvable.
-    static func researchRootURL() -> URL? {
+    /// Repli : `Documents/Research/` du bac à sable de l'app, exposé dans Fichiers
+    /// via `UIFileSharingEnabled` (« Sur mon iPhone › AuditViewer ») et iCloud.
+    /// La racine principale provient du bookmark choisi par l'utilisateur
+    /// (cf. `ResearchFolderBookmark`).
+    static func fallbackSandboxRoot() -> URL? {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
             .first?
             .appendingPathComponent("Research", isDirectory: true)

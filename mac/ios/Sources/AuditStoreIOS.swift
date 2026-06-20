@@ -23,6 +23,17 @@ struct AuditEntry: Identifiable, Sendable {
     var isLoading = false
     var errorMessage: String? = nil
 
+    /// Un dossier Research a-t-il été choisi (bookmark) ?
+    var hasFolder: Bool { ResearchFolderBookmark.hasBookmark }
+
+    // MARK: - Sélection du dossier
+
+    /// Enregistre le dossier choisi via le sélecteur Fichiers, puis recharge.
+    func setResearchFolder(_ url: URL) async {
+        _ = ResearchFolderBookmark.save(url)
+        await refresh()
+    }
+
     // MARK: - Refresh
 
     func refresh() async {
@@ -30,8 +41,12 @@ struct AuditEntry: Identifiable, Sendable {
         errorMessage = nil
         defer { isLoading = false }
 
-        guard let root = ResearchVaultReader.researchRootURL() else {
-            errorMessage = "Dossier Research introuvable."
+        // Racine principale = dossier choisi par l'utilisateur (bookmark security-scoped) ;
+        // repli = `Documents/Research/` du bac à sable (exposé dans Fichiers).
+        guard let root = ResearchFolderBookmark.resolveAndActivate()
+                ?? ResearchVaultReader.fallbackSandboxRoot() else {
+            errorMessage = "Aucun dossier Research sélectionné."
+            audits = []
             return
         }
 

@@ -91,6 +91,24 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
+        # Expose le dossier de l'app dans Fichiers (« Sur mon iPhone › AuditViewer » + iCloud Drive)
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        NSUbiquitousContainers:
+          iCloud.com.vincent.AuditViewerIOS:
+            NSUbiquitousContainerIsDocumentScopePublic: true
+            NSUbiquitousContainerName: AuditViewer
+            NSUbiquitousContainerSupportedFolderLevels: Any
+    # Entitlements générés par XcodeGen (iCloud Documents) — fixe aussi CODE_SIGN_ENTITLEMENTS
+    entitlements:
+      path: ios/AuditViewerIOS.entitlements
+      properties:
+        com.apple.developer.icloud-services:
+          - CloudDocuments
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.com.vincent.AuditViewerIOS
+        com.apple.developer.ubiquity-container-identifiers:
+          - iCloud.com.vincent.AuditViewerIOS
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.vincent.AuditViewerIOS

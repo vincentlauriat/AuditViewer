@@ -61,3 +61,13 @@
 - [x] 3. Mettre à jour install.sh avec support --gemini (symlinks dans ~/.gemini/config/skills)
 - [x] 4. Tester de bout en bout l'audit Yealink en mode solo sur Gemini (OK)
 
+## App iOS / iPadOS — Lecteur d'études (lecture seule)
+- [x] Target `AuditViewerIOS` buildable (project.yml : info.properties + entitlements iCloud)
+- [x] Accès au dossier Research via sélecteur Fichiers + security-scoped bookmark persistant
+      (`ResearchFolderBookmark`), avec repli `Documents/Research` exposé dans Fichiers
+- [x] UX sélecteur : bouton état vide + bouton toolbar (`.fileImporter` dossier)
+- [x] `UIFileSharingEnabled` + `LSSupportsOpeningDocumentsInPlace` + `NSUbiquitousContainers`
+- [x] Build simulateur verte (Swift 6 strict, 0 erreur) + lancement vérifié (état vide OK)
+- [ ] Vérif sur appareil réel : ouvrir le vrai dossier Research iCloud, téléchargement à la demande
+- [ ] Vérif visuelle d'un audit réel (liste + 4 onglets + rapport markdown) iPhone & iPad
+

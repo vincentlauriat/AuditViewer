@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 // MARK: - AuditListView
 //
@@ -9,6 +10,7 @@ import SwiftUI
 struct AuditListView: View {
     @Environment(AuditStoreIOS.self) private var store
     @State private var selectedId: String? = nil
+    @State private var showingFolderPicker = false
 
     var body: some View {
         Group {
@@ -16,6 +18,13 @@ struct AuditListView: View {
                 listContent
                     .navigationTitle("Audits")
                     .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            Button {
+                                showingFolderPicker = true
+                            } label: {
+                                Label("Dossier Research", systemImage: "folder")
+                            }
+                        }
                         ToolbarItem(placement: .navigationBarTrailing) {
                             if store.isLoading {
                                 ProgressView()
@@ -34,7 +43,21 @@ struct AuditListView: View {
                 }
             }
         }
+        .fileImporter(
+            isPresented: $showingFolderPicker,
+            allowedContentTypes: [.folder],
+            allowsMultipleSelection: false
+        ) { result in
+            handlePicked(result)
+        }
         .task { await store.refresh() }
+    }
+
+    // MARK: - Sélection du dossier
+
+    private func handlePicked(_ result: Result<[URL], Error>) {
+        guard case let .success(urls) = result, let url = urls.first else { return }
+        Task { await store.setResearchFolder(url) }
     }
 
     // MARK: - Contenu de la liste
@@ -59,9 +82,19 @@ struct AuditListView: View {
         ContentUnavailableView {
             Label("Aucun audit", systemImage: "folder.badge.questionmark")
         } description: {
-            Text("Placez vos dossiers `audit-*/` dans\n~/Documents/Research/")
+            Text(store.hasFolder
+                 ? "Le dossier choisi ne contient aucun `audit-*/`.\nVérifiez le dossier ou ajoutez vos audits."
+                 : "Choisissez votre dossier Research dans Fichiers\n(iCloud Drive ou « Sur mon iPhone »).")
                 .font(.callout)
                 .foregroundStyle(.secondary)
+        } actions: {
+            Button {
+                showingFolderPicker = true
+            } label: {
+                Label(store.hasFolder ? "Changer de dossier…" : "Choisir le dossier Research…",
+                      systemImage: "folder")
+            }
+            .buttonStyle(.borderedProminent)
         }
     }
 }
