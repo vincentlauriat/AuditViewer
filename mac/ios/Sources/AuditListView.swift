@@ -28,6 +28,12 @@ struct AuditListView: View {
                         ToolbarItem(placement: .navigationBarTrailing) {
                             if store.isLoading {
                                 ProgressView()
+                            } else {
+                                Button {
+                                    Task { await store.refresh() }
+                                } label: {
+                                    Label("Recharger", systemImage: "arrow.clockwise")
+                                }
                             }
                         }
                     }
