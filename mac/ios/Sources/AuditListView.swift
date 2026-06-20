@@ -64,7 +64,9 @@ struct AuditListView: View {
 
     @ViewBuilder
     private var listContent: some View {
-        if store.audits.isEmpty && !store.isLoading {
+        if store.isLoading && store.audits.isEmpty {
+            loadingState
+        } else if store.audits.isEmpty {
             emptyState
         } else {
             List(store.audits, selection: $selectedId) { entry in
@@ -74,6 +76,23 @@ struct AuditListView: View {
             .refreshable { await store.refresh() }
             .listStyle(.insetGrouped)
         }
+    }
+
+    // MARK: - État de chargement
+
+    private var loadingState: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .controlSize(.large)
+            Text("Recherche des audits…")
+                .font(.headline)
+            Text("Premier accès : téléchargement depuis iCloud.\nCela peut prendre un moment.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, 40)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - État vide

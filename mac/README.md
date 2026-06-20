@@ -100,16 +100,27 @@ bookmark** (`ResearchFolderBookmark`) — iCloud Drive ou « Sur mon iPhone ». 
 `LSSupportsOpeningDocumentsInPlace` + iCloud Documents). Les fichiers iCloud sont
 téléchargés à la demande via `NSFileCoordinator` + `startDownloadingUbiquitousItem`.
 
-**Build** (iOS 17+, nécessite Xcode complet) :
+**Build** (iOS 17+, nécessite Xcode complet) — via le script `ios/build.sh` :
 
 ```bash
-xcodegen generate
-xcodebuild -scheme AuditViewerIOS -destination 'generic/platform=iOS Simulator' build
+ios/build.sh                 # build simulateur (vérification de compilation)
+ios/build.sh <device-udid>   # build signé + install + lancement sur l'appareil
+                             # UDID via : xcrun devicectl list devices
 ```
+
+> ⚠️ **Builder hors iCloud.** Le dépôt vit sous `~/Documents` (synchronisé iCloud) : macOS
+> stampe l'attribut étendu `com.apple.provenance` sur les produits de build, et `codesign`
+> le refuse (« resource fork, Finder information, or similar detritus not allowed »).
+> `ios/build.sh` builde donc vers un `derivedDataPath` **hors `~/Documents`** (`$TMPDIR`).
+> Si tu lances `xcodebuild` à la main, fais de même (`-derivedDataPath /tmp/...`).
 
 > La target iOS est définie dans `project.yml` (sans Sparkle, macOS only). Comme pour le
 > Mac, **`ios/Info.plist` et `ios/AuditViewerIOS.entitlements` sont générés par XcodeGen** —
 > éditer `project.yml`, pas ces fichiers.
+
+> Première install sur un appareil : accepter le **Program License Agreement** sur
+> developer.apple.com, **enregistrer l'UDID** de l'appareil dans le portail, et activer le
+> **Mode développeur** sur l'iPhone (Réglages › Confidentialité et sécurité).
 
 ---
 
