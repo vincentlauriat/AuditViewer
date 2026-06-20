@@ -67,3 +67,56 @@ targets:
         CURRENT_PROJECT_VERSION: "1"
         CODE_SIGN_IDENTITY: "Developer ID Application"
         CODE_SIGN_STYLE: Manual
+
+  AuditViewerIOS:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: ios/Sources
+    info:
+      path: ios/Info.plist
+      properties:
+        CFBundleDisplayName: Audit Viewer
+        CFBundleName: AuditViewerIOS
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        "UISupportedInterfaceOrientations~ipad":
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        # Expose le dossier de l'app dans Fichiers (« Sur mon iPhone › AuditViewer » + iCloud Drive)
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        NSUbiquitousContainers:
+          iCloud.com.vincent.AuditViewerIOS:
+            NSUbiquitousContainerIsDocumentScopePublic: true
+            NSUbiquitousContainerName: AuditViewer
+            NSUbiquitousContainerSupportedFolderLevels: Any
+    # Entitlements générés par XcodeGen (iCloud Documents) — fixe aussi CODE_SIGN_ENTITLEMENTS
+    entitlements:
+      path: ios/AuditViewerIOS.entitlements
+      properties:
+        com.apple.developer.icloud-services:
+          - CloudDocuments
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.com.vincent.AuditViewerIOS
+        com.apple.developer.ubiquity-container-identifiers:
+          - iCloud.com.vincent.AuditViewerIOS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vincent.AuditViewerIOS
+        PRODUCT_NAME: AuditViewerIOS
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+        DEVELOPMENT_TEAM: "KFLACS69T9"
+        CODE_SIGN_STYLE: Automatic
