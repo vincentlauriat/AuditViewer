@@ -96,3 +96,23 @@ Dossier audit-{sujet}/ ──► AuditStore (état @Observable, @MainActor)
 | JS → Swift (clic nœud) | `WKScriptMessageHandler` nommé `graph` |
 | Lancement d'audit | `Process` exécutant `claude --output-format stream-json -p "/audit-report …"` ; stdout parsé ligne à ligne |
 | Suivi d'audit | `DispatchSource` sur `_events.jsonl` + polling de `_question.json` |
+
+## Cible iOS / iPadOS (`ios/Sources/`, lecture seule)
+
+Target SwiftUI **`AuditViewerIOS`** (définie dans `project.yml`, sans Sparkle) qui lit le
+même contrat machine v1, sans pilotage (pas de `Process`/`NSOpenPanel`, pas de graphe).
+
+- **`AuditViewerIOSApp`** — `@main`, injecte `AuditStoreIOS` (`@Observable @MainActor`).
+- **`AuditListView`** — `NavigationSplitView` (deux colonnes sur iPad, pile sur iPhone) ;
+  `.fileImporter([.folder])` pour choisir le dossier `Research`.
+- **`AuditDetailView`** — `TabView` 4 onglets : Synthèse (+`KPIGridView`), Dimensions,
+  `SourcesView`, Rapport (`DimensionView` → `MarkdownWebView` WKWebView).
+- **`ResearchFolderBookmark`** — persiste un **security-scoped bookmark** du dossier choisi
+  (UserDefaults), accès maintenu actif pour la durée du process.
+- **`ResearchVaultReader`** — découverte des `audit-*/` + lecture via `NSFileCoordinator`
+  (téléchargement iCloud à la demande) ; repli `fallbackSandboxRoot` = `Documents/Research`.
+- **Accès Fichiers** : `UIFileSharingEnabled` + `LSSupportsOpeningDocumentsInPlace` +
+  `NSUbiquitousContainers` (entitlements iCloud Documents générés par XcodeGen).
+
+> Dépendance au skill identique au Mac : si les noms de fichiers du contrat changent,
+> réaligner `AuditManifest`/`AuditMeta`/`ModelsIOS` côté iOS comme `Models.swift` côté Mac.

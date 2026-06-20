@@ -64,7 +64,7 @@ Quand c'est terminé, vous aurez un nouveau dossier nommé `audit-notion/` conte
 
 Ouvrez le dossier `audit-notion/`. Commencez par **`00_RESUME_EXECUTIF.md`** (le résumé exécutif) pour un aperçu d'une page, puis plongez dans n'importe quel chapitre qui vous intéresse. **`RAPPORT_COMPLET.md`** est le rapport complet, prêt à partager ou à imprimer.
 
-Tous les fichiers Markdown (`.md`) s'ouvrent dans n'importe quel éditeur de texte, sur GitHub, ou dans un lecteur Markdown. Mais les deux visualiseurs ci-dessous le rendent encore plus agréable.
+Tous les fichiers Markdown (`.md`) s'ouvrent dans n'importe quel éditeur de texte, sur GitHub, ou dans un lecteur Markdown. Mais les visualiseurs ci-dessous le rendent encore plus agréable.
 
 ---
 
@@ -95,6 +95,18 @@ open build/AuditViewer.app
 ```
 
 L'application Mac ajoute une vue Markdown enrichie et une **carte de style Obsidian** qui montre comment vos audits se connectent via les sources partagées et les personnes.
+
+### Lecteur iOS / iPadOS — vos audits en déplacement
+
+Une application native **en lecture seule** pour iPhone et iPad. Compilez-la depuis les sources (iOS 17+, Xcode + [XcodeGen](https://github.com/yonaskolb/XcodeGen)) :
+
+```bash
+cd mac
+xcodegen generate
+xcodebuild -scheme AuditViewerIOS -destination 'generic/platform=iOS Simulator' build
+```
+
+Au premier lancement, touchez **Choisir le dossier Research…** et sélectionnez votre dossier `Research` dans l'app **Fichiers** (iCloud Drive ou « Sur mon iPhone »). L'app le mémorise et vous laisse parcourir la synthèse, les dimensions, les sources et le rapport complet de chaque audit.
 
 ---
 

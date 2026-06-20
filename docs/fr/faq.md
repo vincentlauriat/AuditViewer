@@ -5,13 +5,13 @@ Réponses courtes aux questions les plus fréquentes. Toujours bloqué ? Ouvrez 
 ---
 
 ### Qu'est-ce qu'AuditViewer exactement ?
-Un outil qui transforme une simple demande — comme `/audit-report Tesla` — en un dossier de recherche complet et sourcé sur n'importe quelle entreprise, produit, marché ou technologie. Il s'accompagne de deux visualiseurs optionnels (une application web et une application macOS) pour lire et lancer les audits confortablement. Voir [Comment ça marche](fonctionnement.md).
+Un outil qui transforme une simple demande — comme `/audit-report Tesla` — en un dossier de recherche complet et sourcé sur n'importe quelle entreprise, produit, marché ou technologie. Il s'accompagne de visualiseurs optionnels (une application web, une application macOS et un lecteur iOS/iPadOS) pour lire et lancer les audits confortablement. Voir [Comment ça marche](fonctionnement.md).
 
 ### Faut-il être technicien pour l'utiliser ?
 Non. Si vous savez installer une application et taper une commande, vous pouvez lancer un audit. Le [guide de démarrage](demarrage.md) ne suppose aucune connaissance préalable. Les visualiseurs vous permettent ensuite de tout faire depuis une interface graphique.
 
 ### Qu'est-ce que je dois installer ?
-Au minimum, un assistant IA dans lequel le skill s'exécute : **[Claude Code](https://claude.com/claude-code)** (recommandé) ou **Gemini**. Le visualiseur web nécessite en plus [Node.js](https://nodejs.org/) ; l'application Mac nécessite macOS 15+ et la chaîne d'outils Swift. Les deux visualiseurs sont optionnels.
+Au minimum, un assistant IA dans lequel le skill s'exécute : **[Claude Code](https://claude.com/claude-code)** (recommandé) ou **Gemini**. Le visualiseur web nécessite en plus [Node.js](https://nodejs.org/) ; l'application Mac nécessite macOS 15+ et la chaîne d'outils Swift ; le lecteur iOS/iPadOS nécessite iOS 17+ et se compile depuis les sources avec Xcode. Tous les visualiseurs sont optionnels.
 
 ### Est-ce que ça coûte quelque chose ?
 Le projet lui-même est gratuit et open source ([licence MIT](../../LICENSE)). Lancer des audits consomme votre quota chez votre assistant IA (Claude Code ou Gemini), qui a sa propre tarification. Un audit « quick » consomme bien moins de ressources qu'un audit « full ».

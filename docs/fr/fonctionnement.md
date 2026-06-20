@@ -70,9 +70,9 @@ C'est la même rigueur qu'applique une équipe de conseil — traduite en règle
 
 ---
 
-## Les trois applications, un langage commun
+## Les visualiseurs, un langage commun
 
-Vous pouvez lire un audit sous forme de simples fichiers. Mais le **visualiseur web** et l'**application macOS** ajoutent la progression en direct, une lecture confortable et une carte des liens entre vos audits.
+Vous pouvez lire un audit sous forme de simples fichiers. Mais le **visualiseur web** et l'**application macOS** ajoutent la progression en direct, une lecture confortable et une carte des liens entre vos audits. En déplacement, le **lecteur iOS / iPadOS** ouvre les mêmes audits directement depuis l'app Fichiers.
 
 Toutes comprennent la même chose parce que le skill écrit sa sortie comme un **contrat machine** — un petit ensemble de fichiers stables à la structure fixe :
 

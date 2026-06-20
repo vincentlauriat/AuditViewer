@@ -50,4 +50,4 @@ Plain-language definitions of every term you might meet in this project. Sorted 
 
 **Verbose (`--verbose`)** — An option that shows every search and source as the audit runs, instead of just the final result.
 
-**Viewer** — One of the two optional apps for reading and running audits: the **web viewer** (browser) and the **macOS app** (native Mac). Both are optional — audits are readable as plain files without them.
+**Viewer** — One of the optional apps for reading and running audits: the **web viewer** (browser), the **macOS app** (native Mac) and the **iOS / iPadOS reader** (iPhone & iPad). All are optional — audits are readable as plain files without them.

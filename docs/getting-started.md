@@ -11,7 +11,7 @@ AuditViewer's engine runs *inside* an AI assistant. You need **one** of these:
 - **[Claude Code](https://claude.com/claude-code)** — recommended, supports every feature.
 - **Gemini** (Google's AI coding assistant) — supported in "solo" mode.
 
-That's the only hard requirement. The web viewer and the Mac app are **optional** ways to read your audits more comfortably — you can skip them at first.
+That's the only hard requirement. The web viewer, the Mac app and the iOS/iPadOS reader are **optional** ways to read your audits more comfortably — you can skip them at first.
 
 ---
 
@@ -64,7 +64,7 @@ When it's done, you'll have a new folder named `audit-notion/` containing all th
 
 Open the `audit-notion/` folder. Start with **`00_RESUME_EXECUTIF.md`** (the executive summary) for the one-page overview, then dive into any chapter that interests you. **`RAPPORT_COMPLET.md`** is the full report, ready to share or print.
 
-Every Markdown file (`.md`) opens in any text editor, on GitHub, or in a Markdown reader. But the two viewers below make it nicer.
+Every Markdown file (`.md`) opens in any text editor, on GitHub, or in a Markdown reader. But the viewers below make it nicer.
 
 ---
 
@@ -96,6 +96,18 @@ open build/AuditViewer.app
 ```
 
 The Mac app adds a rich Markdown view and an **Obsidian-style map** that shows how your audits connect through shared sources and people.
+
+### iOS / iPadOS reader — your audits on the go
+
+A native **read-only** app for iPhone & iPad. Build it from source (iOS 17+, Xcode + [XcodeGen](https://github.com/yonaskolb/XcodeGen)):
+
+```bash
+cd mac
+xcodegen generate
+xcodebuild -scheme AuditViewerIOS -destination 'generic/platform=iOS Simulator' build
+```
+
+On first launch, tap **Choose the Research folder…** and pick your `Research` folder in the **Files** app (iCloud Drive or "On My iPhone"). The app remembers it and lets you browse each audit's summary, dimensions, sources and full report.
 
 ---
 

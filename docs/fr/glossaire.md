@@ -50,4 +50,4 @@ Définitions en langage simple de chaque terme que vous pourriez rencontrer dans
 
 **Verbose (`--verbose`)** — Une option qui affiche chaque recherche et chaque source au fil de l'audit, au lieu du seul résultat final.
 
-**Visualiseur** — L'une des deux applications optionnelles pour lire et lancer les audits : le **visualiseur web** (navigateur) et l'**application macOS** (Mac natif). Les deux sont optionnelles — les audits restent lisibles comme de simples fichiers sans elles.
+**Visualiseur** — L'une des applications optionnelles pour lire et lancer les audits : le **visualiseur web** (navigateur), l'**application macOS** (Mac natif) et le **lecteur iOS / iPadOS** (iPhone et iPad). Toutes sont optionnelles — les audits restent lisibles comme de simples fichiers sans elles.

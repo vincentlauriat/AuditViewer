@@ -5,13 +5,13 @@ Short answers to the questions people ask most. Still stuck? Open an issue on th
 ---
 
 ### What exactly is AuditViewer?
-A tool that turns a single request — like `/audit-report Tesla` — into a complete, sourced research dossier on any company, product, market, or technology. It comes with two optional viewers (a web app and a macOS app) to read and run audits comfortably. See [How it works](how-it-works.md).
+A tool that turns a single request — like `/audit-report Tesla` — into a complete, sourced research dossier on any company, product, market, or technology. It comes with optional viewers (a web app, a macOS app, and an iOS/iPadOS reader) to read and run audits comfortably. See [How it works](how-it-works.md).
 
 ### Do I need to be technical to use it?
 No. If you can install one app and type a command, you can run an audit. The [getting-started guide](getting-started.md) assumes zero background. The viewers let you do everything from a graphical interface afterwards.
 
 ### What do I need to install?
-At minimum, an AI assistant the skill runs inside: **[Claude Code](https://claude.com/claude-code)** (recommended) or **Gemini**. The web viewer additionally needs [Node.js](https://nodejs.org/); the Mac app needs macOS 15+ and the Swift toolchain. Both viewers are optional.
+At minimum, an AI assistant the skill runs inside: **[Claude Code](https://claude.com/claude-code)** (recommended) or **Gemini**. The web viewer additionally needs [Node.js](https://nodejs.org/); the Mac app needs macOS 15+ and the Swift toolchain; the iOS/iPadOS reader needs iOS 17+ and is built from source with Xcode. All viewers are optional.
 
 ### Does it cost anything?
 The project itself is free and open-source ([MIT license](../LICENSE)). Running audits consumes usage from your AI assistant (Claude Code or Gemini), which has its own pricing. A "quick" audit uses far fewer resources than a "full" one.

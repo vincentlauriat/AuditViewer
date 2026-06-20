@@ -1,0 +1,1584 @@
+<title>AuditViewer iOS — Plan d'architecture</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap');
+
+  :root {
+    --ground:    #F2F4F7;
+    --text:      #1A2332;
+    --accent:    #C8922A;
+    --accent-2:  #3D5A80;
+    --muted:     #6B7A90;
+    --rule:      #CBD5E1;
+    --surface:   #FFFFFF;
+    --surface-2: #E8EDF4;
+    --red-flag:  #B94040;
+
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body:    'IBM Plex Mono', 'Courier New', monospace;
+    --font-ui:      'IBM Plex Sans', system-ui, sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    background: var(--ground);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    line-height: 1.65;
+    min-height: 100vh;
+  }
+
+  /* ── Masthead ─────────────────────────────────────────── */
+  .masthead {
+    background: var(--text);
+    color: var(--ground);
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .masthead-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 3rem 2rem 2.5rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 2rem;
+  }
+
+  .eyebrow {
+    font-family: var(--font-body);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+  }
+
+  .masthead h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 900;
+    line-height: 0.93;
+    letter-spacing: -0.02em;
+    color: var(--ground);
+  }
+
+  .masthead h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .masthead-meta {
+    text-align: right;
+    font-family: var(--font-body);
+    font-size: 0.6875rem;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  .masthead-meta strong {
+    color: var(--ground);
+    font-weight: 500;
+    display: block;
+  }
+
+  /* Ruled line under masthead */
+  .masthead-rule {
+    border: none;
+    border-top: 1px solid var(--accent);
+    margin: 0;
+    opacity: 0.4;
+  }
+
+  .masthead-bar {
+    background: var(--accent-2);
+    padding: 0.6rem 2rem;
+    max-width: 100%;
+  }
+
+  .masthead-bar-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .stat-pill {
+    font-family: var(--font-body);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: rgba(242,244,247,0.9);
+    letter-spacing: 0.08em;
+  }
+
+  .stat-pill span {
+    color: var(--accent);
+    margin-right: 0.35em;
+  }
+
+  /* ── Layout shell ─────────────────────────────────────── */
+  .page-body {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 3rem 2rem 5rem;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+
+  /* ── Sticky nav / TOC ─────────────────────────────────── */
+  .toc {
+    position: sticky;
+    top: 2rem;
+    border-left: 2px solid var(--accent);
+    padding-left: 1rem;
+  }
+
+  .toc-label {
+    font-family: var(--font-body);
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .toc a {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 0.2rem 0;
+    transition: color 0.15s;
+    line-height: 1.4;
+  }
+
+  .toc a:hover { color: var(--accent); }
+  .toc a.active { color: var(--text); font-weight: 500; }
+
+  /* ── Main content ─────────────────────────────────────── */
+  .content { min-width: 0; }
+
+  /* ── Section blocks ───────────────────────────────────── */
+  .section {
+    margin-bottom: 3.5rem;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .section-num {
+    font-family: var(--font-body);
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    flex-shrink: 0;
+    line-height: 1;
+    margin-top: 0.15rem;
+  }
+
+  .section h2 {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+
+  .section p {
+    font-family: var(--font-body);
+    font-size: 0.8125rem;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+    line-height: 1.7;
+  }
+
+  /* ── File manifest table ──────────────────────────────── */
+  .manifest-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .manifest-table thead tr {
+    background: var(--text);
+    color: var(--ground);
+  }
+
+  .manifest-table th {
+    padding: 0.45rem 0.75rem;
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.625rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .manifest-table td {
+    padding: 0.4rem 0.75rem;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+
+  .manifest-table tr:nth-child(even) td {
+    background: var(--surface-2);
+  }
+
+  .file-name {
+    font-weight: 600;
+    color: var(--accent-2);
+    white-space: nowrap;
+  }
+
+  .file-type {
+    display: inline-block;
+    font-size: 0.5625rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.1rem 0.35rem;
+    border-radius: 2px;
+    color: white;
+  }
+
+  .ft-md  { background: var(--accent-2); }
+  .ft-json { background: var(--accent); color: var(--text); }
+  .ft-jsonl { background: var(--muted); }
+
+  .badge-opt {
+    display: inline-block;
+    font-size: 0.5rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid var(--rule);
+    color: var(--muted);
+    padding: 0.05rem 0.3rem;
+    border-radius: 2px;
+    margin-left: 0.3rem;
+    vertical-align: middle;
+  }
+
+  /* ── Architecture diagram (ASCII-ish but rendered) ─────── */
+  .arch-diagram {
+    background: var(--text);
+    color: var(--ground);
+    border-radius: 4px;
+    padding: 1.5rem;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+  }
+
+  .arch-diagram .layer-label {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.625rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+    margin-top: 1rem;
+  }
+
+  .arch-diagram .layer-label:first-child { margin-top: 0; }
+
+  .arch-diagram .box {
+    display: inline-block;
+    border: 1px solid rgba(242,244,247,0.2);
+    padding: 0.1rem 0.5rem;
+    border-radius: 2px;
+    color: rgba(242,244,247,0.85);
+  }
+
+  .arch-diagram .box.highlight {
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .arch-diagram .arrow {
+    color: var(--muted);
+  }
+
+  .arch-diagram .row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: 0.25rem 0;
+  }
+
+  /* ── Code-style component list ────────────────────────── */
+  .component-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .component-card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-top: 2px solid var(--accent-2);
+    padding: 1rem;
+  }
+
+  .component-card.mac-only {
+    border-top-color: var(--red-flag);
+    opacity: 0.7;
+  }
+
+  .component-card.shared {
+    border-top-color: var(--accent);
+  }
+
+  .card-tag {
+    font-size: 0.5625rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    margin-bottom: 0.4rem;
+  }
+
+  .component-card.shared .card-tag { color: var(--accent); }
+  .component-card.mac-only .card-tag { color: var(--red-flag); }
+
+  .card-title {
+    font-family: var(--font-body);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.35rem;
+  }
+
+  .card-desc {
+    font-family: var(--font-body);
+    font-size: 0.6875rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ── iOS screens mockup (canvas-based) ──────────────────── */
+  .mockup-row {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .mockup-wrap {
+    flex: 1;
+    min-width: 240px;
+  }
+
+  .mockup-label {
+    font-family: var(--font-body);
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  canvas.mockup {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    display: block;
+    width: 100%;
+    height: auto;
+    background: var(--surface);
+  }
+
+  /* ── Decision table ───────────────────────────────────── */
+  .decision-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .decision-table thead tr {
+    background: var(--accent-2);
+    color: white;
+  }
+
+  .decision-table th {
+    padding: 0.45rem 0.75rem;
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.625rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .decision-table td {
+    padding: 0.45rem 0.75rem;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  .decision-table tr:nth-child(even) td {
+    background: var(--surface-2);
+  }
+
+  .tag-keep   { color: var(--accent); font-weight: 600; }
+  .tag-adapt  { color: var(--accent-2); font-weight: 600; }
+  .tag-rewrite{ color: var(--red-flag); font-weight: 600; }
+  .tag-skip   { color: var(--muted); }
+
+  /* ── Event schema ─────────────────────────────────────── */
+  .event-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .event-chip {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: 0.4rem 0.6rem;
+    font-family: var(--font-body);
+    font-size: 0.6875rem;
+  }
+
+  .event-chip code {
+    color: var(--accent-2);
+    font-weight: 600;
+  }
+
+  .event-chip .ev-desc {
+    color: var(--muted);
+    font-size: 0.625rem;
+    margin-top: 0.1rem;
+  }
+
+  /* ── Callout boxes ────────────────────────────────────── */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    padding: 0.85rem 1rem;
+    margin-bottom: 1rem;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+  }
+
+  .callout.warn {
+    border-color: var(--red-flag);
+    background: rgba(185,64,64,0.04);
+  }
+
+  .callout strong {
+    font-weight: 600;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 0.2rem;
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .callout.warn strong { color: var(--red-flag); }
+
+  /* ── Phase timeline ───────────────────────────────────── */
+  .phase-row {
+    display: flex;
+    gap: 0;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+  }
+
+  .phase-block {
+    flex: 1;
+    min-width: 80px;
+    padding: 0.6rem 0.5rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-right: none;
+    text-align: center;
+  }
+
+  .phase-block:last-child { border-right: 1px solid var(--rule); }
+
+  .phase-block.active {
+    background: var(--accent-2);
+    border-color: var(--accent-2);
+    color: white;
+  }
+
+  .phase-name {
+    font-family: var(--font-body);
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .phase-block.active .phase-name { color: white; }
+
+  /* ── Sprint planning ──────────────────────────────────── */
+  .sprint-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .sprint-card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: 1rem;
+  }
+
+  .sprint-num {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--rule);
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .sprint-title {
+    font-family: var(--font-ui);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .sprint-tasks {
+    list-style: none;
+    font-family: var(--font-body);
+    font-size: 0.6875rem;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  .sprint-tasks li::before {
+    content: '→ ';
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* ── Footer ───────────────────────────────────────────── */
+  .page-footer {
+    background: var(--text);
+    padding: 1.5rem 2rem;
+    font-family: var(--font-body);
+    font-size: 0.6875rem;
+    color: var(--muted);
+    text-align: center;
+    letter-spacing: 0.06em;
+  }
+
+  .page-footer strong { color: var(--accent); }
+
+  /* ── Responsive ───────────────────────────────────────── */
+  @media (max-width: 720px) {
+    .page-body {
+      grid-template-columns: 1fr;
+    }
+    .toc { display: none; }
+    .masthead-inner {
+      grid-template-columns: 1fr;
+    }
+    .masthead-meta { text-align: left; }
+    .sprint-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="masthead-inner">
+    <div>
+      <p class="eyebrow">Plan d'architecture — Dossier technique</p>
+      <h1>Audit<em>Viewer</em><br>iOS / iPadOS</h1>
+    </div>
+    <div class="masthead-meta">
+      <strong>Version cible</strong>
+      iOS 17+, iPadOS 17+
+      <strong>Référence Mac</strong>
+      macOS 15, Swift 6, SwiftUI
+      <strong>Contrat données</strong>
+      audit-report skill v1
+      <strong>Date</strong>
+      Juin 2026
+    </div>
+  </div>
+  <hr class="masthead-rule">
+  <div class="masthead-bar">
+    <div class="masthead-bar-inner">
+      <span class="stat-pill"><span>7</span> fichiers Swift réutilisables tels quels</span>
+      <span class="stat-pill"><span>12</span> sections d'audit (id 0–11 + 100+)</span>
+      <span class="stat-pill"><span>8</span> types de fichiers dans un dossier audit</span>
+      <span class="stat-pill"><span>0</span> dépendance externe dans le core</span>
+    </div>
+  </div>
+</header>
+
+<!-- BODY -->
+<div class="page-body">
+
+  <!-- TOC -->
+  <nav class="toc" aria-label="Sommaire">
+    <p class="toc-label">Sommaire</p>
+    <a href="#sec-contexte" class="active">Contexte</a>
+    <a href="#sec-format">Format des données</a>
+    <a href="#sec-fichiers">Fichiers d'un audit</a>
+    <a href="#sec-evenements">Événements live</a>
+    <a href="#sec-architecture">Architecture iOS</a>
+    <a href="#sec-composants">Composants</a>
+    <a href="#sec-ecrans">Écrans</a>
+    <a href="#sec-decisions">Décisions</a>
+    <a href="#sec-sprint">Plan de sprint</a>
+  </nav>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <!-- §1 Contexte -->
+    <section class="section" id="sec-contexte">
+      <div class="section-header">
+        <span class="section-num">§1</span>
+        <h2>Contexte et périmètre</h2>
+      </div>
+      <p>AuditViewer Mac est une app SwiftUI (Swift 6, macOS 15, SwiftPM) qui affiche et pilote les dossiers d'audit produits par le skill <code>audit-report</code> de Claude Code. L'app iOS/iPadOS cible la <strong>lecture et la navigation</strong> dans ces mêmes dossiers — sans capacité à lancer un audit (pas de <code>Process</code> ni de <code>NSOpenPanel</code> sur iOS).</p>
+      <p>Le contrat de données est stable (contrat machine v1) : le skill écrit des fichiers .md numérotés, des fichiers JSON préfixés <code>_</code>, et un flux d'événements <code>_events.jsonl</code>. L'app iOS lit exactement ces mêmes artefacts, qu'ils viennent d'iCloud Drive, d'un partage AirDrop, ou d'un Files provider tiers.</p>
+
+      <div class="callout">
+        <strong>Hypothèse d'accès aux fichiers</strong>
+        L'app iOS accède aux dossiers d'audit via le File System API standard (<code>UIDocumentPickerViewController</code> ou URL bookmark de sécurité). La racine Research est stockée dans le Keychain, comme sur Mac. Aucun serveur requis.
+      </div>
+
+      <div class="callout warn">
+        <strong>Hors périmètre v1 iOS</strong>
+        Lancer un audit (<code>claude -p …</code>), surveiller <code>_events.jsonl</code> en temps réel (kqueue indisponible sur iOS — polling uniquement), exporter en DOCX (pandoc absent). Ces features peuvent arriver en v2.
+      </div>
+    </section>
+
+    <!-- §2 Format des données -->
+    <section class="section" id="sec-format">
+      <div class="section-header">
+        <span class="section-num">§2</span>
+        <h2>Format de données — contrat v1</h2>
+      </div>
+      <p>Chaque dossier d'audit est nommé <code>audit-&lt;slug&gt;</code> (slug déterministe : NFKD → ASCII → non-alphanum remplacé par <code>-</code>, trim, minuscules). Les fichiers internes se répartissent en deux familles :</p>
+
+      <div class="arch-diagram">
+        <div class="layer-label">Répertoire racine (Research Root — Keychain)</div>
+        <div class="row">
+          <span class="box">~/Documents/Research/</span>
+          <span class="arrow">ou chemin personnalisé</span>
+        </div>
+
+        <div class="layer-label">Dossiers d'audit (nommage déterministe)</div>
+        <div class="row">
+          <span class="box highlight">audit-apple-inc/</span>
+          <span class="box">audit-openai/</span>
+          <span class="box">audit-notion/</span>
+          <span class="arrow">…</span>
+        </div>
+
+        <div class="layer-label">Contenu d'un dossier (skill audit-report v1)</div>
+        <div class="row">
+          <span class="box">00_RESUME_EXECUTIF.md</span>
+          <span class="box">01_HISTORIQUE.md</span>
+          <span class="arrow">→</span>
+          <span class="box">11_RAPPORT_COMPLET.md</span>
+        </div>
+        <div class="row">
+          <span class="box">_manifest.json</span>
+          <span class="box">_recon.json</span>
+          <span class="box">_sources.json</span>
+          <span class="box">_data.json</span>
+          <span class="box">_events.jsonl</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- §3 Fichiers -->
+    <section class="section" id="sec-fichiers">
+      <div class="section-header">
+        <span class="section-num">§3</span>
+        <h2>Inventaire des fichiers</h2>
+      </div>
+
+      <table class="manifest-table">
+        <thead>
+          <tr>
+            <th>Fichier</th>
+            <th>Type</th>
+            <th>Modèle Swift</th>
+            <th>Section / id</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code class="file-name">00_RESUME_EXECUTIF.md</code></td>
+            <td><span class="file-type ft-md">MD</span></td>
+            <td>AuditSection (id 0)</td>
+            <td>Résumé exécutif</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><code class="file-name">01_HISTORIQUE.md</code></td>
+            <td><span class="file-type ft-md">MD</span></td>
+            <td>AuditSection (id 1)</td>
+            <td>Historique</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><code class="file-name">02_MARCHE.md</code></td>
+            <td><span class="file-type ft-md">MD</span></td>
+            <td>AuditSection (id 2)</td>
+            <td>Marché</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><code class="file-name">03_TECHNIQUE.md</code></td>
+            <td><span class="file-type ft-md">MD</span></td>
+            <td>AuditSection (id 3)</td>
+            <td>Technique</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><code class="file-name">04_TARIFICATION.md</code></td>
+            <td><span class="file-type ft-md">MD</span></td>
+            <td>AuditSection (id 4)</td>
+            <td>Tarification</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><code class="file-name">05_CONCURRENCE.md</code></td>
+            <td><span class="file-type ft-md">MD</span></td>
+            <td>AuditSection (id 5)</td>
+            <td>Concurrence</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><code class="file-name">06_FINANCIER.md</code></td>
+            <td><span class="file-type ft-md">MD</span></td>
+            <td>AuditSection (id 6)</td>
+            <td>Financier</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><code class="file-name">07_FUTUR.md</code></td>
+            <td><span class="file-type ft-md">MD</span></td>
+            <td>AuditSection (id 7)</td>
+            <td>Futur</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><code class="file-name">08_ESG.md</code></td>
+            <td><span class="file-type ft-md">MD</span></td>
+            <td>AuditSection (id 8)</td>
+            <td>ESG</td>
+            <td><span class="badge-opt">opt</span></td>
+          </tr>
+          <tr>
+            <td><code class="file-name">09_SWOT.md</code></td>
+            <td><span class="file-type ft-md">MD</span></td>
+            <td>AuditSection (id 9)</td>
+            <td>SWOT</td>
+            <td><span class="badge-opt">opt</span></td>
+          </tr>
+          <tr>
+            <td><code class="file-name">10_RH.md</code></td>
+            <td><span class="file-type ft-md">MD</span></td>
+            <td>AuditSection (id 10)</td>
+            <td>RH / Culture</td>
+            <td><span class="badge-opt">opt</span></td>
+          </tr>
+          <tr>
+            <td><code class="file-name">RAPPORT_COMPLET.md</code></td>
+            <td><span class="file-type ft-md">MD</span></td>
+            <td>AuditSection (id 11)</td>
+            <td>Rapport complet</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><code class="file-name">*.md</code> (sans préfixe _)</td>
+            <td><span class="file-type ft-md">MD</span></td>
+            <td>AuditSection (id 100+)</td>
+            <td>Dynamiques</td>
+            <td>Découverte auto</td>
+          </tr>
+          <tr>
+            <td><code class="file-name">_factcheck.md</code></td>
+            <td><span class="file-type ft-md">MD</span></td>
+            <td>—</td>
+            <td>id -3 (virtuel)</td>
+            <td>Vérification faits</td>
+          </tr>
+          <tr>
+            <td><code class="file-name">_recon.json</code></td>
+            <td><span class="file-type ft-json">JSON</span></td>
+            <td>AuditMeta</td>
+            <td>Métadonnées</td>
+            <td>Ou _meta.json (legacy)</td>
+          </tr>
+          <tr>
+            <td><code class="file-name">_manifest.json</code></td>
+            <td><span class="file-type ft-json">JSON</span></td>
+            <td>AuditManifest</td>
+            <td>Contrat v1 complet</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><code class="file-name">_sources.json</code></td>
+            <td><span class="file-type ft-json">JSON</span></td>
+            <td>SourcesFile / [AuditSource]</td>
+            <td>Sources enrichies</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><code class="file-name">_data.json</code></td>
+            <td><span class="file-type ft-json">JSON</span></td>
+            <td>AuditDataKpis</td>
+            <td>KPIs structurés</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><code class="file-name">_events.jsonl</code></td>
+            <td><span class="file-type ft-jsonl">JSONL</span></td>
+            <td>AuditEvent (1 ligne = 1 JSON)</td>
+            <td>Flux live</td>
+            <td>Polling sur iOS</td>
+          </tr>
+          <tr>
+            <td><code class="file-name">_options.json</code></td>
+            <td><span class="file-type ft-json">JSON</span></td>
+            <td>AuditOptions</td>
+            <td>Options persistées</td>
+            <td>Lecture seule iOS</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>Les fichiers préfixés <code>_</code> sont des artefacts techniques — jamais listés dans la sidebar.</p>
+    </section>
+
+    <!-- §4 Événements -->
+    <section class="section" id="sec-evenements">
+      <div class="section-header">
+        <span class="section-num">§4</span>
+        <h2>Événements live — <code>_events.jsonl</code></h2>
+      </div>
+      <p>Le skill écrit une ligne JSON par événement dans <code>_events.jsonl</code>. Sur Mac, ce fichier est surveillé via kqueue (<code>DispatchSourceFileSystemObject</code>). Sur iOS, il faudra utiliser <strong>un timer de polling</strong> (suggéré : 1 s pendant un audit actif, 0 autrement) via <code>FileHandle</code> ou <code>NSFileCoordinator</code>.</p>
+
+      <div class="phase-row" role="list" aria-label="Phases d'audit">
+        <div class="phase-block active" role="listitem"><div class="phase-name">recon</div></div>
+        <div class="phase-block" role="listitem"><div class="phase-name">research</div></div>
+        <div class="phase-block" role="listitem"><div class="phase-name">factcheck</div></div>
+        <div class="phase-block" role="listitem"><div class="phase-name">swot</div></div>
+        <div class="phase-block" role="listitem"><div class="phase-name">summary</div></div>
+        <div class="phase-block" role="listitem"><div class="phase-name">assembly</div></div>
+        <div class="phase-block" role="listitem"><div class="phase-name">finalize</div></div>
+      </div>
+
+      <div class="event-list">
+        <div class="event-chip"><code>audit_start</code><div class="ev-desc">subject, depth, mode, options, output_dir</div></div>
+        <div class="event-chip"><code>phase_start</code><div class="ev-desc">phase, label</div></div>
+        <div class="event-chip"><code>phase_done</code><div class="ev-desc">phase, label</div></div>
+        <div class="event-chip"><code>dimension_start</code><div class="ev-desc">dimension, label</div></div>
+        <div class="event-chip"><code>dimension_done</code><div class="ev-desc">dimension, status, sources_count</div></div>
+        <div class="event-chip"><code>progress</code><div class="ev-desc">done, total, pct (0–100)</div></div>
+        <div class="event-chip"><code>file_written</code><div class="ev-desc">file — rafraîchir la section</div></div>
+        <div class="event-chip"><code>question</code><div class="ev-desc">id — lire _question.json</div></div>
+        <div class="event-chip"><code>audit_complete</code><div class="ev-desc">recharger le dossier</div></div>
+        <div class="event-chip"><code>audit_canceled</code><div class="ev-desc">recharger le dossier</div></div>
+        <div class="event-chip"><code>error</code><div class="ev-desc">message</div></div>
+        <div class="event-chip"><code>search</code><div class="ev-desc">query (verbose)</div></div>
+      </div>
+
+      <div class="callout warn">
+        <strong>Différence iOS / Mac</strong>
+        kqueue n'est pas disponible sur iOS. Remplacer par un <code>Timer</code> à 1 s qui lit les nouvelles lignes de <code>_events.jsonl</code> en tenant un curseur de position (<code>lastEventLine: Int</code>). Arrêter le timer sur <code>audit_complete</code> ou <code>audit_canceled</code>.
+      </div>
+    </section>
+
+    <!-- §5 Architecture iOS -->
+    <section class="section" id="sec-architecture">
+      <div class="section-header">
+        <span class="section-num">§5</span>
+        <h2>Architecture iOS recommandée</h2>
+      </div>
+
+      <div class="arch-diagram">
+        <div class="layer-label">Package partagé — AuditViewerCore (Foundation only)</div>
+        <div class="row">
+          <span class="box highlight">Models.swift</span>
+          <span class="box highlight">AuditMeta.swift</span>
+          <span class="box highlight">AuditManifest.swift</span>
+          <span class="box highlight">AuditEvent.swift</span>
+        </div>
+        <div class="row">
+          <span class="box highlight">AuditOptions.swift</span>
+          <span class="box highlight">GraphBuilder.swift</span>
+          <span class="box highlight">DiffEngine.swift</span>
+        </div>
+
+        <div class="layer-label">Target Mac — AuditViewer macOS</div>
+        <div class="row">
+          <span class="box">AuditStore.swift</span>
+          <span class="arrow">+</span>
+          <span class="box">NSOpenPanel</span>
+          <span class="box">Process</span>
+          <span class="box">kqueue</span>
+          <span class="box">Sparkle</span>
+        </div>
+
+        <div class="layer-label">Target iOS — AuditViewer iOS (à créer)</div>
+        <div class="row">
+          <span class="box highlight">AuditStoreIOS.swift</span>
+          <span class="arrow">+</span>
+          <span class="box">UIDocumentPicker</span>
+          <span class="box">Timer polling</span>
+          <span class="box">NSFileCoordinator</span>
+        </div>
+        <div class="row">
+          <span class="box">NavigationSplitView (iPad)</span>
+          <span class="box">NavigationStack (iPhone)</span>
+          <span class="box">WKWebView (rendu MD)</span>
+        </div>
+
+        <div class="layer-label">Ressources partagées (bundles)</div>
+        <div class="row">
+          <span class="box">Resources/web/ — rendu Markdown</span>
+          <span class="box">Resources/webgraph/ — carte JS</span>
+        </div>
+      </div>
+
+      <p>Le package <code>AuditViewerCore</code> contient uniquement du code Foundation — aucune API AppKit, UIKit, ou macOS-only. Il est importé par les deux targets. Chaque plateforme implémente son propre store et ses propres vues.</p>
+    </section>
+
+    <!-- §6 Composants -->
+    <section class="section" id="sec-composants">
+      <div class="section-header">
+        <span class="section-num">§6</span>
+        <h2>Inventaire des composants</h2>
+      </div>
+      <p>Chaque composant est classé selon ce qu'il faut faire pour l'app iOS.</p>
+
+      <div class="component-grid">
+        <div class="component-card shared">
+          <p class="card-tag">Partagé — zéro modification</p>
+          <p class="card-title">Models.swift</p>
+          <p class="card-desc">AuditSection, auditSections (id 0–11), LogEntry. Foundation only.</p>
+        </div>
+        <div class="component-card shared">
+          <p class="card-tag">Partagé — zéro modification</p>
+          <p class="card-title">AuditMeta.swift</p>
+          <p class="card-desc">Décode _recon.json → subject, keyPlayers, sector, depth, sourcesCount…</p>
+        </div>
+        <div class="component-card shared">
+          <p class="card-tag">Partagé — zéro modification</p>
+          <p class="card-title">AuditManifest.swift</p>
+          <p class="card-desc">AuditManifest, AuditSource, SourcesFile, AuditKpi, AuditDataKpis.</p>
+        </div>
+        <div class="component-card shared">
+          <p class="card-tag">Partagé — zéro modification</p>
+          <p class="card-title">AuditEvent.swift</p>
+          <p class="card-desc">AuditEvent, AuditQuestion, AuditAnswer. Décodage JSONL tolérant.</p>
+        </div>
+        <div class="component-card shared">
+          <p class="card-tag">Partagé — zéro modification</p>
+          <p class="card-title">AuditOptions.swift</p>
+          <p class="card-desc">Codable, lecture de _options.json. cliFlags() ignoré côté iOS.</p>
+        </div>
+        <div class="component-card shared">
+          <p class="card-tag">Partagé — zéro modification</p>
+          <p class="card-title">GraphBuilder.swift</p>
+          <p class="card-desc">GraphData, GraphNode, GraphEdge. Build local + global. Foundation only.</p>
+        </div>
+        <div class="component-card shared">
+          <p class="card-tag">Partagé — zéro modification</p>
+          <p class="card-title">DiffEngine.swift</p>
+          <p class="card-desc">Diff texte ligne par ligne. Utile pour comparer des versions.</p>
+        </div>
+        <div class="component-card">
+          <p class="card-tag">À adapter — UIViewRepresentable</p>
+          <p class="card-title">WebView.swift</p>
+          <p class="card-desc">NSViewRepresentable → UIViewRepresentable. WKWebView disponible iOS. Même API JS.</p>
+        </div>
+        <div class="component-card">
+          <p class="card-tag">À adapter — UIViewRepresentable</p>
+          <p class="card-title">GraphWebView.swift</p>
+          <p class="card-desc">Idem WebView. Bundle webgraph/ identique. WKScriptMessageHandler inchangé.</p>
+        </div>
+        <div class="component-card">
+          <p class="card-tag">À adapter — identifiant service</p>
+          <p class="card-title">KeychainStore.swift</p>
+          <p class="card-desc">Security framework disponible iOS. Changer kSecAttrService si bundle ID différent. Sinon identique.</p>
+        </div>
+        <div class="component-card mac-only">
+          <p class="card-tag">Mac uniquement — à réécrire</p>
+          <p class="card-title">AuditStore.swift (parties système)</p>
+          <p class="card-desc">NSOpenPanel, Process, kqueue DispatchSource → UIDocumentPicker, pas de Process, Timer polling.</p>
+        </div>
+        <div class="component-card mac-only">
+          <p class="card-tag">Mac uniquement — exclure</p>
+          <p class="card-title">AuditPanelController / LogsPanelController</p>
+          <p class="card-desc">NSPanel AppKit. Pas d'équivalent iOS nécessaire en v1.</p>
+        </div>
+        <div class="component-card mac-only">
+          <p class="card-tag">Mac uniquement — exclure</p>
+          <p class="card-title">Updater.swift + Sparkle</p>
+          <p class="card-desc">App Store gère les mises à jour iOS.</p>
+        </div>
+        <div class="component-card mac-only">
+          <p class="card-tag">Mac uniquement — adapter via ShareSheet</p>
+          <p class="card-title">Export DOCX (pandoc)</p>
+          <p class="card-desc">Remplacer par UIActivityViewController + share .md. Pandoc absent sur iOS.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- §7 Écrans -->
+    <section class="section" id="sec-ecrans">
+      <div class="section-header">
+        <span class="section-num">§7</span>
+        <h2>Écrans principaux</h2>
+      </div>
+      <p>Rendu canvas des wireframes clés — iPad en split view, iPhone en navigation stack.</p>
+
+      <div class="mockup-row">
+        <div class="mockup-wrap">
+          <p class="mockup-label">iPad — NavigationSplitView</p>
+          <canvas class="mockup" id="canvas-ipad" width="700" height="500"></canvas>
+        </div>
+        <div class="mockup-wrap">
+          <p class="mockup-label">iPhone — NavigationStack</p>
+          <canvas class="mockup" id="canvas-iphone" width="380" height="680"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- §8 Décisions -->
+    <section class="section" id="sec-decisions">
+      <div class="section-header">
+        <span class="section-num">§8</span>
+        <h2>Table des décisions techniques</h2>
+      </div>
+
+      <table class="decision-table">
+        <thead>
+          <tr>
+            <th>Problème</th>
+            <th>Solution Mac</th>
+            <th>Solution iOS</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Accès au dossier racine</td>
+            <td>NSOpenPanel + chemin libre</td>
+            <td>UIDocumentPickerViewController + URL bookmark de sécurité (<code>startAccessingSecurityScopedResource</code>)</td>
+            <td class="tag-adapt">À adapter</td>
+          </tr>
+          <tr>
+            <td>Surveillance _events.jsonl en temps réel</td>
+            <td>kqueue via DispatchSourceFileSystemObject</td>
+            <td>Timer 1 s + lecture de nouvelles lignes avec curseur <code>lastEventLine</code></td>
+            <td class="tag-rewrite">À réécrire</td>
+          </tr>
+          <tr>
+            <td>Rendu Markdown</td>
+            <td>WKWebView + NSViewRepresentable + bundle web/</td>
+            <td>WKWebView + UIViewRepresentable — même bundle web/, même JS</td>
+            <td class="tag-adapt">À adapter</td>
+          </tr>
+          <tr>
+            <td>Carte des liens (graphe)</td>
+            <td>WKWebView + bundle webgraph/ + WKScriptMessageHandler</td>
+            <td>Identique — UIViewRepresentable uniquement</td>
+            <td class="tag-adapt">À adapter</td>
+          </tr>
+          <tr>
+            <td>Stockage du chemin racine</td>
+            <td>Keychain (Security framework)</td>
+            <td>Keychain identique — Security disponible iOS</td>
+            <td class="tag-keep">Réutiliser</td>
+          </tr>
+          <tr>
+            <td>Lancer un audit</td>
+            <td>Process (claude -p …)</td>
+            <td>Non applicable sur iOS v1</td>
+            <td class="tag-skip">Hors périmètre</td>
+          </tr>
+          <tr>
+            <td>Export DOCX</td>
+            <td>pandoc via Process</td>
+            <td>UIActivityViewController + partage du .md brut</td>
+            <td class="tag-adapt">À adapter</td>
+          </tr>
+          <tr>
+            <td>Navigation principale (iPad)</td>
+            <td>NavigationSplitView (sidebar + contenu)</td>
+            <td>NavigationSplitView — disponible iOS 16+</td>
+            <td class="tag-keep">Réutiliser</td>
+          </tr>
+          <tr>
+            <td>Navigation principale (iPhone)</td>
+            <td>N/A (Mac seulement)</td>
+            <td>NavigationStack — liste audits → liste sections → détail</td>
+            <td class="tag-rewrite">Nouveau</td>
+          </tr>
+          <tr>
+            <td>Modèles de données (7 fichiers)</td>
+            <td>Foundation, Sendable, Codable</td>
+            <td>Identiques — extraire dans AuditViewerCore package</td>
+            <td class="tag-keep">Réutiliser</td>
+          </tr>
+          <tr>
+            <td>Slug déterministe</td>
+            <td>AuditStore.slugify() — NFKD ASCII</td>
+            <td>Même méthode, déplacée dans AuditViewerCore</td>
+            <td class="tag-keep">Réutiliser</td>
+          </tr>
+          <tr>
+            <td>Mise à jour automatique</td>
+            <td>Sparkle (build Xcode release)</td>
+            <td>App Store</td>
+            <td class="tag-skip">N/A</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- §9 Sprint plan -->
+    <section class="section" id="sec-sprint">
+      <div class="section-header">
+        <span class="section-num">§9</span>
+        <h2>Plan de sprint suggéré</h2>
+      </div>
+
+      <div class="sprint-grid">
+        <div class="sprint-card">
+          <div class="sprint-num">S1</div>
+          <div class="sprint-title">Foundation — Package core + ouverture</div>
+          <ul class="sprint-tasks">
+            <li>Créer AuditViewerCore (Swift package)</li>
+            <li>Migrer les 7 fichiers modèles</li>
+            <li>Ajouter target iOS dans Xcode</li>
+            <li>UIDocumentPickerViewController + URL bookmark</li>
+            <li>KeychainStore iOS (service ID)</li>
+            <li>AuditStoreIOS : loadAuditDir, loadSection</li>
+          </ul>
+        </div>
+        <div class="sprint-card">
+          <div class="sprint-num">S2</div>
+          <div class="sprint-title">Affichage — Lecture et navigation</div>
+          <ul class="sprint-tasks">
+            <li>NavigationSplitView iPad (sidebar + détail)</li>
+            <li>NavigationStack iPhone</li>
+            <li>SidebarView iOS (sections réelles + virtuelles)</li>
+            <li>WKWebView UIViewRepresentable (rendu MD)</li>
+            <li>Bundle web/ copié dans target iOS</li>
+            <li>EmptyStateView + gestion sections manquantes</li>
+          </ul>
+        </div>
+        <div class="sprint-card">
+          <div class="sprint-num">S3</div>
+          <div class="sprint-title">Données — KPIs, Sources, Graphe</div>
+          <ul class="sprint-tasks">
+            <li>Vue Chiffres-clés (_data.json)</li>
+            <li>Vue Sources (_sources.json)</li>
+            <li>GraphWebView UIViewRepresentable</li>
+            <li>Bundle webgraph/ copié</li>
+            <li>GraphInfoPanel iOS (sheet au lieu de panneau flottant)</li>
+            <li>Surveillance _events.jsonl (Timer polling)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Priorité absolue en S1</strong>
+        Le URL security-scoped bookmark est le verrou iOS : sans lui, l'app perd l'accès au dossier après relancement. Implémenter <code>startAccessingSecurityScopedResource</code> + persistance du bookmark dans le Keychain dès le premier sprint.
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="page-footer">
+  <strong>AuditViewer iOS</strong> — Document de planification — Juin 2026 — Basé sur le contrat machine audit-report v1
+</footer>
+
+<script>
+// ── Canvas wireframe: iPad ────────────────────────────────
+(function() {
+  const c = document.getElementById('canvas-ipad');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+
+  const GROUND   = '#F2F4F7';
+  const TEXT     = '#1A2332';
+  const ACCENT   = '#C8922A';
+  const ACCENT2  = '#3D5A80';
+  const MUTED    = '#6B7A90';
+  const RULE     = '#CBD5E1';
+  const WHITE    = '#FFFFFF';
+
+  // Background
+  ctx.fillStyle = WHITE;
+  ctx.fillRect(0, 0, W, H);
+
+  // Status bar
+  ctx.fillStyle = TEXT;
+  ctx.fillRect(0, 0, W, 28);
+  ctx.fillStyle = GROUND;
+  ctx.font = '500 10px "IBM Plex Mono", monospace';
+  ctx.fillText('9:41', 12, 18);
+  ctx.fillText('●●●●○  WiFi  ⬜', W - 100, 18);
+
+  // Navigation bar
+  ctx.fillStyle = TEXT;
+  ctx.fillRect(0, 28, W, 44);
+  ctx.fillStyle = ACCENT;
+  ctx.font = 'bold 12px "IBM Plex Mono", monospace';
+  ctx.fillText('AuditViewer', W/2 - 46, 55);
+  ctx.fillStyle = ACCENT;
+  ctx.font = '600 11px "IBM Plex Mono", monospace';
+  ctx.fillText('+ Audit', W - 70, 55);
+
+  // Sidebar
+  const SBW = 190;
+  ctx.fillStyle = GROUND;
+  ctx.fillRect(0, 72, SBW, H - 72);
+  ctx.strokeStyle = RULE;
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(SBW, 72); ctx.lineTo(SBW, H); ctx.stroke();
+
+  // Sidebar: section header
+  ctx.fillStyle = MUTED;
+  ctx.font = '600 8px "IBM Plex Mono", monospace';
+  ctx.fillText('APPLE INC.', 12, 96);
+
+  // Sidebar sections
+  const sections = [
+    { label: 'Résumé exécutif', active: true, exists: true },
+    { label: 'Historique', active: false, exists: true },
+    { label: 'Marché', active: false, exists: true },
+    { label: 'Technique', active: false, exists: true },
+    { label: 'Tarification', active: false, exists: true },
+    { label: 'Concurrence', active: false, exists: true },
+    { label: 'Financier', active: false, exists: true },
+    { label: 'Futur', active: false, exists: true },
+    { label: 'Rapport complet', active: false, exists: true },
+  ];
+
+  // Virtual entries header
+  ctx.fillStyle = MUTED;
+  ctx.font = '600 8px "IBM Plex Mono", monospace';
+  ctx.fillText('SYNTHÈSE', 12, 118);
+
+  const virtuals = ['Chiffres-clés', 'Sources'];
+  virtuals.forEach((v, i) => {
+    const y = 132 + i * 28;
+    ctx.fillStyle = GROUND;
+    ctx.fillRect(4, y, SBW - 8, 22);
+    // Icon circle
+    ctx.fillStyle = ACCENT2;
+    ctx.beginPath(); ctx.arc(18, y + 11, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = TEXT;
+    ctx.font = '12px "IBM Plex Mono", monospace';
+    ctx.fillText(v, 30, y + 15);
+  });
+
+  // Divider
+  ctx.strokeStyle = RULE;
+  ctx.beginPath(); ctx.moveTo(8, 195); ctx.lineTo(SBW - 8, 195); ctx.stroke();
+
+  ctx.fillStyle = MUTED;
+  ctx.font = '600 8px "IBM Plex Mono", monospace';
+  ctx.fillText('SECTIONS', 12, 210);
+
+  sections.forEach((s, i) => {
+    const y = 220 + i * 28;
+    if (s.active) {
+      ctx.fillStyle = ACCENT2 + '20';
+      ctx.fillRect(4, y, SBW - 8, 22);
+    }
+    // Checkmark icon
+    ctx.fillStyle = s.exists ? ACCENT2 : RULE;
+    ctx.font = '10px monospace';
+    ctx.fillText(s.exists ? '✓' : '○', 12, y + 14);
+    ctx.fillStyle = s.active ? TEXT : (s.exists ? TEXT : MUTED);
+    ctx.font = (s.active ? '600' : '400') + ' 11px "IBM Plex Mono", monospace';
+    ctx.fillText(s.label, 28, y + 14);
+  });
+
+  // Main content area
+  const MX = SBW + 24, MY = 88, MW = W - SBW - 40;
+
+  // Breadcrumb / toolbar
+  ctx.fillStyle = MUTED;
+  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.fillText('Apple Inc. › Résumé exécutif', MX, MY + 2);
+
+  // Segmented control (Document / Carte)
+  const segW = 140, segH = 26, segX = W - segW - 16, segY = MY - 10;
+  ctx.strokeStyle = RULE;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(segX, segY, segW, segH);
+  ctx.fillStyle = ACCENT2;
+  ctx.fillRect(segX, segY, segW / 2, segH);
+  ctx.fillStyle = WHITE;
+  ctx.font = '600 9px "IBM Plex Mono", monospace';
+  ctx.fillText('Document', segX + 10, segY + 16);
+  ctx.fillStyle = MUTED;
+  ctx.fillText('Carte', segX + segW / 2 + 14, segY + 16);
+
+  // Horizontal rule
+  ctx.strokeStyle = ACCENT;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(MX, MY + 16); ctx.lineTo(MX + MW, MY + 16); ctx.stroke();
+
+  // Article content
+  // Big title
+  ctx.fillStyle = TEXT;
+  ctx.font = 'bold 20px Georgia, serif';
+  ctx.fillText('Résumé exécutif', MX, MY + 44);
+
+  // Subtitle / meta
+  ctx.fillStyle = MUTED;
+  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.fillText('Apple Inc. — Audit complet — Profondeur : full — Juin 2026', MX, MY + 62);
+
+  // Paragraph lines (simulated)
+  const lineH = 15;
+  const lines = [
+    {w: 0.95}, {w: 0.9}, {w: 0.85}, {w: 0.7},
+    {w: 0.0}, // gap
+    {w: 0.92}, {w: 0.88}, {w: 0.93}, {w: 0.8},
+    {w: 0.0},
+    {w: 0.9}, {w: 0.85}, {w: 0.6},
+  ];
+  ctx.fillStyle = RULE;
+  lines.forEach((l, i) => {
+    if (l.w > 0) {
+      ctx.fillRect(MX, MY + 80 + i * lineH, MW * l.w, 7);
+    }
+  });
+
+  // KPI strip at bottom
+  const kpiY = H - 70;
+  ctx.fillStyle = GROUND;
+  ctx.fillRect(SBW, kpiY, W - SBW, 70);
+  ctx.strokeStyle = RULE;
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(SBW, kpiY); ctx.lineTo(W, kpiY); ctx.stroke();
+
+  const kpis = [
+    { label: 'Capitalisation', val: '3 400 Md$' },
+    { label: 'CA 2025', val: '391 Md$' },
+    { label: 'Marge nette', val: '24.3%' },
+    { label: 'Sources', val: '47' },
+  ];
+  const kpiW = (W - SBW) / kpis.length;
+  kpis.forEach((k, i) => {
+    const kx = SBW + i * kpiW + 16;
+    if (i > 0) {
+      ctx.strokeStyle = RULE;
+      ctx.beginPath(); ctx.moveTo(SBW + i * kpiW, kpiY + 10); ctx.lineTo(SBW + i * kpiW, kpiY + 60); ctx.stroke();
+    }
+    ctx.fillStyle = MUTED;
+    ctx.font = '8px "IBM Plex Mono", monospace';
+    ctx.fillText(k.label.toUpperCase(), kx, kpiY + 22);
+    ctx.fillStyle = ACCENT;
+    ctx.font = 'bold 16px "IBM Plex Mono", monospace';
+    ctx.fillText(k.val, kx, kpiY + 46);
+  });
+})();
+
+// ── Canvas wireframe: iPhone ──────────────────────────────
+(function() {
+  const c = document.getElementById('canvas-iphone');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+
+  const GROUND  = '#F2F4F7';
+  const TEXT    = '#1A2332';
+  const ACCENT  = '#C8922A';
+  const ACCENT2 = '#3D5A80';
+  const MUTED   = '#6B7A90';
+  const RULE    = '#CBD5E1';
+  const WHITE   = '#FFFFFF';
+
+  ctx.fillStyle = WHITE;
+  ctx.fillRect(0, 0, W, H);
+
+  // Status bar
+  ctx.fillStyle = TEXT;
+  ctx.fillRect(0, 0, W, 28);
+  ctx.fillStyle = GROUND;
+  ctx.font = '500 10px "IBM Plex Mono", monospace';
+  ctx.fillText('9:41', 12, 18);
+  ctx.fillText('●●●●○', W - 60, 18);
+
+  // Nav bar: Liste des audits
+  ctx.fillStyle = TEXT;
+  ctx.fillRect(0, 28, W, 44);
+  ctx.fillStyle = GROUND;
+  ctx.font = 'bold 13px "IBM Plex Mono", monospace';
+  const titleX = W/2 - ctx.measureText('Mes audits').width / 2;
+  ctx.fillText('Mes audits', titleX, 55);
+  ctx.fillStyle = ACCENT;
+  ctx.font = '600 11px "IBM Plex Mono", monospace';
+  ctx.fillText('+ Ajouter', W - 72, 55);
+
+  // Search bar
+  ctx.fillStyle = GROUND;
+  ctx.fillRect(0, 72, W, 44);
+  ctx.fillStyle = '#E2E8F0';
+  ctx.beginPath();
+  ctx.roundRect(12, 80, W - 24, 28, 6);
+  ctx.fill();
+  ctx.fillStyle = MUTED;
+  ctx.font = '11px "IBM Plex Mono", monospace';
+  ctx.fillText('🔍  Rechercher un audit…', 20, 98);
+
+  // Audit list
+  const audits = [
+    { name: 'Apple Inc.', date: 'Hier', sections: '11/11', depth: 'full' },
+    { name: 'OpenAI', date: 'Il y a 3 j', sections: '9/11', depth: 'quick' },
+    { name: 'Notion', date: 'Il y a 7 j', sections: '11/11', depth: 'full' },
+    { name: 'Yealink', date: 'Il y a 2 sem', sections: '7/11', depth: 'full' },
+    { name: 'Mistral AI', date: 'Il y a 3 sem', sections: '8/11', depth: 'quick' },
+  ];
+
+  const itemH = 68;
+  audits.forEach((a, i) => {
+    const y = 116 + i * itemH;
+
+    // Item background
+    ctx.fillStyle = i === 0 ? '#EEF2FA' : WHITE;
+    ctx.fillRect(0, y, W, itemH);
+    ctx.strokeStyle = RULE;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(16, y + itemH); ctx.lineTo(W, y + itemH); ctx.stroke();
+
+    // Accent stripe
+    if (i === 0) {
+      ctx.fillStyle = ACCENT2;
+      ctx.fillRect(0, y, 3, itemH);
+    }
+
+    // Title
+    ctx.fillStyle = TEXT;
+    ctx.font = 'bold 13px "IBM Plex Mono", monospace';
+    ctx.fillText(a.name, 20, y + 22);
+
+    // Meta: date + sections
+    ctx.fillStyle = MUTED;
+    ctx.font = '10px "IBM Plex Mono", monospace';
+    ctx.fillText(a.date, 20, y + 38);
+
+    // Depth badge
+    const badgeX = 20, badgeY = y + 46;
+    ctx.fillStyle = a.depth === 'full' ? ACCENT2 : MUTED;
+    ctx.beginPath(); ctx.roundRect(badgeX, badgeY, a.depth === 'full' ? 28 : 36, 14, 2); ctx.fill();
+    ctx.fillStyle = WHITE;
+    ctx.font = '600 7px "IBM Plex Mono", monospace';
+    ctx.fillText(a.depth.toUpperCase(), badgeX + 4, badgeY + 10);
+
+    // Sections count
+    ctx.fillStyle = MUTED;
+    ctx.font = '10px "IBM Plex Mono", monospace';
+    ctx.fillText(a.sections + ' sections', a.depth === 'full' ? 58 : 66, y + 57);
+
+    // Chevron
+    ctx.fillStyle = RULE;
+    ctx.font = '14px monospace';
+    ctx.fillText('›', W - 20, y + 36);
+  });
+
+  // Bottom tab bar
+  ctx.fillStyle = WHITE;
+  ctx.fillRect(0, H - 60, W, 60);
+  ctx.strokeStyle = RULE;
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, H - 60); ctx.lineTo(W, H - 60); ctx.stroke();
+
+  const tabs = ['Audits', 'Récents', 'Réglages'];
+  const tabW = W / tabs.length;
+  tabs.forEach((t, i) => {
+    const tx = i * tabW + tabW / 2;
+    ctx.fillStyle = i === 0 ? ACCENT2 : MUTED;
+    ctx.font = '9px "IBM Plex Mono", monospace';
+    const tw = ctx.measureText(t).width;
+    ctx.fillText(t, tx - tw / 2, H - 14);
+
+    // Icon placeholder (circle)
+    ctx.beginPath();
+    ctx.arc(tx, H - 38, 10, 0, Math.PI * 2);
+    ctx.fillStyle = i === 0 ? ACCENT2 + '20' : RULE + '60';
+    ctx.fill();
+    ctx.strokeStyle = i === 0 ? ACCENT2 : MUTED;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+
+  // Home indicator
+  ctx.fillStyle = TEXT + '30';
+  ctx.beginPath();
+  ctx.roundRect(W/2 - 50, H - 6, 100, 4, 2);
+  ctx.fill();
+})();
+
+// ── Scroll spy for TOC ────────────────────────────────────
+(function() {
+  const links = document.querySelectorAll('.toc a');
+  const sections = Array.from(document.querySelectorAll('.section[id]'));
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector('.toc a[href="#' + entry.target.id + '"]');
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  sections.forEach(s => observer.observe(s));
+})();
+</script>

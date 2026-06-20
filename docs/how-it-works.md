@@ -70,9 +70,9 @@ This is the same discipline a consulting team applies — encoded as rules the A
 
 ---
 
-## The three apps, one shared language
+## The viewers, one shared language
 
-You can read an audit as plain files. But the **web viewer** and **macOS app** add live progress, comfortable reading, and a map of how audits relate.
+You can read an audit as plain files. But the **web viewer** and **macOS app** add live progress, comfortable reading, and a map of how audits relate. On the go, the **iOS / iPadOS reader** opens the same audits straight from the Files app.
 
 They all understand the same thing because the skill writes its output as a **machine contract** — a small, stable set of files with a fixed structure:
 
