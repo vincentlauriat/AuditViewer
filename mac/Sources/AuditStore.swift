@@ -326,7 +326,7 @@ final class AuditStore {
 
     // MARK: - Run audit
 
-    func runAudit(subject: String, options: AuditOptions, outputDir: URL) async {
+    func runAudit(subject: String, options: AuditOptions, outputDir: URL, model: String = "auto") async {
         lastOptions = options
         isRunningAudit = true
         processOutput = ""
@@ -351,11 +351,16 @@ final class AuditStore {
         // et gère espaces/accents. `--output` pointe sur le dossier déterministe.
         let quotedSubject = Self.shellQuote(subject)
         let quotedOutput = Self.shellQuote(auditDir.path)
-        process.arguments = [
+        // Modèle Claude : "auto" laisse le défaut de Claude Code ; sinon `--model`
+        // est passé au CLI `claude` lui-même (pas au skill).
+        var arguments: [String] = []
+        if model != "auto" { arguments += ["--model", model] }
+        arguments += [
             "--output-format", "stream-json",
             "--verbose",
             "-p", "/audit-report \(quotedSubject) \(options.cliFlags(appMode: true)) --output \(quotedOutput)"
         ]
+        process.arguments = arguments
         process.currentDirectoryURL = outputDir
 
         let pipe = Pipe()
@@ -434,7 +439,7 @@ final class AuditStore {
         await rerunAuditWith(options: options)
     }
 
-    func rerunAuditWith(options: AuditOptions) async {
+    func rerunAuditWith(options: AuditOptions, model: String = "auto") async {
         guard let dir = auditDir else { return }
 
         // Snapshot du contenu actuel avant écrasement
@@ -448,7 +453,7 @@ final class AuditStore {
         diffs = [:]
         for i in sections.indices { sections[i].diffResult = nil }
 
-        await runAudit(subject: subject, options: options, outputDir: dir.deletingLastPathComponent())
+        await runAudit(subject: subject, options: options, outputDir: dir.deletingLastPathComponent(), model: model)
 
         // Calculer les diffs en arrière-plan (CPU intensif)
         await computeDiffs(snapshot: snapshot)
