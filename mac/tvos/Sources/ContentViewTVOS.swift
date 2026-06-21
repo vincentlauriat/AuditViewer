@@ -34,21 +34,25 @@ struct ContentViewTVOS: View {
                     }
                 }
 
-                if !store.audits.isEmpty {
+                if !store.audits.isEmpty, let client = store.client {
                     Section("Audits — \(store.selected?.name ?? "")") {
                         ForEach(store.audits) { audit in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(audit.subject ?? audit.id)
-                                    .font(.headline)
-                                HStack(spacing: 12) {
-                                    if let type = audit.subjectType { Text(type) }
-                                    if let status = audit.status { Text(status) }
-                                    if let date = audit.auditDate { Text(date) }
+                            NavigationLink {
+                                AuditDetailViewTVOS(client: client, audit: audit)
+                            } label: {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(audit.subject ?? audit.id)
+                                        .font(.headline)
+                                    HStack(spacing: 12) {
+                                        if let type = audit.subjectType { Text(type) }
+                                        if let status = audit.status { Text(status) }
+                                        if let date = audit.auditDate { Text(date) }
+                                    }
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
                                 }
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .padding(.vertical, 4)
                             }
-                            .padding(.vertical, 4)
                         }
                     }
                 }

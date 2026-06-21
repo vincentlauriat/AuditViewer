@@ -65,7 +65,7 @@
 Ingestion : Bonjour + HTTP LAN (Mac = serveur). Périmètre : reader-only.
 - [x] Phase 1 — Serveur Mac `LANServer.swift` (NWListener + Bonjour `_auditviewer._tcp`, REST read-only de researchRoot, garde-fou path-traversal par énumération, toggle dans Réglages + indicateur d'état). Testé : logique métier + serveur réseau réel (URLSession) + 3 cas path-traversal → 404. `swift build` vert.
 - [x] Phase 2 — Target `AuditViewerTVOS` (project.yml, tvOS 17, Bonjour/local-network plist) + `BonjourBrowser`/`EndpointResolver` + `AuditAPIClient` + `AuditStoreTVOS` + vue squelette + `tvos/build.sh`. Build simulateur tvOS vert. Transport client↔serveur testé bout-en-bout (audits/manifest/sources/file décodés). Reste à valider sur simulateur/appareil : découverte Bonjour réelle + résolution endpoint.
-- [ ] Phase 3 — UI 10-foot : écran connexion (Bonjour), liste + détail (TabView), `DimensionView`/`KPIGridView`/`SourcesView` reskinnés focus engine
+- [x] Phase 3 — UI 10-foot : navigation liste → détail (TabView Synthèse/Dimensions/Sources/Rapport). Rendu Markdown **natif SwiftUI** (pas WKWebView : scroll télécommande non fiable) gérant titres/paragraphes/listes/tableaux/citations/code. KPIs + sources + badges. Build simulateur + déploiement Apple TV verts.
 - [~] Phase 4 — Build/test/signing appareil
   - [x] Build simulateur + test : découverte Bonjour OK (screenshot), serveur LAN validé curl réel (audits/manifest/file, traversal→404)
   - [x] Auto-connexion si 1 seul serveur (UX 10-foot)

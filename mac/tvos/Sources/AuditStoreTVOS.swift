@@ -15,7 +15,7 @@ final class AuditStoreTVOS {
     private(set) var isLoading = false
 
     private var browser: BonjourBrowser?
-    private var client: AuditAPIClient?
+    private(set) var client: AuditAPIClient?
 
     func startDiscovery() {
         guard browser == nil else { return }
