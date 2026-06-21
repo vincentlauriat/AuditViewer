@@ -107,6 +107,7 @@ struct AuditDetailViewTVOS: View {
                 .padding(20)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14))
+                .focusable()   // permet le défilement de l'onglet à la télécommande
             }
         }
     }
@@ -121,6 +122,7 @@ struct AuditDetailViewTVOS: View {
                 .padding(.horizontal, 16).padding(.vertical, 10)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10))
+                .focusable()
             }
         }
     }

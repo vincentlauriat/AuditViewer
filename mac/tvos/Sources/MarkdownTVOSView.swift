@@ -26,15 +26,36 @@ struct MarkdownTVOSView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+            LazyVStack(alignment: .leading, spacing: 18) {
                 ForEach(Array(MarkdownBlock.parse(markdown).enumerated()), id: \.offset) { _, block in
-                    block.view
+                    // Chaque bloc est focusable : sur tvOS la ScrollView ne défile à
+                    // la télécommande que si elle contient des cibles de focus.
+                    FocusableBlock { block.view }
                 }
             }
             .padding(.horizontal, 90)   // marges TV-safe
             .padding(.vertical, 60)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+}
+
+/// Enveloppe un bloc pour le rendre focusable (donc défilable) avec un léger
+/// surlignage indiquant la position courante.
+private struct FocusableBlock<Content: View>: View {
+    @ViewBuilder var content: () -> Content
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        content()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(focused ? Color.white.opacity(0.08) : .clear,
+                        in: RoundedRectangle(cornerRadius: 10))
+            .focusable()
+            .focused($focused)
+            .animation(.easeOut(duration: 0.15), value: focused)
     }
 }
 
