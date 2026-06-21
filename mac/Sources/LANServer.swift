@@ -1,5 +1,6 @@
 import Foundation
 import Network
+import Observation
 
 // MARK: - Serveur LAN read-only (Phase 1 du viewer tvOS)
 //

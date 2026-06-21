@@ -638,6 +638,11 @@ def cmd_search(root: str, term: str, scope: str | None, raw: bool) -> int:
             print(col("Plusieurs audits correspondent : " +
                       ", ".join(audit_slug(c) for c in cands), C.YELLOW))
             return 1
+        else:
+            # Périmètre fourni mais introuvable : ne pas retomber silencieusement
+            # sur une recherche globale (résultats trompeurs).
+            print(col(f"Aucun audit ne correspond au périmètre '{scope}'.", C.YELLOW))
+            return 1
     rx = re.compile(re.escape(term), re.IGNORECASE)
     total = 0
     for d in dirs:

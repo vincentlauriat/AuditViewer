@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 
 // MARK: - Store observable du viewer tvOS
 //
