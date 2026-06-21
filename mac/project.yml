@@ -129,6 +129,7 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: tvos/Sources
+      - path: tvos/Assets.xcassets
       # Modèles partagés (Foundation only) — référencés, pas dupliqués.
       - path: Sources/AuditManifest.swift
     info:
@@ -155,3 +156,4 @@ targets:
         TVOS_DEPLOYMENT_TARGET: "17.0"
         DEVELOPMENT_TEAM: "KFLACS69T9"
         CODE_SIGN_STYLE: Automatic
+        ASSETCATALOG_COMPILER_APPICON_NAME: "App Icon & Top Shelf Image"

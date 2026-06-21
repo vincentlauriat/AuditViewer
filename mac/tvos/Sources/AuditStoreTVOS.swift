@@ -28,10 +28,16 @@ final class AuditStoreTVOS {
 
     private func applyServers(_ found: [DiscoveredServer]) {
         servers = found.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-        if selected == nil {
+        guard selected == nil else { return }
+
+        // Un seul serveur → connexion automatique (UX 10-foot : moins de clics).
+        if let only = servers.first, servers.count == 1 {
+            status = "Connexion automatique à \(only.name)…"
+            Task { await select(only) }
+        } else {
             status = found.isEmpty
                 ? "Aucun serveur trouvé. Activez « Partager sur le réseau local » sur le Mac."
-                : "\(found.count) serveur(s) disponible(s)."
+                : "\(found.count) serveurs disponibles — choisissez-en un."
         }
     }
 
