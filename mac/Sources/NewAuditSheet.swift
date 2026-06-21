@@ -9,6 +9,8 @@ struct NewAuditSheet: View {
     @State private var subject: String = ""
     @State private var options: AuditOptions = AuditOptions()
     @State private var outputPath: String = ""
+    // Modèle Claude mémorisé entre les sessions (partagé avec la mise à jour).
+    @AppStorage("auditModel") private var model: String = "auto"
 
     // ── Progression ────────────────────────────────────────────────────────────
     @State private var isRunning: Bool = false
@@ -134,6 +136,20 @@ struct NewAuditSheet: View {
                 Spacer()
                 Toggle("Verbose", isOn: $options.verbose)
                     .toggleStyle(.checkbox)
+            }
+
+            // Modèle Claude (mémorisé)
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Modèle Claude").font(.callout.weight(.medium))
+                Picker("", selection: $model) {
+                    Text("Auto (réglage Claude Code)").tag("auto")
+                    Text("Opus").tag("opus")
+                    Text("Sonnet").tag("sonnet")
+                    Text("Haiku").tag("haiku")
+                }
+                .pickerStyle(.menu)
+                .labelsHidden()
+                .frame(width: 240)
             }
 
             // Modules optionnels
@@ -355,7 +371,7 @@ struct NewAuditSheet: View {
 
         Task {
             // runAudit reçoit le dossier parent (crée audit-{slug}/ dedans)
-            await store.runAudit(subject: trimmed, options: options, outputDir: outputDir)
+            await store.runAudit(subject: trimmed, options: options, outputDir: outputDir, model: model)
         }
     }
 }

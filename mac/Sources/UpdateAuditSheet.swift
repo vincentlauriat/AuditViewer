@@ -8,6 +8,8 @@ struct UpdateAuditSheet: View {
     @State private var options: AuditOptions = AuditOptions()
     @State private var isRunning: Bool = false
     @State private var isDone: Bool = false
+    // Modèle Claude mémorisé entre les sessions (partagé avec le nouvel audit).
+    @AppStorage("auditModel") private var model: String = "auto"
 
     // MARK: - Body
 
@@ -130,6 +132,20 @@ struct UpdateAuditSheet: View {
                 Spacer()
                 Toggle("Verbose", isOn: $options.verbose)
                     .toggleStyle(.checkbox)
+            }
+
+            // Modèle Claude (mémorisé)
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Modèle Claude").font(.callout.weight(.medium))
+                Picker("", selection: $model) {
+                    Text("Auto (réglage Claude Code)").tag("auto")
+                    Text("Opus").tag("opus")
+                    Text("Sonnet").tag("sonnet")
+                    Text("Haiku").tag("haiku")
+                }
+                .pickerStyle(.menu)
+                .labelsHidden()
+                .frame(width: 240)
             }
 
             // Modules optionnels
@@ -256,7 +272,7 @@ struct UpdateAuditSheet: View {
         isRunning = true
         store.startWatchingEvents(in: dir)
         Task {
-            await store.rerunAuditWith(options: options)
+            await store.rerunAuditWith(options: options, model: model)
             isRunning = false
             isDone = true
         }
