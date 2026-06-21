@@ -44,8 +44,9 @@ struct MarkdownTVOSView: View {
 }
 
 /// Enveloppe un bloc pour le rendre focusable (donc défilable) avec un léger
-/// surlignage indiquant la position courante.
-private struct FocusableBlock<Content: View>: View {
+/// surlignage indiquant la position courante. Partagé par les vues qui doivent
+/// défiler à la télécommande (rendu markdown, liste de sources…).
+struct FocusableBlock<Content: View>: View {
     @ViewBuilder var content: () -> Content
     @FocusState private var focused: Bool
 

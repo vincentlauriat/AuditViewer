@@ -227,22 +227,31 @@ struct SourcesTVOSView: View {
                 ContentUnavailableView("Sources indisponibles", systemImage: "link.badge.slash",
                                        description: Text("Aucune source partagée pour cet audit."))
             } else {
-                List(sorted) { source in
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(alignment: .top) {
-                            Text(source.title ?? source.url).fontWeight(.medium).lineLimit(2)
-                            Spacer()
-                            if let tag = source.tag { TagBadgeTVOS(tag: tag) }
-                            if source.stale == true {
-                                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 14) {
+                        // Lignes focusables : sur tvOS la liste ne défile (et n'est
+                        // atteignable depuis la barre d'onglets) que via des cibles de focus.
+                        ForEach(sorted) { source in
+                            FocusableBlock {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    HStack(alignment: .top) {
+                                        Text(source.title ?? source.url).fontWeight(.medium).lineLimit(2)
+                                        Spacer()
+                                        if let tag = source.tag { TagBadgeTVOS(tag: tag) }
+                                        if source.stale == true {
+                                            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                                        }
+                                    }
+                                    Text(source.url).font(.callout).foregroundStyle(.secondary).lineLimit(1)
+                                    if let date = source.date {
+                                        Label(date, systemImage: "calendar").font(.caption).foregroundStyle(.tertiary)
+                                    }
+                                }
                             }
                         }
-                        Text(source.url).font(.callout).foregroundStyle(.secondary).lineLimit(1)
-                        if let date = source.date {
-                            Label(date, systemImage: "calendar").font(.caption).foregroundStyle(.tertiary)
-                        }
                     }
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, 90)
+                    .padding(.vertical, 60)
                 }
             }
         }
