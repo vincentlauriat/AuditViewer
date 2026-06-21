@@ -120,3 +120,38 @@ targets:
         IPHONEOS_DEPLOYMENT_TARGET: "17.0"
         DEVELOPMENT_TEAM: "KFLACS69T9"
         CODE_SIGN_STYLE: Automatic
+
+  # Viewer Apple TV (lecture seule) — lit les audits via Bonjour + HTTP LAN
+  # (le Mac partage le dossier Research, cf. LANServer). Pas d'iCloud, pas de Sparkle.
+  AuditViewerTVOS:
+    type: application
+    platform: tvOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: tvos/Sources
+      # Modèles partagés (Foundation only) — référencés, pas dupliqués.
+      - path: Sources/AuditManifest.swift
+    info:
+      path: tvos/Info.plist
+      properties:
+        CFBundleDisplayName: Audit Viewer
+        CFBundleName: AuditViewerTVOS
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        # Réseau local : découverte Bonjour + autorisation requise (tvOS 14+).
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        NSBonjourServices:
+          - _auditviewer._tcp
+        NSLocalNetworkUsageDescription: "Découvre le Mac qui partage vos dossiers d'audit sur le réseau local."
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vincent.AuditViewerTVOS
+        PRODUCT_NAME: AuditViewerTVOS
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        TVOS_DEPLOYMENT_TARGET: "17.0"
+        DEVELOPMENT_TEAM: "KFLACS69T9"
+        CODE_SIGN_STYLE: Automatic

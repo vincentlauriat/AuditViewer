@@ -64,7 +64,7 @@
 ## App tvOS (Apple TV) — Lecteur d'études (lecture seule) — étude validée, voir PLAN_TVOS.md
 Ingestion : Bonjour + HTTP LAN (Mac = serveur). Périmètre : reader-only.
 - [x] Phase 1 — Serveur Mac `LANServer.swift` (NWListener + Bonjour `_auditviewer._tcp`, REST read-only de researchRoot, garde-fou path-traversal par énumération, toggle dans Réglages + indicateur d'état). Testé : logique métier + serveur réseau réel (URLSession) + 3 cas path-traversal → 404. `swift build` vert.
-- [ ] Phase 2 — Target `AuditViewerTVOS` (project.yml) + `BonjourBrowser` + `AuditAPIClient` + `AuditStoreTVOS` + `tvos/build.sh`
+- [x] Phase 2 — Target `AuditViewerTVOS` (project.yml, tvOS 17, Bonjour/local-network plist) + `BonjourBrowser`/`EndpointResolver` + `AuditAPIClient` + `AuditStoreTVOS` + vue squelette + `tvos/build.sh`. Build simulateur tvOS vert. Transport client↔serveur testé bout-en-bout (audits/manifest/sources/file décodés). Reste à valider sur simulateur/appareil : découverte Bonjour réelle + résolution endpoint.
 - [ ] Phase 3 — UI 10-foot : écran connexion (Bonjour), liste + détail (TabView), `DimensionView`/`KPIGridView`/`SourcesView` reskinnés focus engine
 - [ ] Phase 4 — Build XcodeGen tvOS, test bout-en-bout (Mac partage → TV découvre → audit réel), signing appareil
 
