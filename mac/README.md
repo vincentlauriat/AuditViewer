@@ -124,6 +124,43 @@ ios/build.sh <device-udid>   # build signé + install + lancement sur l'appareil
 
 ---
 
+## App Apple TV / tvOS (lecture seule)
+
+La cible **`AuditViewerTVOS`** (`tvos/Sources/`) est un **lecteur natif** pour Apple TV,
+pensé pour consulter les audits sur grand écran (réunions, présentations). Périmètre
+lecture seule : liste des audits + synthèse/KPIs, dimensions, sources et rapport Markdown.
+Pas de lancement ni de mise à jour d'audit, pas de CLI `claude`, pas de Sparkle — ces
+fonctions restent sur Mac/Web.
+
+**Rendu** : le Markdown est rendu **nativement en SwiftUI** (pas de `WKWebView`). La
+navigation se fait à la télécommande via le *focus engine* : tout contenu consultable doit
+être *focusable* pour rester atteignable et défilable.
+
+**Accès aux fichiers** : tvOS n'a ni sélecteur **Fichiers**, ni iCloud Drive, ni stockage
+local persistant. Le Mac partage donc son dossier `Research` **sur le réseau local** via
+`LANServer` (`Sources/LANServer.swift`) — un `NWListener` + Bonjour `_auditviewer._tcp`
+exposant un serveur HTTP **GET-only, lecture seule** (protégé contre le *path traversal*).
+Le réglage **« Partager sur le réseau local »** est *off* par défaut côté Mac. L'Apple TV
+(`tvos/Sources/` : `BonjourBrowser`, `EndpointResolver`, `AuditAPIClient`,
+`AuditStoreTVOS`) découvre le Mac et lit via l'API REST : `/api/audits`,
+`/api/audit/{id}/manifest|data|sources|files`, `/api/audit/{id}/file?name=X.md`.
+
+**Build** (tvOS 17+, nécessite Xcode complet) — via le script `tvos/build.sh` :
+
+```bash
+tvos/build.sh                # build simulateur (vérification de compilation)
+tvos/build.sh <device-udid>  # build signé + install + lancement sur une Apple TV
+                             # appairée à Xcode par Wi-Fi
+```
+
+> La target tvOS est définie dans `project.yml` (XcodeGen), sans Sparkle, et partage
+> `Sources/AuditManifest.swift` avec les autres cibles. Elle déclare `NSBonjourServices`
+> et `NSLocalNetworkUsageDescription`, **sans entitlement iCloud**. L'icône tvOS provient
+> des *brand assets* dans `tvos/Assets.xcassets`. Comme pour le Mac et l'iOS, l'`Info.plist`
+> est généré par XcodeGen — éditer `project.yml`, pas le fichier.
+
+---
+
 ## Documentation
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — structure du code et flux de données

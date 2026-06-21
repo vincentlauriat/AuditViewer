@@ -37,6 +37,19 @@ Deux systèmes de build coexistent :
 - **Dépendance au skill** : si les noms de fichiers (`00_*.md`, `_factcheck.md`, `_data.json`,
   `_recon.json`) ou leurs structures changent côté skill, réaligner `auditSections` (`Models.swift`),
   la détection dans `loadAuditDir`, `AuditMeta`, et `GraphBuilder`.
+- **Trois cibles** : ce dépôt build **macOS** (app complète), **iOS/iPadOS** (`ios/`, lecteur lecture
+  seule) et **tvOS** (`tvos/`, lecteur Apple TV lecture seule). Les trois sont déclarées dans
+  `project.yml` ; iOS et tvOS sont sans Sparkle. tvOS partage `Sources/AuditManifest.swift`.
+- **Piège tvOS — *focus engine*** : sur tvOS, une `ScrollView`/`List` ne défile et n'est atteignable
+  que si elle **contient des éléments focusables**. Le contenu textuel pur (rendu Markdown natif
+  SwiftUI dans `tvos/Sources/`, **pas** de `WKWebView`) doit être **enveloppé pour devenir focusable**,
+  sinon il est inaccessible à la télécommande.
+- **Piège tvOS — ingestion réseau** : tvOS n'a ni Files picker, ni iCloud Drive, ni stockage local
+  persistant. L'Apple TV lit via HTTP le dossier `Research` partagé par le Mac (`Sources/LANServer.swift` :
+  `NWListener` + Bonjour `_auditviewer._tcp`, serveur GET-only lecture seule, anti *path-traversal*).
+  Réglage **« Partager sur le réseau local »** *off* par défaut. Un audit **sans `_manifest.json`**
+  (legacy) est servi via l'endpoint `/files`. Déclarer `NSBonjourServices` +
+  `NSLocalNetworkUsageDescription`, **pas** d'entitlements iCloud, dans `project.yml`.
 
 ## Conventions de code
 - Concurrence Swift 6 stricte : `AuditStore` est `@MainActor @Observable` ; respecter `Sendable`

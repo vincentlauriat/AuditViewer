@@ -11,7 +11,7 @@ AuditViewer's engine runs *inside* an AI assistant. You need **one** of these:
 - **[Claude Code](https://claude.com/claude-code)** — recommended, supports every feature.
 - **Gemini** (Google's AI coding assistant) — supported in "solo" mode.
 
-That's the only hard requirement. The web viewer, the Mac app and the iOS/iPadOS reader are **optional** ways to read your audits more comfortably — you can skip them at first.
+That's the only hard requirement. The web viewer, the Mac app, the iOS/iPadOS reader and the Apple TV (tvOS) viewer are **optional** ways to read your audits more comfortably — you can skip them at first.
 
 ---
 
@@ -108,6 +108,30 @@ xcodebuild -scheme AuditViewerIOS -destination 'generic/platform=iOS Simulator' 
 ```
 
 On first launch, tap **Choose the Research folder…** and pick your `Research` folder in the **Files** app (iCloud Drive or "On My iPhone"). The app remembers it and lets you browse each audit's summary, dimensions, sources and full report.
+
+### Apple TV (tvOS) viewer — your audits on the big screen
+
+A native **read-only** app for Apple TV, made for showing an audit on a large screen during a meeting or boardroom presentation. The Apple TV can't store files or reach iCloud Drive, so it reads your audits **over the local network**: the Mac app shares its `Research` folder, and the Apple TV discovers it automatically.
+
+Build it from source (tvOS 17+, Xcode + [XcodeGen](https://github.com/yonaskolb/XcodeGen)):
+
+```bash
+cd mac
+./tvos/build.sh
+```
+
+This builds and runs the `AuditViewerTVOS` target in the tvOS Simulator. To run it on a real Apple TV paired to Xcode over Wi-Fi, pass its device UDID:
+
+```bash
+./tvos/build.sh <UDID>
+```
+
+To make audits appear on the TV, two things must be on:
+
+1. **On the Mac:** open the app's settings and turn on **Share on the local network** (off by default). A status indicator confirms sharing is active.
+2. **On the Apple TV:** on first launch, allow **Local Network** access when prompted. The viewer then discovers the Mac automatically and — if there's only one — connects to it, letting you browse each audit's summary, dimensions, sources and full report with the Siri Remote.
+
+Everything stays on your local network; nothing goes to the cloud.
 
 ---
 

@@ -72,7 +72,7 @@ This is the same discipline a consulting team applies — encoded as rules the A
 
 ## The viewers, one shared language
 
-You can read an audit as plain files. But the **web viewer** and **macOS app** add live progress, comfortable reading, and a map of how audits relate. On the go, the **iOS / iPadOS reader** opens the same audits straight from the Files app.
+You can read an audit as plain files. But the **web viewer** and **macOS app** add live progress, comfortable reading, and a map of how audits relate. On the go, the **iOS / iPadOS reader** opens the same audits straight from the Files app. And for the boardroom, the **Apple TV (tvOS) viewer** shows them on the big screen — reading over your local network, since the Apple TV has no file storage of its own. The Mac app exposes its `Research` folder as a small read-only service that the Apple TV discovers automatically (via Bonjour) and reads over a simple, GET-only API; nothing leaves your network.
 
 They all understand the same thing because the skill writes its output as a **machine contract** — a small, stable set of files with a fixed structure:
 

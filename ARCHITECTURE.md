@@ -101,3 +101,21 @@ L'UI écrit `{v, action, dimension?}`. Le skill relit ce fichier aux **points de
 | **Gemini / Antigravity** | `solo` | Contexte unique — grand contexte natif |
 
 Le contrat machine est identique dans les deux cas ; seul le moteur d'exécution interne diffère.
+
+## Viewers AuditViewer (trois cibles)
+
+Le contrat machine v1 (`_manifest.json`, `_data.json`, `_sources.json`, `*.md`) est consommé par
+**trois applications**, chacune avec son propre mode d'accès aux données. Voir
+[`mac/ARCHITECTURE.md`](mac/ARCHITECTURE.md) pour le détail des composants.
+
+| Cible | Plateforme | Périmètre | Accès aux données du contrat |
+|---|---|---|---|
+| **`AuditViewer`** | macOS | App complète (création/màj via CLI `claude`, graphe, export `.docx`) | Lecture/écriture directe du dossier `Research` local |
+| **`AuditViewerIOS`** | iOS / iPadOS 17+ | Lecteur seul | Files picker + iCloud Drive (security-scoped bookmark) |
+| **`AuditViewerTVOS`** | tvOS 17+ | Lecteur seul, grand écran (réunions/présentations) | **Réseau local** : le Mac partage `Research` via Bonjour + HTTP read-only |
+
+> **Pourquoi un transport réseau sur tvOS ?** tvOS n'expose ni Files picker, ni documents iCloud Drive,
+> ni stockage local persistant. Le Mac joue donc le rôle de serveur (composant `LANServer`,
+> Bonjour `_auditviewer._tcp` + HTTP/1.1 GET-only) et l'Apple TV celui de client. L'API REST sert
+> exactement les mêmes artefacts du contrat v1 (`_manifest.json`/`_data.json`/`_sources.json` + `.md`),
+> garantissant la cohérence des trois viewers.

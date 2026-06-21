@@ -1,5 +1,13 @@
 # PLAN — Viewer tvOS (Apple TV) — lecteur d'études en lecture seule
 
+> **Statut (2026-06-21) : P0 LIVRÉ et validé sur une vraie Apple TV.**
+> Phases 1→4 terminées : serveur LAN macOS (Bonjour + HTTP), cible tvOS + transport,
+> UI 10-foot (TabView Synthèse/Dimensions/Sources/Rapport, rendu Markdown natif),
+> build/signing + déploiement appareil. Correctifs post-livraison : défilement au
+> focus engine (tout contenu rendu focusable), support des audits sans `_manifest.json`
+> via l'endpoint `/files`, auto-connexion à un serveur unique, icône tvOS.
+> Voir `TODOS.md` pour le détail coché.
+
 Étude de faisabilité validée le 2026-06-21. Décisions retenues :
 - **Ingestion des données** : Bonjour + serveur HTTP sur le réseau local (Mac = serveur, Apple TV = client). Offline-LAN, pas de cloud.
 - **Périmètre** : reader-only, calqué sur l'app iOS P0 (synthèse, dimensions, KPIs, sources). Pas de création/màj d'audit, pas de CLI `claude`, pas de Sparkle.

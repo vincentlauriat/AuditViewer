@@ -5,13 +5,13 @@ Réponses courtes aux questions les plus fréquentes. Toujours bloqué ? Ouvrez 
 ---
 
 ### Qu'est-ce qu'AuditViewer exactement ?
-Un outil qui transforme une simple demande — comme `/audit-report Tesla` — en un dossier de recherche complet et sourcé sur n'importe quelle entreprise, produit, marché ou technologie. Il s'accompagne de visualiseurs optionnels (une application web, une application macOS et un lecteur iOS/iPadOS) pour lire et lancer les audits confortablement. Voir [Comment ça marche](fonctionnement.md).
+Un outil qui transforme une simple demande — comme `/audit-report Tesla` — en un dossier de recherche complet et sourcé sur n'importe quelle entreprise, produit, marché ou technologie. Il s'accompagne de visualiseurs optionnels (une application web, une application macOS, un lecteur iOS/iPadOS et un lecteur Apple TV) pour lire et lancer les audits confortablement. Voir [Comment ça marche](fonctionnement.md).
 
 ### Faut-il être technicien pour l'utiliser ?
 Non. Si vous savez installer une application et taper une commande, vous pouvez lancer un audit. Le [guide de démarrage](demarrage.md) ne suppose aucune connaissance préalable. Les visualiseurs vous permettent ensuite de tout faire depuis une interface graphique.
 
 ### Qu'est-ce que je dois installer ?
-Au minimum, un assistant IA dans lequel le skill s'exécute : **[Claude Code](https://claude.com/claude-code)** (recommandé) ou **Gemini**. Le visualiseur web nécessite en plus [Node.js](https://nodejs.org/) ; l'application Mac nécessite macOS 15+ et la chaîne d'outils Swift ; le lecteur iOS/iPadOS nécessite iOS 17+ et se compile depuis les sources avec Xcode. Tous les visualiseurs sont optionnels.
+Au minimum, un assistant IA dans lequel le skill s'exécute : **[Claude Code](https://claude.com/claude-code)** (recommandé) ou **Gemini**. Le visualiseur web nécessite en plus [Node.js](https://nodejs.org/) ; l'application Mac nécessite macOS 15+ et la chaîne d'outils Swift ; le lecteur iOS/iPadOS nécessite iOS 17+ et se compile depuis les sources avec Xcode ; le lecteur Apple TV nécessite tvOS 17+, se compile aussi depuis les sources, et a besoin que le Mac partage son dossier `Research` sur le réseau local. Tous les visualiseurs sont optionnels.
 
 ### Est-ce que ça coûte quelque chose ?
 Le projet lui-même est gratuit et open source ([licence MIT](../../LICENSE)). Lancer des audits consomme votre quota chez votre assistant IA (Claude Code ou Gemini), qui a sa propre tarification. Un audit « quick » consomme bien moins de ressources qu'un audit « full ».
@@ -40,8 +40,11 @@ Oui. Relancez le même sujet : le skill détecte l'audit existant et vous propos
 ### Où mes audits sont-ils stockés ?
 Dans un dossier par audit (par exemple `audit-tesla/`), au sein du répertoire d'audits que vous avez choisi (par défaut `~/Documents/Research`). Ce sont de simples fichiers Markdown et JSON qui vous appartiennent entièrement — lisibles partout, avec ou sans les visualiseurs.
 
+### Puis-je consulter mes audits sur Apple TV ?
+Oui, avec le **lecteur Apple TV (tvOS 17+)**, en lecture seule — idéal pour présenter un audit sur grand écran en réunion ou en salle de conseil. Comme l'Apple TV n'a ni sélecteur de fichiers, ni iCloud Drive, ni stockage local, c'est votre **Mac qui partage son dossier `Research` sur le réseau local** : activez le réglage **Partager sur le réseau local** dans l'application macOS, autorisez le **réseau local** sur l'Apple TV, et celle-ci découvre puis se connecte automatiquement à votre Mac (via Bonjour). Tout reste sur votre réseau, sans cloud. Le lecteur tvOS se compile depuis les sources avec Xcode (cible `AuditViewerTVOS`).
+
 ### Les visualiseurs envoient-ils mes données quelque part ?
-Non. Les visualiseurs lisent les dossiers d'audit sur votre propre machine. Les seuls appels externes sont les recherches web que votre assistant IA effectue pendant l'investigation.
+Non. Les visualiseurs lisent les dossiers d'audit sur votre propre machine. Le lecteur Apple TV lit les audits que votre Mac partage sur le **réseau local** uniquement — rien ne sort de votre réseau. Les seuls appels externes sont les recherches web que votre assistant IA effectue pendant l'investigation.
 
 ### Ça marche avec Claude — est-ce que ça marche avec Gemini ?
 Oui. Le skill détecte quand les sous-agents ne sont pas disponibles et bascule automatiquement en mode « solo », en produisant le même rapport. Installez avec `./install.sh --gemini`.

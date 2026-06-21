@@ -97,6 +97,28 @@ Dossier audit-{sujet}/ ──► AuditStore (état @Observable, @MainActor)
 | Lancement d'audit | `Process` exécutant `claude --output-format stream-json -p "/audit-report …"` ; stdout parsé ligne à ligne |
 | Suivi d'audit | `DispatchSource` sur `_events.jsonl` + polling de `_question.json` |
 
+## Partage réseau local — `LANServer` (`Sources/LANServer.swift`)
+
+Composant macOS qui **sert le dossier `Research` en lecture seule sur le réseau local**, afin que le
+viewer Apple TV (qui n'a ni Files picker, ni iCloud, ni stockage persistant) puisse consulter les audits.
+
+- **`NWListener`** (Network.framework) sur un port éphémère + publication Bonjour **`_auditviewer._tcp`**
+  (nom = nom de la machine) ; parseur HTTP/1.1 minimal **GET seul**.
+- Sert `KeychainStore.researchRoot` (ou son repli) ; garde-fou **anti path-traversal par énumération
+  réelle** des fichiers.
+- Activé via un réglage macOS **« Partager sur le réseau local »** (*off* par défaut) ; indicateur d'état
+  (actif / nb de clients) dans l'UI.
+- **API REST** (alignée sur le contrat machine v1, mêmes `_manifest.json`/`_data.json`/`_sources.json`) :
+
+  | Route | Réponse |
+  |---|---|
+  | `GET /api/audits` | liste des dossiers `audit-*/` (slug + titre depuis `_manifest.json`) |
+  | `GET /api/audit/{id}/manifest` | `_manifest.json` |
+  | `GET /api/audit/{id}/data` | `_data.json` |
+  | `GET /api/audit/{id}/sources` | `_sources.json` |
+  | `GET /api/audit/{id}/files` | liste des `.md` de l'audit |
+  | `GET /api/audit/{id}/file?name=X.md` | un `.md` (validation : nom simple, pas de `..`, extension `.md`) |
+
 ## Cible iOS / iPadOS (`ios/Sources/`, lecture seule)
 
 Target SwiftUI **`AuditViewerIOS`** (définie dans `project.yml`, sans Sparkle) qui lit le
@@ -116,3 +138,38 @@ même contrat machine v1, sans pilotage (pas de `Process`/`NSOpenPanel`, pas de 
 
 > Dépendance au skill identique au Mac : si les noms de fichiers du contrat changent,
 > réaligner `AuditManifest`/`AuditMeta`/`ModelsIOS` côté iOS comme `Models.swift` côté Mac.
+
+## Cible tvOS / Apple TV (`tvos/Sources/`, lecture seule)
+
+Target SwiftUI **`AuditViewerTVOS`** (tvOS 17+, définie dans `project.yml`, sans Sparkle ni entitlements
+iCloud) pour consulter les audits **sur grand écran** (réunions/présentations). Pas de création/màj,
+pas de CLI `claude`.
+
+- **Ingestion par le réseau local** (point d'architecture central) : tvOS n'a ni Files picker, ni iCloud
+  Drive, ni stockage local persistant — toute la couche d'accès iOS (`ResearchFolderBookmark`,
+  `ResearchVaultReader`, security-scoped bookmark) est donc **inutilisable**. Le Mac partage à la place
+  son dossier `Research` via le composant **`LANServer`** (voir plus haut) ; tout est re-fetch à chaque
+  lancement (pas de persistance).
+- **`BonjourBrowser`** (`NWBrowser`) — découvre les serveurs `_auditviewer._tcp` sur le réseau local.
+- **`EndpointResolver`** — résout un service Bonjour en `http://host:port`.
+- **`AuditAPIClient`** — client REST typé (`URLSession`) sur le contrat exposé par `LANServer`
+  (`/api/audits`, `/api/audit/{id}/manifest|data|sources|files`, `/api/audit/{id}/file?name=X.md`).
+- **`AuditStoreTVOS`** — source de vérité (`@Observable @MainActor`) : serveurs trouvés, audit
+  sélectionné, contenu chargé.
+- **Vues SwiftUI 10-foot** : écran de connexion (liste des Mac découverts, focusable télécommande),
+  liste des audits + détail en `TabView` (Synthèse / Dimensions / Sources). Rendu Markdown **natif
+  SwiftUI** (pas de `WKWebView` : scroll télécommande non fiable) ; tout le contenu est rendu
+  **focusable** pour le focus engine.
+
+> Dépendance au skill identique au Mac, mais via le réseau : si les noms de fichiers du contrat changent,
+> réaligner conjointement `LANServer` (Mac) et le client tvOS (`AuditAPIClient` + modèles partagés).
+
+## Build des cibles
+
+XcodeGen (`project.yml`) génère les trois targets ; la cible tvOS partage `Sources/AuditManifest.swift`.
+
+| Cible | Build | iCloud / Sparkle | Clés `Info.plist` notables |
+|---|---|---|---|
+| `AuditViewer` (macOS) | `build.sh` (SwiftPM) / `Scripts/release.sh` (XcodeGen + Sparkle) | Sparkle (release) | — |
+| `AuditViewerIOS` | `ios/build.sh` | entitlements iCloud Documents | `UIFileSharingEnabled`, `LSSupportsOpeningDocumentsInPlace`, `NSUbiquitousContainers` |
+| `AuditViewerTVOS` | `tvos/build.sh` | aucun | `NSBonjourServices`, `NSLocalNetworkUsageDescription` |

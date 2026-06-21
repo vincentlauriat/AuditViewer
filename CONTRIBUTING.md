@@ -20,7 +20,11 @@ Thanks for your interest! Contributions of all kinds are welcome — bug reports
 | `skills/audit-report/` | The AI audit skill | Markdown skill spec |
 | `web/` | Web viewer & control UI | Node + React + Vite |
 | `mac/` | Native macOS app | Swift / SwiftUI |
+| `mac/ios/` | iPhone/iPad reader (read-only) | Swift / SwiftUI |
+| `mac/tvos/` | Apple TV reader (read-only) | Swift / SwiftUI |
 | `docs/` | User documentation | Markdown (EN + FR) |
+
+The `mac/`, `mac/ios/` and `mac/tvos/` targets share one Xcode project (`mac/project.yml`, XcodeGen). The iOS and tvOS readers are read-only and have no Sparkle; the Apple TV reader pulls audits from the Mac over the local network (Bonjour + read-only HTTP).
 
 The three apps communicate through a versioned **machine contract** — read [ARCHITECTURE.md](ARCHITECTURE.md) before changing any output format.
 
@@ -43,6 +47,14 @@ swift build          # quick compile check
 ./build.sh           # full .app bundle (dev)
 ```
 For the distributable build (XcodeGen + Sparkle), see [`mac/RELEASE.md`](mac/RELEASE.md).
+
+**iOS / iPadOS reader** and **Apple TV reader** (read-only, require full Xcode):
+```bash
+cd mac
+ios/build.sh         # iOS: build for the simulator (compile check)
+tvos/build.sh        # tvOS: build for the simulator (compile check)
+# pass a device UDID to build/install on a real device or a paired Apple TV
+```
 
 ## Pull request checklist
 
@@ -76,7 +88,7 @@ Merci de votre intérêt ! Toutes les contributions sont les bienvenues — rapp
 
 ## Mise en place
 
-Voir la section anglaise « Local setup » : skill via `./install.sh`, viewer web via `npm install && npm run dev`, app macOS via `swift build` / `./build.sh`. Build distribuable : [`mac/RELEASE.md`](mac/RELEASE.md).
+Voir la section anglaise « Local setup » : skill via `./install.sh`, viewer web via `npm install && npm run dev`, app macOS via `swift build` / `./build.sh`. Build distribuable : [`mac/RELEASE.md`](mac/RELEASE.md). Les lecteurs **iOS/iPadOS** et **Apple TV** (lecture seule, Xcode complet requis) se buildent via `mac/ios/build.sh` et `mac/tvos/build.sh` (simulateur, ou UDID d'un appareil / d'une Apple TV appairée).
 
 ## Avant d'ouvrir une PR
 

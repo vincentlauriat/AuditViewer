@@ -5,13 +5,13 @@ Short answers to the questions people ask most. Still stuck? Open an issue on th
 ---
 
 ### What exactly is AuditViewer?
-A tool that turns a single request — like `/audit-report Tesla` — into a complete, sourced research dossier on any company, product, market, or technology. It comes with optional viewers (a web app, a macOS app, and an iOS/iPadOS reader) to read and run audits comfortably. See [How it works](how-it-works.md).
+A tool that turns a single request — like `/audit-report Tesla` — into a complete, sourced research dossier on any company, product, market, or technology. It comes with optional viewers (a web app, a macOS app, an iOS/iPadOS reader, and an Apple TV viewer) to read and run audits comfortably. See [How it works](how-it-works.md).
 
 ### Do I need to be technical to use it?
 No. If you can install one app and type a command, you can run an audit. The [getting-started guide](getting-started.md) assumes zero background. The viewers let you do everything from a graphical interface afterwards.
 
 ### What do I need to install?
-At minimum, an AI assistant the skill runs inside: **[Claude Code](https://claude.com/claude-code)** (recommended) or **Gemini**. The web viewer additionally needs [Node.js](https://nodejs.org/); the Mac app needs macOS 15+ and the Swift toolchain; the iOS/iPadOS reader needs iOS 17+ and is built from source with Xcode. All viewers are optional.
+At minimum, an AI assistant the skill runs inside: **[Claude Code](https://claude.com/claude-code)** (recommended) or **Gemini**. The web viewer additionally needs [Node.js](https://nodejs.org/); the Mac app needs macOS 15+ and the Swift toolchain; the iOS/iPadOS reader needs iOS 17+ and is built from source with Xcode; the Apple TV viewer needs tvOS 17+ and is likewise built from source with Xcode. All viewers are optional.
 
 ### Does it cost anything?
 The project itself is free and open-source ([MIT license](../LICENSE)). Running audits consumes usage from your AI assistant (Claude Code or Gemini), which has its own pricing. A "quick" audit uses far fewer resources than a "full" one.
@@ -40,8 +40,11 @@ Yes. Re-run the same subject and the skill detects the existing audit, offering 
 ### Where are my audits stored?
 In a folder per audit (e.g. `audit-tesla/`), under your chosen audits directory (by default `~/Documents/Research`). They're plain Markdown and JSON files you fully own — readable anywhere, with or without the viewers.
 
+### Can I see my audits on Apple TV?
+Yes. There's a read-only **Apple TV (tvOS) viewer**, made for showing an audit on the big screen in a meeting or boardroom. Because the Apple TV has no file storage and can't reach iCloud Drive, it reads your audits **over the local network**: turn on **Share on the local network** in the Mac app, and the Apple TV discovers your Mac automatically and connects to it. Everything stays on your network — nothing goes to the cloud. It's a reader only: you can't create or update audits from it. See [Getting started](getting-started.md) for how to build and launch it.
+
 ### Do the viewers send my data anywhere?
-No. The viewers read audit folders on your own machine. The only external calls are the web searches your AI assistant makes while researching.
+No. The viewers read audit folders on your own machine — and the Apple TV viewer reads them over your local network from the Mac, which never leaves your network. The only external calls are the web searches your AI assistant makes while researching.
 
 ### It works with Claude — does it work with Gemini?
 Yes. The skill detects when sub-agents aren't available and automatically switches to "solo" mode, producing the same report. Install with `./install.sh --gemini`.

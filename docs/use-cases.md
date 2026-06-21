@@ -33,6 +33,10 @@ You're entering — or sizing — a new market.
 
 Market size (TAM/SAM/SOM), growth rates, regulation, geography, and the main players, assembled into one briefing.
 
+### Present an audit on the big screen
+
+You're walking a board or a team through your findings. Instead of passing a laptop around, put the audit on the Apple TV in the room: turn on **Share on the local network** in the Mac app, and the **Apple TV (tvOS) viewer** discovers your Mac automatically over the local network. Browse the summary, dimensions, sources and full report on the big screen with the Siri Remote — everything stays on your network, nothing in the cloud.
+
 ---
 
 ## For curious non-experts
