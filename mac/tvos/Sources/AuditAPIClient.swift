@@ -42,12 +42,21 @@ struct AuditAPIClient: Sendable {
         var comps = URLComponents(url: base.appendingPathComponent("api/audit/\(id)/file"),
                                   resolvingAgainstBaseURL: false)!
         comps.queryItems = [URLQueryItem(name: "name", value: name)]
-        let (data, _) = try await URLSession.shared.data(from: comps.url!)
+        let (data, resp) = try await URLSession.shared.data(from: comps.url!)
+        try Self.ensureOK(resp)   // sinon un 404 renvoie un corps JSON d'erreur affiché comme markdown
         return String(decoding: data, as: UTF8.self)
     }
 
     private func getJSON<T: Decodable>(_ path: String) async throws -> T {
-        let (data, _) = try await URLSession.shared.data(from: base.appendingPathComponent(path))
+        let (data, resp) = try await URLSession.shared.data(from: base.appendingPathComponent(path))
+        try Self.ensureOK(resp)
         return try JSONDecoder().decode(T.self, from: data)
+    }
+
+    /// Rejette les réponses non-2xx (le serveur renvoie 404 avec un corps JSON d'erreur).
+    private static func ensureOK(_ resp: URLResponse) throws {
+        guard let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw URLError(.badServerResponse)
+        }
     }
 }
