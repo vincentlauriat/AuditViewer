@@ -64,7 +64,7 @@ Quand c'est terminé, vous aurez un nouveau dossier nommé `audit-notion/` conte
 
 Ouvrez le dossier `audit-notion/`. Commencez par **`00_RESUME_EXECUTIF.md`** (le résumé exécutif) pour un aperçu d'une page, puis plongez dans n'importe quel chapitre qui vous intéresse. **`RAPPORT_COMPLET.md`** est le rapport complet, prêt à partager ou à imprimer.
 
-Tous les fichiers Markdown (`.md`) s'ouvrent dans n'importe quel éditeur de texte, sur GitHub, ou dans un lecteur Markdown. Mais les deux visualiseurs ci-dessous le rendent encore plus agréable.
+Tous les fichiers Markdown (`.md`) s'ouvrent dans n'importe quel éditeur de texte, sur GitHub, ou dans un lecteur Markdown. Mais les visualiseurs ci-dessous le rendent encore plus agréable.
 
 ---
 
@@ -95,6 +95,39 @@ open build/AuditViewer.app
 ```
 
 L'application Mac ajoute une vue Markdown enrichie et une **carte de style Obsidian** qui montre comment vos audits se connectent via les sources partagées et les personnes.
+
+### Lecteur iOS / iPadOS — vos audits en déplacement
+
+Une application native **en lecture seule** pour iPhone et iPad. Compilez-la depuis les sources (iOS 17+, Xcode + [XcodeGen](https://github.com/yonaskolb/XcodeGen)) :
+
+```bash
+cd mac
+xcodegen generate
+xcodebuild -scheme AuditViewerIOS -destination 'generic/platform=iOS Simulator' build
+```
+
+Au premier lancement, touchez **Choisir le dossier Research…** et sélectionnez votre dossier `Research` dans l'app **Fichiers** (iCloud Drive ou « Sur mon iPhone »). L'app le mémorise et vous laisse parcourir la synthèse, les dimensions, les sources et le rapport complet de chaque audit.
+
+### Lecteur Apple TV (tvOS) — vos audits sur grand écran
+
+Une application native **en lecture seule** pour Apple TV, pensée pour présenter un audit en réunion, en présentation ou en salle de conseil. L'Apple TV n'a ni sélecteur de fichiers, ni iCloud Drive, ni stockage local : c'est donc votre **Mac qui partage son dossier `Research` sur le réseau local**, et l'Apple TV s'y connecte pour lire les audits. Aucun cloud, tout reste chez vous.
+
+Compilez la cible `AuditViewerTVOS` depuis les sources (tvOS 17+, Xcode + [XcodeGen](https://github.com/yonaskolb/XcodeGen)) :
+
+```bash
+cd mac
+xcodegen generate
+./tvos/build.sh
+```
+
+Cela compile et lance le viewer dans le simulateur tvOS. Pour l'installer sur une vraie Apple TV appairée à Xcode par Wi-Fi, passez son identifiant : `./tvos/build.sh <UDID>`.
+
+Au premier lancement :
+
+1. Côté Mac, ouvrez l'application macOS et activez le réglage **Partager sur le réseau local** (désactivé par défaut) ; un indicateur confirme que le partage est actif.
+2. Côté Apple TV, autorisez l'accès au **réseau local** lorsque l'app le demande.
+
+L'Apple TV découvre alors automatiquement votre Mac sur le réseau (via Bonjour) et, s'il n'y en a qu'un, s'y connecte sans configuration. Vous pouvez parcourir la liste des audits, la synthèse, les dimensions, les sources et le rapport complet, le tout à la télécommande Siri.
 
 ---
 

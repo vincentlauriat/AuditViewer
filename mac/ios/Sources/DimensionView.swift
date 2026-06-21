@@ -92,11 +92,6 @@ struct MarkdownWebView: UIViewRepresentable {
         // Rendu côté CSS uniquement pour les cas simples.
         // Pour P0 : rendu naïf (titres, paragraphes, code).
         // L'intégration du bundle web/ peut remplacer ceci en P1.
-        let escaped = md
-            .replacingOccurrences(of: "&", with: "&amp;")
-            .replacingOccurrences(of: "<", with: "&lt;")
-            .replacingOccurrences(of: ">", with: "&gt;")
-
         let isDark = UITraitCollection.current.userInterfaceStyle == .dark
         let bg = isDark ? "#1C1C1E" : "#FFFFFF"
         let fg = isDark ? "#F2F2F7" : "#1C1C1E"
@@ -193,7 +188,10 @@ struct MarkdownWebView: UIViewRepresentable {
     }
 
     private func jsonEncode(_ s: String) -> String {
-        let data = try? JSONSerialization.data(withJSONObject: s)
+        // NB : JSONSerialization.data(withJSONObject:) lève une NSException pour un
+        // String au niveau racine (non rattrapable par try?) → crash. JSONEncoder
+        // gère les fragments de type String depuis iOS 13.
+        let data = try? JSONEncoder().encode(s)
         return data.flatMap { String(data: $0, encoding: .utf8) } ?? "\"\""
     }
 }

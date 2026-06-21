@@ -854,36 +854,48 @@ final class AuditStore {
     /// URLs d'un domaine pour le dossier courant : scan des `.md` (domaine→URLs),
     /// enrichi par `_sources.json` (tag/date/stale) lorsqu'une URL y figure.
     private func sourceItems(forDomain domain: String) -> [GraphSourceItem] {
-        guard let dir = auditDir else { return [] }
-
-        // Index _sources.json par URL (si présent) pour l'enrichissement.
-        var meta: [String: AuditSource] = [:]
-        if let sources = Self.loadSources(from: dir) {
-            for s in sources { meta[s.url] = s }
+        // En périmètre global, le nœud « Source » agrège un domaine partagé par
+        // plusieurs audits : scanner tous les dossiers, pas seulement l'audit courant.
+        let dirs: [URL]
+        switch graphScope {
+        case .local:
+            guard let dir = auditDir else { return [] }
+            dirs = [dir]
+        case .global:
+            guard let root = researchRoot ?? auditDir?.deletingLastPathComponent() else { return [] }
+            dirs = GraphBuilder.auditDirs(in: root)
         }
 
-        // URLs du domaine via le scan (couvre aussi les audits legacy).
         var seen = Set<String>()
         var items: [GraphSourceItem] = []
-        for ref in GraphBuilder.scanSources(in: dir) where ref.domain == domain {
-            guard seen.insert(ref.url).inserted else { continue }
-            let s = meta[ref.url]
-            items.append(GraphSourceItem(
-                id: ref.url,
-                url: ref.url,
-                title: s?.title ?? (ref.label.isEmpty ? nil : ref.label),
-                tag: s?.tag,
-                date: s?.date,
-                stale: s?.stale ?? false
-            ))
-        }
+        for dir in dirs {
+            // Index _sources.json par URL (si présent) pour l'enrichissement.
+            var meta: [String: AuditSource] = [:]
+            if let sources = Self.loadSources(from: dir) {
+                for s in sources { meta[s.url] = s }
+            }
 
-        // Ajouter les URLs de _sources.json du même domaine non vues au scan.
-        for (url, s) in meta where GraphBuilder.domain(of: url) == domain && !seen.contains(url) {
-            seen.insert(url)
-            items.append(GraphSourceItem(
-                id: url, url: url, title: s.title, tag: s.tag, date: s.date, stale: s.stale ?? false
-            ))
+            // URLs du domaine via le scan (couvre aussi les audits legacy).
+            for ref in GraphBuilder.scanSources(in: dir) where ref.domain == domain {
+                guard seen.insert(ref.url).inserted else { continue }
+                let s = meta[ref.url]
+                items.append(GraphSourceItem(
+                    id: ref.url,
+                    url: ref.url,
+                    title: s?.title ?? (ref.label.isEmpty ? nil : ref.label),
+                    tag: s?.tag,
+                    date: s?.date,
+                    stale: s?.stale ?? false
+                ))
+            }
+
+            // Ajouter les URLs de _sources.json du même domaine non vues au scan.
+            for (url, s) in meta where GraphBuilder.domain(of: url) == domain && !seen.contains(url) {
+                seen.insert(url)
+                items.append(GraphSourceItem(
+                    id: url, url: url, title: s.title, tag: s.tag, date: s.date, stale: s.stale ?? false
+                ))
+            }
         }
 
         // Tri : Officielle > Analyste > Presse > autre, puis par URL.

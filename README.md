@@ -15,20 +15,22 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Last commit](https://img.shields.io/github/last-commit/vincentlauriat/AuditViewer)](https://github.com/vincentlauriat/AuditViewer/commits)
 <br>
-![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Web-blue)
+![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20iOS%20%7C%20iPadOS%20%7C%20tvOS%20%7C%20Web-blue)
 ![Works with](https://img.shields.io/badge/AI-Claude%20Code%20%7C%20Gemini-7c3aed)
 
 ---
 
 You type a name — `Tesla`, `Notion`, `the LLM market`, `Société Générale`. A few minutes later you have a structured, sourced, fact-checked research dossier worth what a consulting firm would bill thousands for: history, market sizing, technology, pricing, competition, financials, outlook — each figure backed by a dated source.
 
-AuditViewer is **an AI strategic-research assistant** made of three parts that work together:
+AuditViewer is **an AI strategic-research assistant** made of five parts that work together:
 
 | Part | What it is | For whom |
 |---|---|---|
 | 🧠 **`audit-report` skill** | The engine. One command that researches a topic and writes a full dossier. | Anyone with Claude Code or Gemini |
 | 🌐 **Web viewer** | A browser app to launch, watch, and read audits live. | Users who prefer a web UI |
 | 🖥️ **macOS app** | A native Mac app to read, compare and explore audits as a knowledge map. | Mac users |
+| 📱 **iOS / iPadOS app** | A native reader to browse your audits on iPhone & iPad, straight from the Files app. | Mobile readers |
+| 📺 **Apple TV app** | A native reader to view your audits on the big screen, served over your local network. | Boardrooms & presentations |
 
 ![Audit-Report: your AI strategic-consulting partner](images/Audit-Report__AI_Strategic_Consulting.png)
 
@@ -176,6 +178,50 @@ open build/AuditViewer.app
 
 Details: [`mac/README.md`](mac/README.md).
 
+### 4 — The iOS / iPadOS app
+
+A native **read-only reader** for iPhone & iPad: browse your audits and read each
+dimension and the full Markdown report on the go. It opens your existing `Research`
+folder straight from the **Files** app (iCloud Drive or "On My iPhone") — pick the
+folder once and the app remembers it.
+
+Build from source (iOS 17+, Xcode + [XcodeGen](https://github.com/yonaskolb/XcodeGen)):
+
+```bash
+cd mac
+xcodegen generate
+xcodebuild -scheme AuditViewerIOS -destination 'generic/platform=iOS Simulator' build
+```
+
+Scope is read-only — launching audits and the link map stay on Mac/Web. Sources live
+under [`mac/ios/`](mac/ios/).
+
+### 5 — The Apple TV app
+
+A native **read-only reader** for Apple TV: view your audits on the big screen —
+in meetings, presentations, the boardroom. It shows the audit list, the summary
+(title, status, KPIs, badges), dimensions (drill-down), sources and the full
+Markdown report, with native SwiftUI rendering and Siri Remote navigation.
+
+Since tvOS has no file picker, no iCloud Drive and no persistent local storage, the
+**Mac shares its `Research` folder over your local network**: the macOS app exposes a
+small read-only HTTP server published via Bonjour (`_auditviewer._tcp`). Turn on
+**"Share on local network"** in the Mac app (off by default), and the Apple TV
+discovers the Mac automatically and reads the audits over a REST API. Everything stays
+on the LAN — no cloud.
+
+Build from source (tvOS 17+, Xcode + [XcodeGen](https://github.com/yonaskolb/XcodeGen)):
+
+```bash
+cd mac
+xcodegen generate
+./tvos/build.sh           # build & run on the tvOS Simulator
+./tvos/build.sh <UDID>    # or target an Apple TV paired to Xcode over Wi-Fi
+```
+
+Scope is read-only — launching audits and the link map stay on Mac/Web. Sources live
+under [`mac/tvos/`](mac/tvos/).
+
 ---
 
 ## Documentation
@@ -195,7 +241,7 @@ French versions live under [`docs/fr/`](docs/fr/).
 
 ## Under the hood: the machine contract
 
-The three apps stay in sync because the skill writes its output as a **deterministic, versioned "machine contract" (v1)**: a real-time event stream (`_events.jsonl`), a two-way control channel (`_control.json`), an interactive question/answer cycle, and canonical structured outputs (`_manifest.json`, `_data.json`, `_sources.json`). Any tool that reads this contract can display or drive an audit.
+The viewers stay in sync because the skill writes its output as a **deterministic, versioned "machine contract" (v1)**: a real-time event stream (`_events.jsonl`), a two-way control channel (`_control.json`), an interactive question/answer cycle, and canonical structured outputs (`_manifest.json`, `_data.json`, `_sources.json`). Any tool that reads this contract can display or drive an audit.
 
 ![Machine Contract v1](images/SkillAuditReport___Contrat_Machine_V1.png)
 
@@ -208,6 +254,8 @@ Full specification: [ARCHITECTURE.md](ARCHITECTURE.md).
 | `skills/audit-report/` | The AI audit skill (Claude Code / Gemini) |
 | `web/` | Web viewer & control UI (Node + React) |
 | `mac/` | Native macOS app (SwiftUI) |
+| `mac/ios/` | Native iOS / iPadOS reader app (SwiftUI) |
+| `mac/tvos/` | Native Apple TV (tvOS) reader app (SwiftUI) |
 | `docs/` | User documentation (this guide set) |
 | `images/` | Illustrations used in the docs |
 

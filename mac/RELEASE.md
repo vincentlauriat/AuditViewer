@@ -45,3 +45,6 @@ Variables surchargeables : `SIGNING_IDENTITY`, `NOTARY_PROFILE`, `SPARKLE_ACCOUN
 
 - `Info.plist` est **généré** par XcodeGen depuis `project.yml` — ne pas l'éditer à la main.
 - `AuditViewer.xcodeproj`, `build/`, `*.dmg` et `.sparkle-tools/` sont gitignorés (régénérables).
+- Ce pipeline ne concerne que l'app **macOS**. Les lecteurs **iOS/iPadOS** (`AuditViewerIOS`) et
+  **Apple TV / tvOS** (`AuditViewerTVOS`) sont des cibles à part, **sans Sparkle**, buildées via
+  `ios/build.sh` et `tvos/build.sh` (cf. [README.md](README.md)) — pas de DMG ni d'appcast pour elles.

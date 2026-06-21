@@ -9,7 +9,7 @@ Welcome. These guides are written to be read by **anyone** — you do not need a
 
 ## Go further
 
-- **[Use cases](use-cases.md)** — real scenarios: due diligence, competitive monitoring, market study, job-interview prep, purchase decisions.
+- **[Use cases](use-cases.md)** — real scenarios: due diligence, competitive monitoring, market study, boardroom presentations on Apple TV, job-interview prep, purchase decisions.
 - **[FAQ](faq.md)** — the questions people ask most often.
 - **[Glossary](glossary.md)** — every technical word you'll meet, defined simply.
 

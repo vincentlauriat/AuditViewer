@@ -6,6 +6,8 @@ Définitions en langage simple de chaque terme que vous pourriez rencontrer dans
 
 **Audit** — Ici, un dossier de recherche complet sur un sujet : un ensemble de documents couvrant l'historique, le marché, la technologie, la tarification, la concurrence, les finances et les perspectives. Ce n'est pas un audit financier/comptable au sens strict — c'est plus proche de ce qu'un cabinet de conseil appelle une « analyse approfondie ».
 
+**Bonjour** — La technologie d'Apple qui permet à des appareils de se découvrir entre eux sur un réseau local, sans configuration. Le lecteur Apple TV s'en sert pour repérer automatiquement le Mac qui partage vos audits (service `_auditviewer._tcp`) et s'y connecter.
+
 **Claude Code** — L'assistant IA d'Anthropic pour le terminal et les éditeurs. L'environnement recommandé pour exécuter le skill `audit-report`. <https://claude.com/claude-code>
 
 **Contrat machine** — La structure fixe et versionnée que le skill utilise pour sa sortie, afin que les visualiseurs (et tout autre outil) puissent lire et piloter les audits de façon fiable. Comprend le flux d'événements, le canal de contrôle et les fichiers JSON structurés. Spécification complète dans [ARCHITECTURE.md](../../ARCHITECTURE.md). C'est un sujet pour développeurs — vous n'éditez jamais ces fichiers à la main.
@@ -32,6 +34,8 @@ Définitions en langage simple de chaque terme que vous pourriez rencontrer dans
 
 **Profondeur (`--depth`)** — Le niveau de détail de la recherche. `quick` = plus rapide, ~10 sources, 4 dimensions. `full` = le réglage par défaut, ~30+ sources, 7 dimensions.
 
+**Réseau local** — Le réseau de votre domicile ou de votre bureau (Wi-Fi ou Ethernet). Le lecteur Apple TV lit vos audits par ce biais : votre Mac expose son dossier `Research` via un petit serveur en lecture seule, et l'Apple TV s'y connecte. Tout reste sur ce réseau, sans passer par un cloud.
+
 **Reconnaissance** — La première passe rapide où l'IA cadre votre sujet avant la recherche approfondie, et confirme le périmètre avec vous. Enregistrée dans `_recon.json`.
 
 **Résumé exécutif** — L'aperçu d'une page en tête de chaque audit (`00_RESUME_EXECUTIF.md`) : faits clés, chiffres marquants et verdict. À lire en premier.
@@ -50,4 +54,4 @@ Définitions en langage simple de chaque terme que vous pourriez rencontrer dans
 
 **Verbose (`--verbose`)** — Une option qui affiche chaque recherche et chaque source au fil de l'audit, au lieu du seul résultat final.
 
-**Visualiseur** — L'une des deux applications optionnelles pour lire et lancer les audits : le **visualiseur web** (navigateur) et l'**application macOS** (Mac natif). Les deux sont optionnelles — les audits restent lisibles comme de simples fichiers sans elles.
+**Visualiseur** — L'une des applications optionnelles pour lire et lancer les audits : le **visualiseur web** (navigateur), l'**application macOS** (Mac natif), le **lecteur iOS / iPadOS** (iPhone et iPad) et le **lecteur Apple TV** (tvOS, lecture sur grand écran via le réseau local). Toutes sont optionnelles — les audits restent lisibles comme de simples fichiers sans elles.

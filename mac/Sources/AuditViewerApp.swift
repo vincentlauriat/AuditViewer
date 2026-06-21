@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct AuditViewerApp: App {
     @State private var store = AuditStore()
+    @State private var lanServer = LANServer()
 
     var body: some Scene {
         WindowGroup {
@@ -12,6 +13,7 @@ struct AuditViewerApp: App {
         }
         Settings {
             SettingsView()
+                .environment(lanServer)
         }
         .commands {
             #if canImport(Sparkle)

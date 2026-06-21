@@ -33,6 +33,9 @@ Vous entrez sur un nouveau marché ou en dimensionnez un.
 
 Taille du marché (TAM/SAM/SOM), taux de croissance, régulation, géographie et principaux acteurs, condensés en un seul dossier.
 
+### Présenter un audit en réunion ou en conseil
+Vous devez exposer les conclusions d'un audit à un comité, un conseil d'administration ou une équipe, sans partager d'écran ni jongler avec un PDF. Lancez le **lecteur Apple TV (tvOS)** : il lit directement les audits partagés par votre Mac sur le réseau local, et vous parcourez à la télécommande la synthèse, les dimensions, les sources et le rapport complet sur le grand écran de la salle. Tout reste en local, rien ne transite par un cloud — pratique pour des sujets confidentiels en salle de conseil.
+
 ---
 
 ## Pour les curieux non-spécialistes

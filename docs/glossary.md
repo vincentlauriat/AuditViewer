@@ -8,6 +8,8 @@ Plain-language definitions of every term you might meet in this project. Sorted 
 
 **Audit folder** — The output of one run, e.g. `audit-tesla/`. It holds the report chapters (Markdown) and a few structured data files. You own it entirely; it's just files on your disk.
 
+**Bonjour** — Apple's zero-configuration networking technology for finding services on a local network without typing addresses. The Apple TV viewer uses it to discover the Mac that's sharing audits, so it can connect automatically.
+
 **Claude Code** — Anthropic's AI assistant for the terminal and editors. The recommended environment to run the `audit-report` skill. <https://claude.com/claude-code>
 
 **Depth (`--depth`)** — How thorough the research is. `quick` = faster, ~10 sources, 4 dimensions. `full` = the default, ~30+ sources, 7 dimensions.
@@ -21,6 +23,8 @@ Plain-language definitions of every term you might meet in this project. Sorted 
 **Fact-check** — A verification pass that re-checks the most important numbers against at least two independent sources and flags contradictions. Produces `_factcheck.md`.
 
 **Gemini** — Google's AI assistant. Supported via "solo" mode; install with `./install.sh --gemini`.
+
+**Local network** — Your home or office Wi-Fi/wired network. The Apple TV (tvOS) viewer reads audits over the local network from the Mac that shares them — the data never leaves your network and never touches the cloud.
 
 **Machine contract** — The fixed, versioned structure the skill uses for its output, so the viewers (and any other tool) can read and drive audits reliably. Includes the event stream, control channel, and structured JSON files. Full spec in [ARCHITECTURE.md](../ARCHITECTURE.md). Developer-facing — you never edit these by hand.
 
@@ -50,4 +54,4 @@ Plain-language definitions of every term you might meet in this project. Sorted 
 
 **Verbose (`--verbose`)** — An option that shows every search and source as the audit runs, instead of just the final result.
 
-**Viewer** — One of the two optional apps for reading and running audits: the **web viewer** (browser) and the **macOS app** (native Mac). Both are optional — audits are readable as plain files without them.
+**Viewer** — One of the optional apps for reading and running audits: the **web viewer** (browser), the **macOS app** (native Mac), the **iOS / iPadOS reader** (iPhone & iPad) and the **Apple TV (tvOS) viewer** (big screen, reads over the local network). All are optional — audits are readable as plain files without them.
