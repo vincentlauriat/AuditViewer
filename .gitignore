@@ -16,3 +16,8 @@
 *.swp
 .idea/
 .vscode/
+
+# Doublons de conflit iCloud (le dépôt vit sous ~/Documents synchronisé iCloud)
+# ex. « LANServer 2.swift » — cassent le build s'ils traînent dans Sources/
+* 2.swift
+* 3.swift
