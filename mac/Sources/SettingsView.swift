@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(LANServer.self) private var lanServer
     @State private var rootPath: String = KeychainStore.researchRoot?.path ?? ""
     @State private var saved: Bool = false
 
@@ -76,6 +77,50 @@ struct SettingsView: View {
                         .disabled(saved)
                         .keyboardShortcut(.return, modifiers: .command)
                 }
+            }
+
+            // ── Partage sur le réseau local (viewer Apple TV) ──────────────
+            Section {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "appletv")
+                            .font(.title2)
+                            .foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Partager sur le réseau local")
+                                .font(.headline)
+                            Text("Diffuse les audits en lecture seule pour le lecteur Apple TV (Bonjour + HTTP).")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Toggle("", isOn: Binding(
+                            get: { lanServer.isRunning },
+                            set: { _ in lanServer.toggle(root: KeychainStore.researchRoot) }
+                        ))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                    }
+
+                    if lanServer.isRunning {
+                        Label(
+                            lanServer.port.map { "Actif — port \($0) · \(lanServer.requestsServed) requête(s) servie(s)" }
+                                ?? "Démarrage…",
+                            systemImage: "dot.radiowaves.left.and.right"
+                        )
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                    } else if let err = lanServer.lastError {
+                        Label("Erreur : \(err)", systemImage: "exclamationmark.triangle")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    } else {
+                        Label("Inactif.", systemImage: "wifi.slash")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.vertical, 4)
             }
         }
         .formStyle(.grouped)

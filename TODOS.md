@@ -61,6 +61,13 @@
 - [x] 3. Mettre à jour install.sh avec support --gemini (symlinks dans ~/.gemini/config/skills)
 - [x] 4. Tester de bout en bout l'audit Yealink en mode solo sur Gemini (OK)
 
+## App tvOS (Apple TV) — Lecteur d'études (lecture seule) — étude validée, voir PLAN_TVOS.md
+Ingestion : Bonjour + HTTP LAN (Mac = serveur). Périmètre : reader-only.
+- [x] Phase 1 — Serveur Mac `LANServer.swift` (NWListener + Bonjour `_auditviewer._tcp`, REST read-only de researchRoot, garde-fou path-traversal par énumération, toggle dans Réglages + indicateur d'état). Testé : logique métier + serveur réseau réel (URLSession) + 3 cas path-traversal → 404. `swift build` vert.
+- [ ] Phase 2 — Target `AuditViewerTVOS` (project.yml) + `BonjourBrowser` + `AuditAPIClient` + `AuditStoreTVOS` + `tvos/build.sh`
+- [ ] Phase 3 — UI 10-foot : écran connexion (Bonjour), liste + détail (TabView), `DimensionView`/`KPIGridView`/`SourcesView` reskinnés focus engine
+- [ ] Phase 4 — Build XcodeGen tvOS, test bout-en-bout (Mac partage → TV découvre → audit réel), signing appareil
+
 ## App iOS / iPadOS — Lecteur d'études (lecture seule)
 - [x] Target `AuditViewerIOS` buildable (project.yml : info.properties + entitlements iCloud)
 - [x] Accès au dossier Research via sélecteur Fichiers + security-scoped bookmark persistant
