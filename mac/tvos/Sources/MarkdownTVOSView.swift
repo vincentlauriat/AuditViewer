@@ -26,7 +26,10 @@ struct MarkdownTVOSView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 18) {
+            // VStack (et non LazyVStack) : sur tvOS, seuls les blocs déjà rendus sont
+            // focusables ; en lazy, le contenu hors écran n'existe pas → le focus ne
+            // peut pas descendre et la page ne défile pas. On rend tout d'emblée.
+            VStack(alignment: .leading, spacing: 18) {
                 ForEach(Array(MarkdownBlock.parse(markdown).enumerated()), id: \.offset) { _, block in
                     // Chaque bloc est focusable : sur tvOS la ScrollView ne défile à
                     // la télécommande que si elle contient des cibles de focus.
