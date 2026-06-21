@@ -99,6 +99,7 @@ struct AuditHTTPService: Sendable {
             case "manifest": return jsonFile(dir.appendingPathComponent("_manifest.json"))
             case "data":     return jsonFile(dir.appendingPathComponent("_data.json"))
             case "sources":  return jsonFile(dir.appendingPathComponent("_sources.json"))
+            case "files":    return filesList(in: dir)
             case "file":     return markdownFile(in: dir, query: query)
             default:         return .notFound()
             }
@@ -129,6 +130,15 @@ struct AuditHTTPService: Sendable {
 
     private func jsonFile(_ url: URL) -> HTTPResponse {
         guard let data = try? Data(contentsOf: url) else { return .notFound() }
+        return .json(data)
+    }
+
+    /// Liste les `.md` réellement présents dans l'audit (pour les audits sans
+    /// `_manifest.json` : on découvre ainsi les sections et le rapport disponibles).
+    private func filesList(in dir: URL) -> HTTPResponse {
+        let entries = (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []
+        let mds = entries.filter { $0.hasSuffix(".md") }.sorted()
+        guard let data = try? JSONEncoder().encode(mds) else { return .error(500, "Encode Failed") }
         return .json(data)
     }
 

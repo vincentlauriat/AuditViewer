@@ -32,6 +32,11 @@ struct AuditAPIClient: Sendable {
         try await getJSON("api/audit/\(id)/data")
     }
 
+    /// Liste des fichiers `.md` présents (pour les audits sans manifest).
+    func files(_ id: String) async throws -> [String] {
+        try await getJSON("api/audit/\(id)/files")
+    }
+
     /// Contenu markdown d'un fichier de l'audit (`?name=00_RESUME.md`).
     func file(_ id: String, name: String) async throws -> String {
         var comps = URLComponents(url: base.appendingPathComponent("api/audit/\(id)/file"),

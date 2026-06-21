@@ -12,9 +12,40 @@ struct AuditDetailViewTVOS: View {
 
     @State private var manifest: AuditManifest?
     @State private var kpis: [AuditKpi] = []
+    @State private var files: [String] = []
     @State private var loading = true
 
-    private var subject: String { manifest?.subject ?? audit.subject ?? audit.id }
+    private var subject: String {
+        manifest?.subject ?? audit.subject ?? Self.prettify(audit.id)
+    }
+
+    /// "audit-iphone" → "Iphone" (titre de repli pour les audits sans manifest).
+    private static func prettify(_ id: String) -> String {
+        let s = id.hasPrefix("audit-") ? String(id.dropFirst(6)) : id
+        return s.replacingOccurrences(of: "-", with: " ").capitalized
+    }
+
+    /// "01_HISTORIQUE.md" → "Historique".
+    private static func sectionTitle(_ filename: String) -> String {
+        let base = filename.replacingOccurrences(of: ".md", with: "")
+        let stripped = String(base.drop(while: { $0.isNumber || $0 == "_" }))
+        return stripped.replacingOccurrences(of: "_", with: " ").capitalized
+    }
+
+    /// Fichier du rapport : manifest s'il existe, sinon repli sur les fichiers réels
+    /// (RAPPORT_COMPLET puis résumé exécutif puis première section).
+    private var reportFilename: String {
+        if let rf = manifest?.reportFile, files.isEmpty || files.contains(rf) { return rf }
+        if files.contains("RAPPORT_COMPLET.md") { return "RAPPORT_COMPLET.md" }
+        if files.contains("00_RESUME_EXECUTIF.md") { return "00_RESUME_EXECUTIF.md" }
+        return files.first(where: { !$0.hasPrefix("_") }) ?? "RAPPORT_COMPLET.md"
+    }
+
+    /// Sections à lister dans l'onglet Dimensions quand il n'y a pas de manifest :
+    /// les `.md` de section (hors fichiers techniques `_*` et hors rapport complet).
+    private var fallbackSections: [String] {
+        files.filter { !$0.hasPrefix("_") && $0 != "RAPPORT_COMPLET.md" }
+    }
 
     var body: some View {
         TabView {
@@ -24,13 +55,16 @@ struct AuditDetailViewTVOS: View {
             dimensionsTab
                 .tabItem { Label("Dimensions", systemImage: "list.bullet.rectangle") }
 
-            SourcesTVOSView(client: client, id: audit.id)
-                .tabItem { Label("Sources", systemImage: "link") }
+            NavigationStack {
+                SourcesTVOSView(client: client, id: audit.id)
+                    .navigationTitle("Sources")
+            }
+            .tabItem { Label("Sources", systemImage: "link") }
 
             NavigationStack {
                 DimensionTVOSView(client: client, id: audit.id,
-                                  filename: manifest?.reportFile ?? "RAPPORT_COMPLET.md",
-                                  title: "Rapport complet")
+                                  filename: reportFilename,
+                                  title: "Rapport")
             }
             .tabItem { Label("Rapport", systemImage: "doc.richtext") }
         }
@@ -42,13 +76,16 @@ struct AuditDetailViewTVOS: View {
         defer { loading = false }
         async let m = try? client.manifest(audit.id)
         async let d = try? client.data(audit.id)
+        async let f = try? client.files(audit.id)
         manifest = await m
         kpis = (await d)?.kpis ?? []
+        files = (await f) ?? []
     }
 
     // MARK: Synthèse
 
     private var syntheseTab: some View {
+        NavigationStack {
         ScrollView {
             VStack(alignment: .leading, spacing: 40) {
                 header
@@ -67,6 +104,7 @@ struct AuditDetailViewTVOS: View {
             }
             .padding(90)
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
         }
     }
 
@@ -155,8 +193,18 @@ struct AuditDetailViewTVOS: View {
                             }
                         }
                     }
+                } else if !fallbackSections.isEmpty {
+                    // Audit sans manifest : sections déduites des fichiers présents.
+                    ForEach(fallbackSections, id: \.self) { name in
+                        NavigationLink {
+                            DimensionTVOSView(client: client, id: audit.id,
+                                              filename: name, title: Self.sectionTitle(name))
+                        } label: {
+                            Text(Self.sectionTitle(name))
+                        }
+                    }
                 } else {
-                    Text("Aucune dimension dans le manifeste.").foregroundStyle(.secondary)
+                    Text("Aucune section disponible.").foregroundStyle(.secondary)
                 }
             }
             .navigationTitle("Dimensions")
@@ -187,11 +235,12 @@ struct DimensionTVOSView: View {
             }
         }
         .navigationTitle(title ?? filename)
-        .task { await load() }
+        .task(id: filename) { await load() }   // recharge si le nom se résout après coup
     }
 
     private func load() async {
         loading = true
+        failed = false
         defer { loading = false }
         do {
             markdown = stripYAMLFrontmatter(try await client.file(id, name: filename))
