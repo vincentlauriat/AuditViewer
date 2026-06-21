@@ -1,72 +1,69 @@
 import SwiftUI
 
+/// Entrée « virtuelle » de la barre latérale (id négatif). Construite en tant que
+/// donnée pour être listée via `ForEach` : la sélection d'une `List` n'écrit le
+/// binding que pour les lignes issues d'un `ForEach`, pas pour des vues statiques
+/// conditionnelles (sinon le clic ne navigue pas — cf. l'entrée « Sources »).
+private struct VirtualEntry: Identifiable {
+    let id: Int
+    let title: String
+    let icon: String
+    let color: Color
+    var badge: Int? = nil
+}
+
 struct SidebarView: View {
     @Environment(AuditStore.self) private var store
+
+    private var virtualEntries: [VirtualEntry] {
+        var items: [VirtualEntry] = []
+        if store.hasChanges {
+            items.append(VirtualEntry(id: -1, title: "Modifications",
+                                      icon: "arrow.triangle.2.circlepath", color: .orange,
+                                      badge: store.changedSectionsCount))
+        }
+        if store.meta != nil {
+            items.append(VirtualEntry(id: -2, title: "Reconnaissance",
+                                      icon: "doc.text.below.ecg", color: .accentColor))
+        }
+        if store.factcheckExists {
+            items.append(VirtualEntry(id: -3, title: "Vérification des faits",
+                                      icon: "checkmark.shield", color: .green))
+        }
+        if store.dataExists {
+            items.append(VirtualEntry(id: -4, title: "Chiffres-clés",
+                                      icon: "tablecells", color: .teal))
+        }
+        if store.sourceCount > 0 {
+            items.append(VirtualEntry(id: -5, title: "Sources",
+                                      icon: "link", color: .cyan, badge: store.sourceCount))
+        }
+        return items
+    }
 
     var body: some View {
         @Bindable var store = store
         List(selection: $store.selectedSectionId) {
 
             // ── Entrées virtuelles ──────────────────────────────────────
-            if store.hasChanges || store.meta != nil || store.factcheckExists
-                || store.dataExists || store.sourceCount > 0 {
+            if !virtualEntries.isEmpty {
                 Section {
-                    if store.hasChanges {
+                    ForEach(virtualEntries) { entry in
                         Label {
-                            Text("Modifications")
+                            Text(entry.title)
                         } icon: {
-                            Image(systemName: "arrow.triangle.2.circlepath")
+                            Image(systemName: entry.icon)
                                 .font(.caption)
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(entry.color)
                         }
-                        .tag(-1)
-                        .badge(store.changedSectionsCount)
+                        .tag(entry.id)
+                        .badge(entry.badge ?? 0)
                     }
-
-                    if store.meta != nil {
-                        Label {
-                            Text("Reconnaissance")
-                        } icon: {
-                            Image(systemName: "doc.text.below.ecg")
-                                .font(.caption)
-                                .foregroundStyle(Color.accentColor)
-                        }
-                        .tag(-2)
-                    }
-
-                    if store.factcheckExists {
-                        Label {
-                            Text("Vérification des faits")
-                        } icon: {
-                            Image(systemName: "checkmark.shield")
-                                .font(.caption)
-                                .foregroundStyle(.green)
-                        }
-                        .tag(-3)
-                    }
-
-                    if store.dataExists {
-                        Label {
-                            Text("Chiffres-clés")
-                        } icon: {
-                            Image(systemName: "tablecells")
-                                .font(.caption)
-                                .foregroundStyle(.teal)
-                        }
-                        .tag(-4)
-                    }
-
-                    if store.sourceCount > 0 {
-                        Label {
-                            Text("Sources")
-                        } icon: {
-                            Image(systemName: "link")
-                                .font(.caption)
-                                .foregroundStyle(.cyan)
-                        }
-                        .tag(-5)
-                        .badge(store.sourceCount)
-                    }
+                } header: {
+                    Text("Synthèse")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .textCase(.uppercase)
                 }
             }
 

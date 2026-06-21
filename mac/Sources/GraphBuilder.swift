@@ -93,6 +93,19 @@ enum GraphBuilder {
         return refs
     }
 
+    /// Sous-dossiers d'audit (`audit-*` / `audit_*`) directement sous `root`.
+    static func auditDirs(in root: URL) -> [URL] {
+        let fm = FileManager.default
+        return ((try? fm.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? [])
+            .filter {
+                var isDir: ObjCBool = false
+                let exists = fm.fileExists(atPath: $0.path, isDirectory: &isDir)
+                let name = $0.lastPathComponent
+                return exists && isDir.boolValue && (name.hasPrefix("audit-") || name.hasPrefix("audit_"))
+            }
+            .sorted { $0.lastPathComponent < $1.lastPathComponent }
+    }
+
     /// Scanne tous les .md non préfixés "_" d'un dossier et renvoie les sources citées.
     static func scanSources(in dir: URL) -> [SourceRef] {
         let fm = FileManager.default
@@ -214,25 +227,17 @@ enum GraphBuilder {
 
     /// Graphe reliant les audits entre eux par sources et acteurs partagés (degré ≥ 2).
     static func buildGlobalGraph(root: URL) -> GraphData {
-        let fm = FileManager.default
-        let auditDirs = ((try? fm.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? [])
-            .filter {
-                var isDir: ObjCBool = false
-                let exists = fm.fileExists(atPath: $0.path, isDirectory: &isDir)
-                let name = $0.lastPathComponent
-                return exists && isDir.boolValue && (name.hasPrefix("audit-") || name.hasPrefix("audit_"))
-            }
-            .sorted { $0.lastPathComponent < $1.lastPathComponent }
+        let dirs = auditDirs(in: root)
 
         var data = GraphData()
-        guard !auditDirs.isEmpty else { return data }
+        guard !dirs.isEmpty else { return data }
 
         // auditId -> ensemble de domaines et d'entités
         var auditId: [URL: String] = [:]
         var domainToAudits: [String: Set<String>] = [:]
         var entityToAudits: [String: Set<String>] = [:]
 
-        for (i, dir) in auditDirs.enumerated() {
+        for (i, dir) in dirs.enumerated() {
             let aid = "audit-\(i)"
             auditId[dir] = aid
             data.nodes.append(GraphNode(
