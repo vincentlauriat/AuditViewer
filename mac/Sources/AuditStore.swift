@@ -1078,7 +1078,11 @@ final class AuditStore {
             // --metadata flags : pas de fichier temporaire, pas de risque d'encodage YAML
             var args: [String] = [
                 sourceURL.path,
-                "--from", "markdown",
+                // markdown-yaml_metadata_block : RAPPORT_COMPLET.md contient des
+                // blocs `---` … `---` (séparateurs horizontaux entourant des notes)
+                // que pandoc prendrait pour des métadonnées YAML → exit 64. On
+                // désactive l'extension ; les --metadata CLI restent appliqués.
+                "--from", "markdown-yaml_metadata_block",
                 "--to", "docx",
                 "--output", destURL.path,
                 "--metadata", "title=\(capturedSubject)",
@@ -1130,7 +1134,11 @@ final class AuditStore {
                 process.executableURL = URL(fileURLWithPath: pandoc)
                 process.arguments = [
                     sourceURL.path,
-                    "--from", "markdown",
+                    // markdown-yaml_metadata_block : voir export DOCX. Les blocs
+                    // `---` … `---` du rapport complet cassaient la conversion
+                    // (exit 64) → l'app retombait sur le fallback <pre> (markdown
+                    // brut dans un cadre gris).
+                    "--from", "markdown-yaml_metadata_block",
                     "--to", "html5",
                     "--output", htmlTmp.path
                 ]

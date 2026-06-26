@@ -108,25 +108,36 @@ final class PDFExporter: NSObject, WKNavigationDelegate {
     }
 }
 
-/// Reçoit le callback AppKit de fin d'impression (runModal est asynchrone).
-@MainActor
-private final class PrintDelegate: NSObject {
+/// Reçoit le callback AppKit de fin d'impression.
+///
+/// ⚠️ NE PAS isoler au `@MainActor` : `runModal(for:delegate:didRun:contextInfo:)` exécute
+/// l'opération d'impression sur un thread d'arrière-plan dédié (NSThread) et invoque ce
+/// callback SUR CE THREAD, pas sur le main. Marquer la classe `@MainActor` ferait insérer
+/// par Swift 6 une vérification d'isolation d'acteur (`_checkExpectedExecutor`) au début du
+/// callback `@objc` → `dispatch_assert_queue` échoue → SIGTRAP.
+///
+/// `CheckedContinuation` est `Sendable` et peut être résumée depuis n'importe quel thread ;
+/// la reprise de l'`await` se fait ensuite sur le `@MainActor` car `export()` y est isolée.
+/// `@unchecked Sendable` : `continuation` n'est touchée qu'une seule fois (le callback n'est
+/// appelé qu'une fois par AppKit), donc pas de course réelle.
+private final class PrintDelegate: NSObject, @unchecked Sendable {
     private var continuation: CheckedContinuation<Void, Error>?
 
     init(continuation: CheckedContinuation<Void, Error>) {
         self.continuation = continuation
     }
 
-    @objc func printOperationDidRun(
+    @objc nonisolated func printOperationDidRun(
         _ op: NSPrintOperation,
         success: Bool,
         contextInfo: UnsafeMutableRawPointer?
     ) {
-        if success {
-            continuation?.resume()
-        } else {
-            continuation?.resume(throwing: CocoaError(.fileWriteUnknown))
-        }
+        let c = continuation
         continuation = nil
+        if success {
+            c?.resume()
+        } else {
+            c?.resume(throwing: CocoaError(.fileWriteUnknown))
+        }
     }
 }
