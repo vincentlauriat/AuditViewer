@@ -1071,36 +1071,28 @@ final class AuditStore {
         let capturedSources = sourceCount
 
         Task.detached(priority: .userInitiated) {
-            guard let sourceContent = try? String(contentsOf: sourceURL, encoding: .utf8) else { return }
-
             let sourcesLabel = capturedSources > 0
                 ? "\(capturedSources) source\(capturedSources > 1 ? "s" : "") analysée\(capturedSources > 1 ? "s" : "")"
                 : ""
-            let authorLine = sourcesLabel.isEmpty ? "" : "author: \"\(sourcesLabel)\"\n"
 
-            // Prépend un bloc YAML pour la page de titre pandoc (Title / Subtitle / Date / Author)
-            let yaml = """
-            ---
-            title: "\(capturedSubject.replacingOccurrences(of: "\"", with: "\\\""))"
-            subtitle: "\(capturedSection.replacingOccurrences(of: "\"", with: "\\\""))"
-            date: "\(capturedDate)"
-            \(authorLine)---
-
-            """
-            let tempURL = FileManager.default.temporaryDirectory
-                .appendingPathComponent(UUID().uuidString + ".md")
-            try? (yaml + sourceContent).write(to: tempURL, atomically: true, encoding: .utf8)
-            defer { try? FileManager.default.removeItem(at: tempURL) }
-
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: pandoc)
-            process.arguments = [
-                tempURL.path,
+            // --metadata flags : pas de fichier temporaire, pas de risque d'encodage YAML
+            var args: [String] = [
+                sourceURL.path,
                 "--from", "markdown",
                 "--to", "docx",
                 "--output", destURL.path,
+                "--metadata", "title=\(capturedSubject)",
+                "--metadata", "subtitle=\(capturedSection)",
+                "--metadata", "date=\(capturedDate)",
                 "--toc", "--toc-depth=2"
             ]
+            if !sourcesLabel.isEmpty {
+                args += ["--metadata", "author=\(sourcesLabel)"]
+            }
+
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: pandoc)
+            process.arguments = args
             try? process.run()
             process.waitUntilExit()
             if process.terminationStatus == 0 {
@@ -1130,18 +1122,23 @@ final class AuditStore {
         let capturedSources = sourceCount
 
         Task {
-            // Conversion markdown → fragment HTML via pandoc (thread détaché)
+            // Pandoc écrit dans un fichier temp pour éviter le deadlock pipe sur gros fichiers
             let htmlBody = await Task.detached(priority: .userInitiated) { () -> String in
+                let htmlTmp = FileManager.default.temporaryDirectory
+                    .appendingPathComponent(UUID().uuidString + ".html")
                 let process = Process()
                 process.executableURL = URL(fileURLWithPath: pandoc)
-                let outPipe = Pipe()
-                process.standardOutput = outPipe
-                process.standardError = Pipe()
-                process.arguments = [sourceURL.path, "--from", "markdown", "--to", "html5"]
+                process.arguments = [
+                    sourceURL.path,
+                    "--from", "markdown",
+                    "--to", "html5",
+                    "--output", htmlTmp.path
+                ]
                 try? process.run()
                 process.waitUntilExit()
+                defer { try? FileManager.default.removeItem(at: htmlTmp) }
                 if process.terminationStatus == 0,
-                   let html = String(data: outPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) {
+                   let html = try? String(contentsOf: htmlTmp, encoding: .utf8) {
                     return html
                 }
                 // Repli : contenu brut préformaté
