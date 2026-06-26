@@ -78,44 +78,66 @@ struct ContentView: View {
 
     @ViewBuilder
     private var detailPane: some View {
-        ZStack(alignment: .top) {
-            if store.viewMode == .graph {
-                GraphWebView(
-                    json: store.graphJSON(for: store.graphScope),
-                    scope: store.graphScope,
-                    store: store
-                )
-                .background(Color(nsColor: .textBackgroundColor))
-                .frame(minWidth: 480, minHeight: 320)
-                .id(store.graphScope)   // recharge le bundle au changement de périmètre
-            } else {
-                WebView(markdown: store.currentMarkdown, zoom: zoomRatio)
-                    .background(Color(nsColor: .textBackgroundColor))
-                    .frame(minWidth: 480, minHeight: 320)
-            }
+        Group {
+            if store.viewMode == .kpis, let auditDir = store.auditDir {
+                // Mode KPIs fullscreen
+                VStack(spacing: 0) {
+                    Text("Chiffres clés")
+                        .font(.title2.weight(.semibold))
+                        .padding(16)
 
-            if showFind && store.viewMode == .document {
-                FindBar(
-                    query: $findQuery,
-                    onClose: { showFind = false; findQuery = "" },
-                    onSubmit: { forward in
-                        NotificationCenter.default.post(
-                            name: .findRequest,
-                            object: nil,
-                            userInfo: ["query": findQuery, "forward": forward]
-                        )
+                    ScrollView {
+                        KPIGridView(dir: auditDir)
+                            .padding(16)
                     }
-                )
-                .frame(maxWidth: 420)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .transition(.move(edge: .top).combined(with: .opacity))
-            }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                // Mode Document / Carte (avec panneau KPIs optionnel)
+                HStack(spacing: 0) {
+                    // Contenu principal
+                    ZStack(alignment: .top) {
+                        if store.viewMode == .graph {
+                            GraphWebView(
+                                json: store.graphJSON(for: store.graphScope),
+                                scope: store.graphScope,
+                                store: store
+                            )
+                            .background(Color(nsColor: .textBackgroundColor))
+                            .frame(minWidth: 480, minHeight: 320)
+                            .id(store.graphScope)
+                        } else {
+                            WebView(markdown: store.currentMarkdown, zoom: zoomRatio)
+                                .background(Color(nsColor: .textBackgroundColor))
+                                .frame(minWidth: 480, minHeight: 320)
+                        }
 
-            // Panneau d'infos d'un nœud Source/Acteur (double-clic sur la carte)
-            if store.viewMode == .graph, let info = store.graphInfo {
-                GraphInfoPanel(info: info, store: store)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
+                        if showFind && store.viewMode == .document {
+                            FindBar(
+                                query: $findQuery,
+                                onClose: { showFind = false; findQuery = "" },
+                                onSubmit: { forward in
+                                    NotificationCenter.default.post(
+                                        name: .findRequest,
+                                        object: nil,
+                                        userInfo: ["query": findQuery, "forward": forward]
+                                    )
+                                }
+                            )
+                            .frame(maxWidth: 420)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                        }
+
+                        // Panneau d'infos d'un nœud Source/Acteur (double-clic sur la carte)
+                        if store.viewMode == .graph, let info = store.graphInfo {
+                            GraphInfoPanel(info: info, store: store)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                                .transition(.move(edge: .trailing).combined(with: .opacity))
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
         }
         .animation(.easeInOut(duration: 0.15), value: showFind)
@@ -134,9 +156,10 @@ struct ContentView: View {
             )) {
                 Label("Document", systemImage: "doc.text").tag(AuditStore.ViewMode.document)
                 Label("Carte", systemImage: "point.3.connected.trianglepath.dotted").tag(AuditStore.ViewMode.graph)
+                Label("Chiffres clés", systemImage: "chart.bar").tag(AuditStore.ViewMode.kpis)
             }
             .pickerStyle(.segmented)
-            .help("Basculer entre le document et la carte des liens")
+            .help("Basculer entre le document, la carte et les chiffres clés")
         }
 
         if store.viewMode == .graph {
@@ -201,6 +224,16 @@ struct ContentView: View {
             }
             .help("Exporter la section en cours au format .docx (Word)")
             .disabled(!store.canExportDocx)
+        }
+
+        ToolbarItem(placement: .primaryAction) {
+            Button {
+                store.exportCurrentSectionToPDF()
+            } label: {
+                Label("Exporter en PDF", systemImage: "doc.richtext")
+            }
+            .help("Exporter la section en cours au format PDF avec page de garde")
+            .disabled(!store.canExportPDF)
         }
 
         ToolbarItem(placement: .primaryAction) {

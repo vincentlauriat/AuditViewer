@@ -3,6 +3,7 @@ import Darwin
 import Foundation
 import Observation
 import SwiftUI
+import WebKit
 
 @MainActor
 @Observable
@@ -42,7 +43,7 @@ final class AuditStore {
     var sourceCount: Int = 0
 
     // Mode d'affichage du pane détail
-    enum ViewMode: String { case document, graph }
+    enum ViewMode: String { case document, graph, kpis }
     enum GraphScope: String { case local, global }
     var viewMode: ViewMode = .document
     var graphScope: GraphScope = .local
@@ -372,14 +373,14 @@ final class AuditStore {
         let accumulator = LineAccumulator()
 
         let handle = pipe.fileHandleForReading
-        handle.readabilityHandler = { h in
+        handle.readabilityHandler = { [weak self] h in
             let data = h.availableData
             guard !data.isEmpty, let text = String(data: data, encoding: .utf8) else { return }
             accumulator.buffer += text
             let lines = accumulator.buffer.components(separatedBy: "\n")
             accumulator.buffer = lines.last ?? ""
             let completed = Array(lines.dropLast().filter { !$0.isEmpty })
-            Task { @MainActor [weak self] in
+            Task { @MainActor in
                 guard let self else { return }
                 self.processOutput += text
                 for line in completed { self.parseStreamLine(line) }
@@ -1030,31 +1031,28 @@ final class AuditStore {
         return LogEntry(id: UUID(), timestamp: Date(), kind: kind, message: message)
     }
 
-    // MARK: - Export DOCX
+    // MARK: - Export
+
+    /// Fichier source, titre du document et titre de la section pour la section affichée.
+    private func exportSourceInfo() -> (filename: String, docTitle: String, sectionTitle: String) {
+        switch selectedSectionId {
+        case -3:
+            let t = subject.isEmpty ? "Vérification des faits" : "\(subject) — Vérification des faits"
+            return ("_factcheck.md", t, "Vérification des faits")
+        case -1, -2, -4, -5:
+            return ("RAPPORT_COMPLET.md", subject, "Rapport complet")
+        default:
+            if let s = sections.first(where: { $0.id == selectedSectionId }), s.exists {
+                let t = subject.isEmpty ? s.title : "\(subject) — \(s.title)"
+                return (s.filename, t, s.title)
+            }
+            return ("RAPPORT_COMPLET.md", subject, "Rapport complet")
+        }
+    }
 
     func exportCurrentSectionToDocx() {
         guard let dir = auditDir else { return }
-
-        // Fichier source : section courante ou RAPPORT_COMPLET par défaut
-        let filename: String
-        let docTitle: String
-        switch selectedSectionId {
-        case -3:
-            filename = "_factcheck.md"
-            docTitle = subject.isEmpty ? "Vérification des faits" : "\(subject) — Vérification des faits"
-        case -1, -2, -4, -5:
-            filename = "RAPPORT_COMPLET.md"
-            docTitle = subject
-        default:
-            if let section = sections.first(where: { $0.id == selectedSectionId }), section.exists {
-                filename = section.filename
-                docTitle = subject.isEmpty ? section.title : "\(subject) — \(section.title)"
-            } else {
-                filename = "RAPPORT_COMPLET.md"
-                docTitle = subject
-            }
-        }
-
+        let (filename, _, sectionTitle) = exportSourceInfo()
         let sourceURL = dir.appendingPathComponent(filename)
         guard FileManager.default.fileExists(atPath: sourceURL.path) else { return }
 
@@ -1067,22 +1065,103 @@ final class AuditStore {
         guard panel.runModal() == .OK, let destURL = panel.url else { return }
 
         let pandoc = Self.findPandoc()
-        let capturedTitle = docTitle
+        let capturedSubject = subject.isEmpty ? "Audit" : subject
+        let capturedSection = sectionTitle
+        let capturedDate = Self.formattedAuditDate(manifest?.auditDate ?? meta?.auditDate)
+        let capturedSources = sourceCount
+
         Task.detached(priority: .userInitiated) {
+            guard let sourceContent = try? String(contentsOf: sourceURL, encoding: .utf8) else { return }
+
+            let sourcesLabel = capturedSources > 0
+                ? "\(capturedSources) source\(capturedSources > 1 ? "s" : "") analysée\(capturedSources > 1 ? "s" : "")"
+                : ""
+            let authorLine = sourcesLabel.isEmpty ? "" : "author: \"\(sourcesLabel)\"\n"
+
+            // Prépend un bloc YAML pour la page de titre pandoc (Title / Subtitle / Date / Author)
+            let yaml = """
+            ---
+            title: "\(capturedSubject.replacingOccurrences(of: "\"", with: "\\\""))"
+            subtitle: "\(capturedSection.replacingOccurrences(of: "\"", with: "\\\""))"
+            date: "\(capturedDate)"
+            \(authorLine)---
+
+            """
+            let tempURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString + ".md")
+            try? (yaml + sourceContent).write(to: tempURL, atomically: true, encoding: .utf8)
+            defer { try? FileManager.default.removeItem(at: tempURL) }
+
             let process = Process()
             process.executableURL = URL(fileURLWithPath: pandoc)
             process.arguments = [
-                sourceURL.path,
+                tempURL.path,
                 "--from", "markdown",
                 "--to", "docx",
                 "--output", destURL.path,
-                "--metadata", "title=\(capturedTitle)",
                 "--toc", "--toc-depth=2"
             ]
             try? process.run()
             process.waitUntilExit()
             if process.terminationStatus == 0 {
                 _ = await MainActor.run { NSWorkspace.shared.open(destURL) }
+            }
+        }
+    }
+
+    func exportCurrentSectionToPDF() {
+        guard let dir = auditDir else { return }
+        let (filename, _, sectionTitle) = exportSourceInfo()
+        let sourceURL = dir.appendingPathComponent(filename)
+        guard FileManager.default.fileExists(atPath: sourceURL.path) else { return }
+
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.pdf]
+        panel.nameFieldStringValue = filename.replacingOccurrences(of: ".md", with: ".pdf")
+        panel.directoryURL = dir
+        panel.message = "Exporter en PDF"
+        panel.prompt = "Exporter"
+        guard panel.runModal() == .OK, let destURL = panel.url else { return }
+
+        let pandoc = Self.findPandoc()
+        let capturedSubject = subject.isEmpty ? "Audit" : subject
+        let capturedSection = sectionTitle
+        let capturedDate = Self.formattedAuditDate(manifest?.auditDate ?? meta?.auditDate)
+        let capturedSources = sourceCount
+
+        Task {
+            // Conversion markdown → fragment HTML via pandoc (thread détaché)
+            let htmlBody = await Task.detached(priority: .userInitiated) { () -> String in
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: pandoc)
+                let outPipe = Pipe()
+                process.standardOutput = outPipe
+                process.standardError = Pipe()
+                process.arguments = [sourceURL.path, "--from", "markdown", "--to", "html5"]
+                try? process.run()
+                process.waitUntilExit()
+                if process.terminationStatus == 0,
+                   let html = String(data: outPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) {
+                    return html
+                }
+                // Repli : contenu brut préformaté
+                let raw = (try? String(contentsOf: sourceURL, encoding: .utf8)) ?? ""
+                return "<pre>\(raw.replacingOccurrences(of: "<", with: "&lt;"))</pre>"
+            }.value
+
+            let fullHTML = Self.buildPDFHTML(
+                subject: capturedSubject,
+                sectionTitle: capturedSection,
+                date: capturedDate,
+                sourcesCount: capturedSources,
+                bodyHTML: htmlBody
+            )
+
+            do {
+                try await PDFExporter.export(html: fullHTML, to: destURL)
+                NSWorkspace.shared.open(destURL)
+            } catch {
+                // Échec silencieux — l'utilisateur voit que le fichier n'est pas créé
             }
         }
     }
@@ -1099,6 +1178,241 @@ final class AuditStore {
         default:
             return sections.first(where: { $0.id == selectedSectionId })?.exists ?? false
         }
+    }
+
+    var canExportPDF: Bool { canExportDocx }
+
+    // MARK: - PDF HTML
+
+    nonisolated static func buildPDFHTML(
+        subject: String,
+        sectionTitle: String,
+        date: String,
+        sourcesCount: Int,
+        bodyHTML: String
+    ) -> String {
+        let sourcesLabel = sourcesCount > 0
+            ? "\(sourcesCount) source\(sourcesCount > 1 ? "s" : "") analysée\(sourcesCount > 1 ? "s" : "")"
+            : ""
+        let sourcesRow = sourcesLabel.isEmpty ? "" : """
+              <div class="ci">
+                <span class="cl">Sources</span>
+                <span class="cv">\(escapeHTML(sourcesLabel))</span>
+              </div>
+        """
+
+        return """
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+        <meta charset="UTF-8">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          @page { size: A4; margin: 0; }
+          body {
+            font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 10pt;
+            color: #1a1a2e;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+
+          /* ── Page de garde ── */
+          .cover {
+            width: 210mm; min-height: 297mm;
+            background: #0c1a3d;
+            display: flex; flex-direction: column;
+            position: relative; overflow: hidden;
+            page-break-after: always;
+          }
+          .cover-stripe {
+            position: absolute; right: 0; top: 0;
+            width: 58mm; height: 100%;
+            background: linear-gradient(160deg, #132347 0%, #0e1d3a 100%);
+            clip-path: polygon(28% 0, 100% 0, 100% 100%, 0% 100%);
+          }
+          .cover-line {
+            position: absolute; right: 0; top: 0;
+            width: 3px; height: 100%;
+            background: linear-gradient(180deg, #4d9fff 0%, #2563eb 100%);
+          }
+          .cover-body {
+            position: relative; z-index: 2;
+            flex: 1; padding: 50mm 28mm 18mm;
+            display: flex; flex-direction: column;
+          }
+          .eyebrow {
+            font-size: 7pt; letter-spacing: 5px;
+            text-transform: uppercase; color: #4d9fff;
+            font-weight: 500; margin-bottom: 12mm;
+          }
+          .cover-title {
+            font-size: 36pt; font-weight: 800;
+            color: #fff; line-height: 1.0;
+            letter-spacing: -0.5px;
+            max-width: 128mm; margin-bottom: 6mm;
+          }
+          .cover-sub {
+            font-size: 15pt; font-weight: 300;
+            color: rgba(255,255,255,0.5);
+            letter-spacing: 0.2px; margin-bottom: auto;
+          }
+          .cover-bar {
+            width: 16mm; height: 2px;
+            background: #4d9fff; border-radius: 1px;
+            margin: 13mm 0 9mm;
+          }
+          .ci {
+            display: flex; align-items: baseline;
+            gap: 4mm; margin-bottom: 3.5mm;
+          }
+          .cl {
+            font-size: 6.5pt; letter-spacing: 2.5px;
+            text-transform: uppercase; color: rgba(255,255,255,0.28);
+            min-width: 22mm;
+          }
+          .cv {
+            font-size: 9pt; color: rgba(255,255,255,0.78);
+            font-weight: 500;
+          }
+          .cover-footer {
+            position: relative; z-index: 2;
+            padding: 5mm 28mm;
+            border-top: 1px solid rgba(255,255,255,0.07);
+            display: flex; justify-content: space-between; align-items: center;
+          }
+          .brand {
+            font-size: 7pt; letter-spacing: 3px;
+            text-transform: uppercase; color: rgba(255,255,255,0.18);
+          }
+          .dot {
+            width: 4px; height: 4px; border-radius: 50%;
+            background: #4d9fff; opacity: 0.35;
+          }
+
+          /* ── Contenu ── */
+          .content { padding: 18mm 22mm 22mm; }
+
+          h1, h2, h3, h4 {
+            font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+          }
+          h1 {
+            font-size: 20pt; font-weight: 700; color: #0c1a3d;
+            margin: 12mm 0 5mm; padding-bottom: 3mm;
+            border-bottom: 2.5px solid #4d9fff;
+            page-break-before: always; page-break-after: avoid;
+          }
+          h1:first-child { page-break-before: avoid; margin-top: 0; }
+          h2 {
+            font-size: 14pt; font-weight: 700; color: #132347;
+            margin: 8mm 0 3mm; page-break-after: avoid;
+          }
+          h3 {
+            font-size: 11pt; font-weight: 600; color: #1e3566;
+            margin: 6mm 0 2mm; page-break-after: avoid;
+          }
+          h4 { font-size: 10pt; font-weight: 600; color: #2a4a7c; margin: 4mm 0 1.5mm; }
+          p { font-size: 10pt; line-height: 1.7; color: #252540; margin-bottom: 4mm; }
+          ul, ol { margin: 0 0 4mm 7mm; padding: 0; }
+          li { font-size: 10pt; line-height: 1.6; color: #252540; margin-bottom: 1.5mm; }
+          strong { font-weight: 700; color: #0c1a3d; }
+          em { font-style: italic; color: #2a2a50; }
+          blockquote {
+            border-left: 3px solid #4d9fff; background: #f2f5fb;
+            padding: 3mm 5mm; margin: 5mm 0; border-radius: 0 3px 3px 0;
+          }
+          blockquote p { margin: 0; font-style: italic; color: #3a3a60; }
+          table {
+            width: 100%; border-collapse: collapse;
+            margin: 5mm 0; font-size: 9pt; page-break-inside: avoid;
+          }
+          thead th {
+            background: #0c1a3d; color: #fff;
+            padding: 3mm 4mm; text-align: left;
+            font-weight: 600; font-size: 8.5pt; letter-spacing: 0.3px;
+          }
+          tbody td {
+            padding: 2.5mm 4mm; border-bottom: 1px solid #e5e9f5;
+            vertical-align: top; line-height: 1.5;
+          }
+          tbody tr:nth-child(even) td { background: #f7f9fd; }
+          tbody tr:last-child td { border-bottom: 2px solid #0c1a3d; }
+          code {
+            font-family: 'SF Mono', Menlo, Consolas, monospace;
+            font-size: 8.5pt; background: #eef2fb;
+            color: #1e3566; padding: 1px 4px; border-radius: 3px;
+          }
+          pre {
+            background: #f0f4fd; border: 1px solid #d8e0f0;
+            border-radius: 4px; padding: 4mm; margin: 4mm 0; overflow: hidden;
+          }
+          pre code { background: none; padding: 0; font-size: 8pt; color: #1e3566; }
+          hr { border: none; border-top: 1px solid #dde2f0; margin: 7mm 0; }
+          a { color: #1e3566; text-decoration: none; }
+          section { display: block; }
+          .footnotes {
+            margin-top: 10mm; padding-top: 4mm;
+            border-top: 1px solid #dde2f0;
+            font-size: 8.5pt; color: #5a5a80;
+          }
+        </style>
+        </head>
+        <body>
+
+        <div class="cover">
+          <div class="cover-stripe"></div>
+          <div class="cover-line"></div>
+          <div class="cover-body">
+            <div class="eyebrow">Dossier d&#8217;audit strat&#233;gique</div>
+            <div class="cover-title">\(escapeHTML(subject))</div>
+            <div class="cover-sub">\(escapeHTML(sectionTitle))</div>
+            <div class="cover-bar"></div>
+            <div class="ci">
+              <span class="cl">Date</span>
+              <span class="cv">\(escapeHTML(date))</span>
+            </div>
+            \(sourcesRow)
+          </div>
+          <div class="cover-footer">
+            <span class="brand">AuditViewer</span>
+            <div class="dot"></div>
+            <span class="brand">Confidentiel</span>
+          </div>
+        </div>
+
+        <div class="content">
+        \(bodyHTML)
+        </div>
+
+        </body>
+        </html>
+        """
+    }
+
+    nonisolated private static func escapeHTML(_ s: String) -> String {
+        s.replacingOccurrences(of: "&", with: "&amp;")
+         .replacingOccurrences(of: "<", with: "&lt;")
+         .replacingOccurrences(of: ">", with: "&gt;")
+         .replacingOccurrences(of: "\"", with: "&quot;")
+    }
+
+    nonisolated static func formattedAuditDate(_ raw: String?) -> String {
+        guard let raw, !raw.isEmpty else {
+            let f = DateFormatter()
+            f.dateStyle = .long
+            f.locale = Locale(identifier: "fr_FR")
+            return f.string(from: Date())
+        }
+        let iso = DateFormatter()
+        iso.dateFormat = "yyyy-MM-dd"
+        iso.locale = Locale(identifier: "en_US_POSIX")
+        if let d = iso.date(from: String(raw.prefix(10))) {
+            let f = DateFormatter()
+            f.dateStyle = .long
+            f.locale = Locale(identifier: "fr_FR")
+            return f.string(from: d)
+        }
+        return raw
     }
 
     // MARK: - Helpers
