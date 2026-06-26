@@ -13,9 +13,11 @@ Dossier audit-{sujet}/ ──► AuditStore (état @Observable, @MainActor)
    _events.jsonl, _options.json  │
                                  ├─► currentMarkdown ──► WebView (WKWebView, markdown-it)   [mode Document]
                                  │
-                                 └─► graphJSON(scope) ─► GraphWebView (WKWebView, canvas)    [mode Carte]
-                                          ▲                        │ clic nœud (postMessage)
-                                          └── GraphBuilder ◄────────┘
+                                 ├─► graphJSON(scope) ─► GraphWebView (WKWebView, canvas)    [mode Carte]
+                                 │        ▲                        │ clic nœud (postMessage)
+                                 │        └── GraphBuilder ◄────────┘
+                                 │
+                                 └─► kpis[] (from _data.json) ─► KPIGridView (SwiftUI)     [mode Chiffres clés]
 ```
 
 ## Composants
@@ -24,7 +26,8 @@ Dossier audit-{sujet}/ ──► AuditStore (état @Observable, @MainActor)
 - **`AuditStore`** (`Sources/AuditStore.swift`) — source de vérité unique (`@Observable`, `@MainActor`).
   Charge un dossier (`loadAuditDir`), résout les sections, lit la section courante (`loadSection`),
   lance/relance les audits (`runAudit`/`rerunAudit`), surveille `_events.jsonl`, calcule les diffs,
-  exporte en `.docx`, et construit les données de graphe (`graphJSON`, `handleGraphNodeTap`).
+  exporte en `.docx` et `.pdf` (`exportCurrentSectionToDocx`/`exportCurrentSectionToPDF`), et
+  construit les données de graphe (`graphJSON`, `handleGraphNodeTap`).
 - **`AuditOptions`** (`Sources/AuditOptions.swift`) — options de lancement → flags CLI `/audit-report`
   (persistées dans `_options.json`).
 - **`AuditMeta`** (`Sources/AuditMeta.swift`) — décodage de `_recon.json` (`key_players`, `sector`, …).
@@ -47,9 +50,13 @@ Dossier audit-{sujet}/ ──► AuditStore (état @Observable, @MainActor)
 ### Vues
 - **`AuditViewerApp`** — point d'entrée `@main`, scènes `WindowGroup` + `Settings`, menus/raccourcis
   (postent des `Notification` consommées par les vues).
-- **`ContentView`** — `NavigationSplitView` (sidebar + détail). Le pane détail bascule entre
-  `WebView` (Document) et `GraphWebView` (Carte) selon `store.viewMode` ; toolbar avec pickers
-  segmentés **Document/Carte** et **Audit courant/Global**.
+- **`ContentView`** — `NavigationSplitView` (sidebar + détail). Le pane détail bascule entre trois modes :
+  - `document` : `WebView` (WKWebView, markdown-it)
+  - `graph` : `GraphWebView` (WKWebView, canvas force-directed)
+  - `kpis` : `KPIGridView` (SwiftUI native, grille 4 colonnes)
+  
+  Selon `store.viewMode`, sélectionnable via toolbar segmenté **Document/Carte/Chiffres clés** ;
+  toolbar additionnel **Audit courant/Global** pour la vue Carte.
 - **`SidebarView`** — `List` liée à `store.selectedSectionId` ; sélectionner une section ramène
   au mode Document.
 - **`WebView`** (`Sources/WebView.swift`) — `NSViewRepresentable` autour d'un `WKWebView` chargeant
@@ -58,8 +65,33 @@ Dossier audit-{sujet}/ ──► AuditStore (état @Observable, @MainActor)
 - **`GraphWebView`** (`Sources/GraphWebView.swift`) — `NSViewRepresentable` chargeant
   `webgraph/graph.html`. Injecte le graphe via `window.renderGraph(<json>)`, reçoit les clics de nœuds
   via un `WKScriptMessageHandler` nommé `graph` → `store.handleGraphNodeTap(...)`.
+- **`KPIGridView`** (`Sources/KPIGridView.swift`) — Vue SwiftUI native affichant une grille 4-colonnes
+  de KPIs (chiffres clés) extraits de `_data.json`. Charge asynchrone des données ; chaque KPI est rendu
+  dans une **carte encadrée** (`KPICellView`) : coins arrondis continus, bordure fine adaptée au thème,
+  ombre douce, barre d'accent latérale (bleu / orange si `estimated`), label, valeur+unité, période,
+  badge "estimé" en capsule. Responsive : colonnes flexibles adaptées à la largeur.
 - Autres : `EmptyStateView`, `FindBar`, `LiveProgressView`/`AuditProgressView`, `LogsView`,
   `NewAuditSheet`/`UpdateAuditSheet`/`QuestionSheet`, `SettingsView`, panels (`*PanelController`).
+
+### Export DOCX / PDF
+- **DOCX** : `AuditStore.exportCurrentSectionToDocx()` appelle `pandoc` (`Task.detached`) avec des
+  métadonnées CLI (`--metadata title/subtitle/date/author`) qui alimentent la page de titre Word.
+- **PDF** : `exportCurrentSectionToPDF()` convertit d'abord le markdown en HTML via `pandoc`
+  (`--to html5`, sortie dans un fichier temp pour éviter le *deadlock* de pipe sur gros fichiers),
+  enrobe ce corps dans `buildPDFHTML(...)` (page de garde marine + CSS `@page` A4), puis délègue
+  à **`PDFExporter`** (`Sources/PDFExporter.swift`).
+- **`PDFExporter`** — impression PDF **A4 vectorielle paginée** sans dépendance externe. Charge le HTML
+  dans une `WKWebView` attachée à une **`NSWindow` réelle mais invisible** (hors-écran, `alphaValue=0`,
+  `orderBack`) — obligatoire pour que WebKit produise un layout imprimable — puis utilise
+  `WKWebView.printOperation(with:)` + `runModal(for:delegate:didRun:contextInfo:)` (**asynchrone** :
+  l'UI ne gèle pas). Le `PrintDelegate` est `nonisolated`/`@unchecked Sendable` car AppKit rappelle le
+  callback `didRun` sur un thread d'arrière-plan (un delegate `@MainActor` → assertion d'isolation
+  Swift 6 → `SIGTRAP`).
+- ⚠️ Les deux conversions lisent avec `--from markdown-yaml_metadata_block` : `RAPPORT_COMPLET.md`
+  contient des blocs `---` … `---` (séparateurs entourant des notes) que pandoc prendrait pour des
+  métadonnées YAML → erreur de parsing (exit 64) → fallback `<pre>` (markdown brut).
+- ❌ **Pas** `WKWebView.pdf()` : il capture tout en une seule page géante rastérisée à 2x Retina
+  (fichiers de plusieurs GB, pas de pagination `@page`).
 
 ### Graphe — `GraphBuilder` (`Sources/GraphBuilder.swift`)
 - Modèles `Codable` : `GraphNode { id, label, type, sectionId?, auditPath?, weight }`,
@@ -96,6 +128,7 @@ Dossier audit-{sujet}/ ──► AuditStore (état @Observable, @MainActor)
 | JS → Swift (clic nœud) | `WKScriptMessageHandler` nommé `graph` |
 | Lancement d'audit | `Process` exécutant `claude --output-format stream-json -p "/audit-report …"` ; stdout parsé ligne à ligne |
 | Suivi d'audit | `DispatchSource` sur `_events.jsonl` + polling de `_question.json` |
+| Export PDF | `WKWebView.printOperation(with:)` dans une `NSWindow` hors-écran + `runModal(…didRun:)` (async) → PDF A4 vectoriel |
 
 ## Partage réseau local — `LANServer` (`Sources/LANServer.swift`)
 

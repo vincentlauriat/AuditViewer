@@ -73,7 +73,28 @@ Statuts : `complete | partial | canceled`.
 ## Versioning du contrat
 Tous les artefacts JSON portent `"v": 1`. Toute évolution incrémente `v`.
 
+## P3 (récemment complété — 2026-06-24)
+- [x] **macOS app: KPIs fullscreen viewer** — New "Chiffres clés" tab in main toolbar
+      - Added `.kpis` case to `AuditStore.ViewMode`
+      - Fullscreen view with 4-column responsive grid layout
+      - Removed right-side KPI sidebar (simplified UI)
+      - Clean modal/tab-based access to key performance indicators
+      - Animation fixes for view transitions
+
+## P4 (récemment complété — 2026-06-26)
+- [x] **macOS app: Export PDF + DOCX avec page de garde professionnelle**
+      - Bouton « Exporter en PDF » dans la toolbar (à côté de l'export Word)
+      - Page de garde marine (titre, sous-titre de section, date d'extraction, nb de sources) — PDF et DOCX
+      - `PDFExporter` : impression WebKit hors-écran (`printOperation` + `NSWindow` invisible +
+        `runModal` async) → PDF A4 **vectoriel paginé**, sans freeze ni fichier multi-GB
+      - Conversion pandoc avec `markdown-yaml_metadata_block` désactivé (les blocs `---`…`---` du
+        rapport complet cassaient le parsing YAML → markdown brut dans un cadre gris)
+- [x] **macOS app: cartes encadrées pour l'écran « Chiffres clés »**
+      - `KPICellView` : coins arrondis continus, bordure fine selon le thème, ombre douce,
+        barre d'accent latérale (bleu / orange si estimé), badge « estimé » en capsule
+
 ## Hors périmètre (Viewer, étape suivante)
 Runner headless (`claude -p` vs Agent SDK), rendu markdown, UI de pilotage.
 Décision pressentie : Agent SDK pour le streaming, `_events.jsonl` + `_control.json` en canal fichier de secours.
+Prochaines vues macOS : possibilité d'un mode sidebar KPI si demande utilisateur (actuellement fullscreen via onglet dédié).
 
