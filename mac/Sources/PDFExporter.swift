@@ -1,10 +1,20 @@
 import AppKit
 import WebKit
 
-/// Exporte un document HTML en PDF A4 paginé via NSPrintOperation (respecte les sauts de page CSS).
-/// WKWebView.pdf() ne pagine pas correctement les longs documents — il crée un PDF basé sur la
-/// hauteur du viewport, ce qui produit des "pages géantes". NSPrintOperation utilise le moteur
-/// d'impression macOS qui respecte page-break-after, page-break-before et @page.
+/// Exporte un document HTML en PDF A4 paginé via NSPrintOperation.
+///
+/// Pourquoi NSPrintOperation :
+///   - WKWebView.pdf() ne pagine pas — il crée un PDF dont la hauteur de page = hauteur du
+///     viewport, ce qui produit des "pages géantes" sur les longs documents.
+///   - NSPrintOperation utilise le moteur d'impression macOS qui respecte page-break-* CSS.
+///
+/// Pourquoi run(withCompletion:) et non run() :
+///   - run() est synchrone et pompe sa propre run loop via [NSApp nextEventMatchingMask:].
+///     Appelé depuis une task Swift concurrency sur @MainActor, il deadlocke (le scheduler
+///     Swift ne cède pas la run loop AppKit → NSPrintOperation attend des events qui ne viennent
+///     jamais → freeze de l'application).
+///   - run(withCompletion:) retourne immédiatement ; AppKit appelle le callback quand le PDF
+///     est écrit, sans bloquer le main actor.
 @MainActor
 final class PDFExporter: NSObject, WKNavigationDelegate {
 
@@ -12,7 +22,7 @@ final class PDFExporter: NSObject, WKNavigationDelegate {
     private var loadContinuation: CheckedContinuation<Void, Never>?
 
     private override init() {
-        // 794px ≈ 210mm (largeur A4 à 96 dpi) — détermine la largeur de mise en page.
+        // 794px ≈ 210mm à 96 dpi = largeur A4, détermine la largeur de mise en page.
         webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 794, height: 1123))
         super.init()
         webView.navigationDelegate = self
@@ -20,19 +30,28 @@ final class PDFExporter: NSObject, WKNavigationDelegate {
 
     static func export(html: String, to destination: URL) async throws {
         let exporter = PDFExporter()
+
+        // Étape 1 : charger le HTML et attendre didFinish
         await withCheckedContinuation { continuation in
             exporter.loadContinuation = continuation
             exporter.webView.loadHTMLString(html, baseURL: nil)
         }
-        // Laisser WebKit finaliser le layout CSS avant l'impression.
+
+        // Étape 2 : laisser WebKit finaliser le layout CSS
         try? await Task.sleep(for: .milliseconds(700))
-        try exporter.printAsPDF(to: destination)
+
+        // Étape 3 : imprimer en PDF (non bloquant)
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            exporter.runPrintOperation(to: destination, continuation: continuation)
+        }
     }
 
-    private func printAsPDF(to destination: URL) throws {
+    private func runPrintOperation(
+        to destination: URL,
+        continuation: CheckedContinuation<Void, Error>
+    ) {
         let printInfo = NSPrintInfo()
-        // A4 en points (72 dpi) : 595.28 × 841.89 pt
-        printInfo.paperSize = NSSize(width: 595.28, height: 841.89)
+        printInfo.paperSize = NSSize(width: 595.28, height: 841.89) // A4 @ 72 dpi
         printInfo.topMargin = 0
         printInfo.bottomMargin = 0
         printInfo.leftMargin = 0
@@ -51,8 +70,20 @@ final class PDFExporter: NSObject, WKNavigationDelegate {
         op.showsPrintPanel = false
         op.showsProgressPanel = false
 
-        guard op.run() else {
-            throw CocoaError(.fileWriteUnknown)
+        // Dispatcher via DispatchQueue.main plutôt qu'appeler op.run() directement :
+        // op.run() est synchrone et pompe la run loop via [NSApp nextEventMatchingMask:].
+        // Depuis un @MainActor Swift task, le scheduler Swift ne cède pas la run loop AppKit
+        // → op.run() deadlocke. Depuis un bloc DispatchQueue.main.async, la run loop est
+        // disponible → op.run() peut traiter ses events internes sans bloquer.
+        // Le withCheckedThrowingContinuation suspend le task Swift (libère le main actor)
+        // avant que ce bloc s'exécute, donc pas de deadlock avec la queue principale.
+        DispatchQueue.main.async {
+            let success = op.run()
+            if success {
+                continuation.resume()
+            } else {
+                continuation.resume(throwing: CocoaError(.fileWriteUnknown))
+            }
         }
     }
 
