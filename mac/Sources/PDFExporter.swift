@@ -1,8 +1,10 @@
 import AppKit
 import WebKit
 
-/// Exporte un document HTML vers PDF via une WKWebView hors-écran.
-/// L'instance est gardée en vie localement dans `export(html:to:)` pendant toute l'opération.
+/// Exporte un document HTML en PDF A4 paginé via NSPrintOperation (respecte les sauts de page CSS).
+/// WKWebView.pdf() ne pagine pas correctement les longs documents — il crée un PDF basé sur la
+/// hauteur du viewport, ce qui produit des "pages géantes". NSPrintOperation utilise le moteur
+/// d'impression macOS qui respecte page-break-after, page-break-before et @page.
 @MainActor
 final class PDFExporter: NSObject, WKNavigationDelegate {
 
@@ -10,7 +12,7 @@ final class PDFExporter: NSObject, WKNavigationDelegate {
     private var loadContinuation: CheckedContinuation<Void, Never>?
 
     private override init() {
-        // Largeur A4 à 96 dpi (794 px) pour la mise en page ; le CSS @page gère le format final.
+        // 794px ≈ 210mm (largeur A4 à 96 dpi) — détermine la largeur de mise en page.
         webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 794, height: 1123))
         super.init()
         webView.navigationDelegate = self
@@ -22,10 +24,36 @@ final class PDFExporter: NSObject, WKNavigationDelegate {
             exporter.loadContinuation = continuation
             exporter.webView.loadHTMLString(html, baseURL: nil)
         }
-        // Délai pour que le CSS @page et les polices système soient appliqués.
-        try? await Task.sleep(for: .milliseconds(450))
-        let data = try await exporter.webView.pdf()
-        try data.write(to: destination)
+        // Laisser WebKit finaliser le layout CSS avant l'impression.
+        try? await Task.sleep(for: .milliseconds(700))
+        try exporter.printAsPDF(to: destination)
+    }
+
+    private func printAsPDF(to destination: URL) throws {
+        let printInfo = NSPrintInfo()
+        // A4 en points (72 dpi) : 595.28 × 841.89 pt
+        printInfo.paperSize = NSSize(width: 595.28, height: 841.89)
+        printInfo.topMargin = 0
+        printInfo.bottomMargin = 0
+        printInfo.leftMargin = 0
+        printInfo.rightMargin = 0
+        printInfo.horizontalPagination = .fit
+        printInfo.verticalPagination = .automatic
+        printInfo.isHorizontallyCentered = false
+        printInfo.isVerticallyCentered = false
+        printInfo.jobDisposition = .save
+        printInfo.dictionary().setValue(
+            destination as NSURL,
+            forKey: NSPrintInfo.AttributeKey.jobSavingURL.rawValue
+        )
+
+        let op = webView.printOperation(with: printInfo)
+        op.showsPrintPanel = false
+        op.showsProgressPanel = false
+
+        guard op.run() else {
+            throw CocoaError(.fileWriteUnknown)
+        }
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
