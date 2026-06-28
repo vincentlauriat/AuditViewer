@@ -2,7 +2,17 @@
 .omc/
 
 # Réglages Claude Code locaux à la machine
-.claude/settings.local.json
+.claude/
+
+# Artefacts de build SwiftPM
+.build/
+
+# Scratchpad de travail local
+/scratchpad/
+
+# Caches Python
+__pycache__/
+*.pyc
 
 # Dossiers de sortie d'audit générés par le skill (créés à la racine d'exécution)
 # Ancré à la racine pour ne PAS exclure skills/audit-report/ (le skill lui-même)
@@ -19,5 +29,7 @@
 
 # Doublons de conflit iCloud (le dépôt vit sous ~/Documents synchronisé iCloud)
 # ex. « LANServer 2.swift » — cassent le build s'ils traînent dans Sources/
-* 2.swift
-* 3.swift
+# Élargi à tous types de fichiers (md, html, png…), pas seulement .swift.
+* 2.*
+* 3.*
+*copie 2.*

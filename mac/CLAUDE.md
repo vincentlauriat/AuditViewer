@@ -44,6 +44,12 @@ Deux systèmes de build coexistent :
   que si elle **contient des éléments focusables**. Le contenu textuel pur (rendu Markdown natif
   SwiftUI dans `tvos/Sources/`, **pas** de `WKWebView`) doit être **enveloppé pour devenir focusable**,
   sinon il est inaccessible à la télécommande.
+- **Piège iOS — placeholders iCloud** : les dossiers/fichiers du dossier Research choisi peuvent être
+  *visibles mais non téléchargés* (dataless ; un dossier entièrement évincé apparaît parfois comme fichier
+  caché `.audit-x.icloud`). `startDownloadingUbiquitousItem` est **asynchrone** : le déclencher sans
+  attendre fait échouer le listing/lecture qui suit → audits manquants ou « aucun audit ». `ResearchVaultReader`
+  télécharge donc de façon **bloquante** (`downloadAndWait`, polling du statut), liste la racine via
+  `NSFileCoordinator`, sans `.skipsHiddenFiles`, et résout les noms `.icloud` → nom réel.
 - **Piège tvOS — ingestion réseau** : tvOS n'a ni Files picker, ni iCloud Drive, ni stockage local
   persistant. L'Apple TV lit via HTTP le dossier `Research` partagé par le Mac (`Sources/LANServer.swift` :
   `NWListener` + Bonjour `_auditviewer._tcp`, serveur GET-only lecture seule, anti *path-traversal*).
