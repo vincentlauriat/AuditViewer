@@ -74,6 +74,7 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: ios/Sources
+      - path: ios/Assets.xcassets
     info:
       path: ios/Info.plist
       properties:
@@ -120,6 +121,7 @@ targets:
         IPHONEOS_DEPLOYMENT_TARGET: "17.0"
         DEVELOPMENT_TEAM: "KFLACS69T9"
         CODE_SIGN_STYLE: Automatic
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 
   # Viewer Apple TV (lecture seule) — lit les audits via Bonjour + HTTP LAN
   # (le Mac partage le dossier Research, cf. LANServer). Pas d'iCloud, pas de Sparkle.

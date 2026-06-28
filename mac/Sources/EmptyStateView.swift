@@ -29,6 +29,15 @@ struct EmptyStateView: View {
                 .keyboardShortcut("o", modifiers: .command)
 
                 Button {
+                    store.openRootFolder()
+                } label: {
+                    Label("Ouvrir un dossier racine…", systemImage: "folder.badge.gearshape")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .keyboardShortcut("o", modifiers: [.command, .shift])
+
+                Button {
                     store.showNewAudit = true
                 } label: {
                     Label("Nouvel audit…", systemImage: "plus")
@@ -37,6 +46,11 @@ struct EmptyStateView: View {
                 .controlSize(.large)
                 .keyboardShortcut("n", modifiers: .command)
             }
+            Text("Le dossier racine liste tous les audits qu'il contient (comme sur iPhone/iPad).")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 380)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(nsColor: .windowBackgroundColor))

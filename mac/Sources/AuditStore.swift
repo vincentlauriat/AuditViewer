@@ -3,6 +3,7 @@ import Darwin
 import Foundation
 import Observation
 import SwiftUI
+import WebKit
 
 @MainActor
 @Observable
@@ -16,6 +17,14 @@ final class AuditStore {
     var meta: AuditMeta? = nil
     var manifest: AuditManifest? = nil   // _manifest.json (contrat v1), nil si legacy
     var diffs: [Int: DiffEngine.Result] = [:]
+
+    // Mode racine (multi-audits) : liste découverte + état de navigation.
+    // `browseMode` vrai → quand `auditDir == nil`, ContentView affiche la liste
+    // (et non l'empty state). `browseRoot` = racine en cours d'exploration.
+    var audits: [AuditEntry] = []
+    var browseMode: Bool = false
+    var browseRoot: URL? = nil
+    var isLoadingAudits: Bool = false
 
     var showNewAudit: Bool = false
     var showUpdateSheet: Bool = false
@@ -42,7 +51,7 @@ final class AuditStore {
     var sourceCount: Int = 0
 
     // Mode d'affichage du pane détail
-    enum ViewMode: String { case document, graph }
+    enum ViewMode: String { case document, graph, kpis }
     enum GraphScope: String { case local, global }
     var viewMode: ViewMode = .document
     var graphScope: GraphScope = .local
@@ -80,6 +89,165 @@ final class AuditStore {
             ?? KeychainStore.researchRoot
         guard panel.runModal() == .OK, let url = panel.url else { return }
         loadAuditDir(url)
+    }
+
+    // MARK: - Mode racine (multi-audits)
+
+    /// Choisit un dossier *racine* contenant plusieurs audits, puis affiche la
+    /// liste. Mémorise la racine dans le Keychain (`researchRoot`). Laisse
+    /// `auditDir = nil` → ContentView bascule sur la liste tant que `browseMode`.
+    func openRootFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.message = "Sélectionner un dossier racine contenant plusieurs audits"
+        panel.prompt = "Ouvrir"
+        panel.directoryURL = browseRoot ?? KeychainStore.researchRoot
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        KeychainStore.researchRoot = url
+        loadRoot(url)
+    }
+
+    /// Scanne la racine, peuple `audits` (triés date↓ puis titre) et active le
+    /// mode liste. La découverte/lecture se fait hors MainActor (I/O disque).
+    func loadRoot(_ url: URL) {
+        stopWatchingEvents()
+        auditDir = nil
+        browseRoot = url
+        browseMode = true
+        audits = []
+        isLoadingAudits = true
+
+        Task { [weak self] in
+            // Découverte (rapide) hors MainActor…
+            let dirs = await Task.detached(priority: .userInitiated) {
+                Self.discoverAudits(root: url)
+            }.value
+            // …puis lecture des entrées EN PARALLÈLE : la 1re lecture d'un fichier
+            // iCloud dataless déclenche une matérialisation bloquante (~0,8 s) ;
+            // en série sur N audits ça gèle la liste plusieurs dizaines de secondes.
+            // Le TaskGroup ramène le mur à ~quelques secondes (puis instantané une
+            // fois les fichiers téléchargés).
+            let entries = await withTaskGroup(of: AuditEntry?.self) { group in
+                for dir in dirs {
+                    group.addTask(priority: .userInitiated) { Self.loadEntry(dir: dir) }
+                }
+                var acc: [AuditEntry] = []
+                for await entry in group { if let entry { acc.append(entry) } }
+                return acc
+            }
+            await MainActor.run {
+                guard let self else { return }
+                self.audits = entries.sorted {
+                    if let d0 = $0.auditDate, let d1 = $1.auditDate, d0 != d1 {
+                        return d0 > d1
+                    }
+                    return $0.title.localizedCompare($1.title) == .orderedAscending
+                }
+                self.isLoadingAudits = false
+            }
+        }
+    }
+
+    /// Recharge la racine courante (bouton « Recharger » de la liste).
+    func refreshRoot() {
+        if let root = browseRoot ?? KeychainStore.researchRoot { loadRoot(root) }
+    }
+
+    /// Revient de la vue détail à la liste (mode racine). Garde `browseRoot`.
+    func backToList() {
+        stopWatchingEvents()
+        auditDir = nil
+        // browseMode reste vrai → ContentView réaffiche la liste.
+    }
+
+    /// Détecte les sous-dossiers de `root` qui sont des audits : présence de
+    /// `_manifest.json` OU `00_RESUME_EXECUTIF.md` (indépendant du préfixe
+    /// `audit-`). Accès filesystem direct (cible macOS non sandboxée).
+    nonisolated static func discoverAudits(root: URL) -> [URL] {
+        let fm = FileManager.default
+        let items = (try? fm.contentsOfDirectory(
+            at: root,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles]
+        )) ?? []
+        return items.filter { url in
+            guard (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true
+            else { return false }
+            return fm.fileExists(atPath: url.appendingPathComponent("_manifest.json").path)
+                || fm.fileExists(atPath: url.appendingPathComponent("00_RESUME_EXECUTIF.md").path)
+        }
+    }
+
+    /// Construit une `AuditEntry` pour un dossier d'audit : `_manifest.json` (v1)
+    /// prioritaire, sinon repli legacy (H1 de `00_RESUME_EXECUTIF.md`).
+    nonisolated static func loadEntry(dir: URL) -> AuditEntry? {
+        let slug = slugFromDir(dir)
+
+        // 1. Manifest v1
+        if let manifest = loadManifest(from: dir) {
+            return AuditEntry(
+                id: slug,
+                dir: dir,
+                manifest: manifest,
+                title: manifest.subject?.isEmpty == false ? manifest.subject! : subjectFromDir(dir),
+                auditDate: manifest.auditDate,
+                status: manifest.status,
+                sourcesCount: manifest.sourcesCount,
+                depth: manifest.depth,
+                options: manifest.options
+            )
+        }
+
+        // 2. Legacy : H1 de 00_RESUME_EXECUTIF.md, sinon nom du dossier.
+        let resumeURL = dir.appendingPathComponent("00_RESUME_EXECUTIF.md")
+        let title: String
+        if let text = try? String(contentsOf: resumeURL, encoding: .utf8) {
+            title = extractH1(from: text) ?? subjectFromDir(dir)
+        } else {
+            title = subjectFromDir(dir)
+        }
+        return AuditEntry(
+            id: slug, dir: dir, manifest: nil, title: title,
+            auditDate: nil, status: nil, sourcesCount: nil, depth: nil, options: nil
+        )
+    }
+
+    /// Slug d'un dossier : nom brut amputé d'un éventuel préfixe `audit-`/`audit_`.
+    nonisolated private static func slugFromDir(_ dir: URL) -> String {
+        var slug = dir.lastPathComponent
+        for prefix in ["audit-", "audit_"] where slug.hasPrefix(prefix) {
+            slug = String(slug.dropFirst(prefix.count))
+            break
+        }
+        return slug
+    }
+
+    /// Premier titre H1 du Markdown (après un frontmatter YAML éventuel).
+    nonisolated private static func extractH1(from text: String) -> String? {
+        let stripped = stripYAMLFrontmatter(text)
+        for line in stripped.split(separator: "\n", omittingEmptySubsequences: false) {
+            let s = String(line)
+            if s.hasPrefix("# ") {
+                return String(s.dropFirst(2)).trimmingCharacters(in: .whitespaces)
+            }
+        }
+        return nil
+    }
+
+    nonisolated private static func stripYAMLFrontmatter(_ text: String) -> String {
+        guard text.hasPrefix("---") else { return text }
+        let lines = text.components(separatedBy: "\n")
+        var i = 1
+        while i < lines.count {
+            if lines[i].trimmingCharacters(in: .whitespaces) == "---" {
+                return lines.dropFirst(i + 1).joined(separator: "\n")
+                    .trimmingCharacters(in: .newlines)
+            }
+            i += 1
+        }
+        return text
     }
 
     func loadAuditDir(_ url: URL) {
@@ -372,14 +540,14 @@ final class AuditStore {
         let accumulator = LineAccumulator()
 
         let handle = pipe.fileHandleForReading
-        handle.readabilityHandler = { h in
+        handle.readabilityHandler = { [weak self] h in
             let data = h.availableData
             guard !data.isEmpty, let text = String(data: data, encoding: .utf8) else { return }
             accumulator.buffer += text
             let lines = accumulator.buffer.components(separatedBy: "\n")
             accumulator.buffer = lines.last ?? ""
             let completed = Array(lines.dropLast().filter { !$0.isEmpty })
-            Task { @MainActor [weak self] in
+            Task { @MainActor in
                 guard let self else { return }
                 self.processOutput += text
                 for line in completed { self.parseStreamLine(line) }
@@ -1030,31 +1198,28 @@ final class AuditStore {
         return LogEntry(id: UUID(), timestamp: Date(), kind: kind, message: message)
     }
 
-    // MARK: - Export DOCX
+    // MARK: - Export
+
+    /// Fichier source, titre du document et titre de la section pour la section affichée.
+    private func exportSourceInfo() -> (filename: String, docTitle: String, sectionTitle: String) {
+        switch selectedSectionId {
+        case -3:
+            let t = subject.isEmpty ? "Vérification des faits" : "\(subject) — Vérification des faits"
+            return ("_factcheck.md", t, "Vérification des faits")
+        case -1, -2, -4, -5:
+            return ("RAPPORT_COMPLET.md", subject, "Rapport complet")
+        default:
+            if let s = sections.first(where: { $0.id == selectedSectionId }), s.exists {
+                let t = subject.isEmpty ? s.title : "\(subject) — \(s.title)"
+                return (s.filename, t, s.title)
+            }
+            return ("RAPPORT_COMPLET.md", subject, "Rapport complet")
+        }
+    }
 
     func exportCurrentSectionToDocx() {
         guard let dir = auditDir else { return }
-
-        // Fichier source : section courante ou RAPPORT_COMPLET par défaut
-        let filename: String
-        let docTitle: String
-        switch selectedSectionId {
-        case -3:
-            filename = "_factcheck.md"
-            docTitle = subject.isEmpty ? "Vérification des faits" : "\(subject) — Vérification des faits"
-        case -1, -2, -4, -5:
-            filename = "RAPPORT_COMPLET.md"
-            docTitle = subject
-        default:
-            if let section = sections.first(where: { $0.id == selectedSectionId }), section.exists {
-                filename = section.filename
-                docTitle = subject.isEmpty ? section.title : "\(subject) — \(section.title)"
-            } else {
-                filename = "RAPPORT_COMPLET.md"
-                docTitle = subject
-            }
-        }
-
+        let (filename, _, sectionTitle) = exportSourceInfo()
         let sourceURL = dir.appendingPathComponent(filename)
         guard FileManager.default.fileExists(atPath: sourceURL.path) else { return }
 
@@ -1067,22 +1232,108 @@ final class AuditStore {
         guard panel.runModal() == .OK, let destURL = panel.url else { return }
 
         let pandoc = Self.findPandoc()
-        let capturedTitle = docTitle
+        let capturedSubject = subject.isEmpty ? "Audit" : subject
+        let capturedSection = sectionTitle
+        let capturedDate = Self.formattedAuditDate(manifest?.auditDate ?? meta?.auditDate)
+        let capturedSources = sourceCount
+
         Task.detached(priority: .userInitiated) {
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: pandoc)
-            process.arguments = [
+            let sourcesLabel = capturedSources > 0
+                ? "\(capturedSources) source\(capturedSources > 1 ? "s" : "") analysée\(capturedSources > 1 ? "s" : "")"
+                : ""
+
+            // --metadata flags : pas de fichier temporaire, pas de risque d'encodage YAML
+            var args: [String] = [
                 sourceURL.path,
-                "--from", "markdown",
+                // markdown-yaml_metadata_block : RAPPORT_COMPLET.md contient des
+                // blocs `---` … `---` (séparateurs horizontaux entourant des notes)
+                // que pandoc prendrait pour des métadonnées YAML → exit 64. On
+                // désactive l'extension ; les --metadata CLI restent appliqués.
+                "--from", "markdown-yaml_metadata_block",
                 "--to", "docx",
                 "--output", destURL.path,
-                "--metadata", "title=\(capturedTitle)",
+                "--metadata", "title=\(capturedSubject)",
+                "--metadata", "subtitle=\(capturedSection)",
+                "--metadata", "date=\(capturedDate)",
                 "--toc", "--toc-depth=2"
             ]
+            if !sourcesLabel.isEmpty {
+                args += ["--metadata", "author=\(sourcesLabel)"]
+            }
+
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: pandoc)
+            process.arguments = args
             try? process.run()
             process.waitUntilExit()
             if process.terminationStatus == 0 {
                 _ = await MainActor.run { NSWorkspace.shared.open(destURL) }
+            }
+        }
+    }
+
+    func exportCurrentSectionToPDF() {
+        guard let dir = auditDir else { return }
+        let (filename, _, sectionTitle) = exportSourceInfo()
+        let sourceURL = dir.appendingPathComponent(filename)
+        guard FileManager.default.fileExists(atPath: sourceURL.path) else { return }
+
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.pdf]
+        panel.nameFieldStringValue = filename.replacingOccurrences(of: ".md", with: ".pdf")
+        panel.directoryURL = dir
+        panel.message = "Exporter en PDF"
+        panel.prompt = "Exporter"
+        guard panel.runModal() == .OK, let destURL = panel.url else { return }
+
+        let pandoc = Self.findPandoc()
+        let capturedSubject = subject.isEmpty ? "Audit" : subject
+        let capturedSection = sectionTitle
+        let capturedDate = Self.formattedAuditDate(manifest?.auditDate ?? meta?.auditDate)
+        let capturedSources = sourceCount
+
+        Task {
+            // Pandoc écrit dans un fichier temp pour éviter le deadlock pipe sur gros fichiers
+            let htmlBody = await Task.detached(priority: .userInitiated) { () -> String in
+                let htmlTmp = FileManager.default.temporaryDirectory
+                    .appendingPathComponent(UUID().uuidString + ".html")
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: pandoc)
+                process.arguments = [
+                    sourceURL.path,
+                    // markdown-yaml_metadata_block : voir export DOCX. Les blocs
+                    // `---` … `---` du rapport complet cassaient la conversion
+                    // (exit 64) → l'app retombait sur le fallback <pre> (markdown
+                    // brut dans un cadre gris).
+                    "--from", "markdown-yaml_metadata_block",
+                    "--to", "html5",
+                    "--output", htmlTmp.path
+                ]
+                try? process.run()
+                process.waitUntilExit()
+                defer { try? FileManager.default.removeItem(at: htmlTmp) }
+                if process.terminationStatus == 0,
+                   let html = try? String(contentsOf: htmlTmp, encoding: .utf8) {
+                    return html
+                }
+                // Repli : contenu brut préformaté
+                let raw = (try? String(contentsOf: sourceURL, encoding: .utf8)) ?? ""
+                return "<pre>\(raw.replacingOccurrences(of: "<", with: "&lt;"))</pre>"
+            }.value
+
+            let fullHTML = Self.buildPDFHTML(
+                subject: capturedSubject,
+                sectionTitle: capturedSection,
+                date: capturedDate,
+                sourcesCount: capturedSources,
+                bodyHTML: htmlBody
+            )
+
+            do {
+                try await PDFExporter.export(html: fullHTML, to: destURL)
+                NSWorkspace.shared.open(destURL)
+            } catch {
+                // Échec silencieux — l'utilisateur voit que le fichier n'est pas créé
             }
         }
     }
@@ -1101,9 +1352,244 @@ final class AuditStore {
         }
     }
 
+    var canExportPDF: Bool { canExportDocx }
+
+    // MARK: - PDF HTML
+
+    nonisolated static func buildPDFHTML(
+        subject: String,
+        sectionTitle: String,
+        date: String,
+        sourcesCount: Int,
+        bodyHTML: String
+    ) -> String {
+        let sourcesLabel = sourcesCount > 0
+            ? "\(sourcesCount) source\(sourcesCount > 1 ? "s" : "") analysée\(sourcesCount > 1 ? "s" : "")"
+            : ""
+        let sourcesRow = sourcesLabel.isEmpty ? "" : """
+              <div class="ci">
+                <span class="cl">Sources</span>
+                <span class="cv">\(escapeHTML(sourcesLabel))</span>
+              </div>
+        """
+
+        return """
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+        <meta charset="UTF-8">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          @page { size: A4; margin: 0; }
+          body {
+            font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 10pt;
+            color: #1a1a2e;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+
+          /* ── Page de garde ── */
+          .cover {
+            width: 210mm; min-height: 297mm;
+            background: #0c1a3d;
+            display: flex; flex-direction: column;
+            position: relative; overflow: hidden;
+            page-break-after: always;
+          }
+          .cover-stripe {
+            position: absolute; right: 0; top: 0;
+            width: 58mm; height: 100%;
+            background: linear-gradient(160deg, #132347 0%, #0e1d3a 100%);
+            clip-path: polygon(28% 0, 100% 0, 100% 100%, 0% 100%);
+          }
+          .cover-line {
+            position: absolute; right: 0; top: 0;
+            width: 3px; height: 100%;
+            background: linear-gradient(180deg, #4d9fff 0%, #2563eb 100%);
+          }
+          .cover-body {
+            position: relative; z-index: 2;
+            flex: 1; padding: 50mm 28mm 18mm;
+            display: flex; flex-direction: column;
+          }
+          .eyebrow {
+            font-size: 7pt; letter-spacing: 5px;
+            text-transform: uppercase; color: #4d9fff;
+            font-weight: 500; margin-bottom: 12mm;
+          }
+          .cover-title {
+            font-size: 36pt; font-weight: 800;
+            color: #fff; line-height: 1.0;
+            letter-spacing: -0.5px;
+            max-width: 128mm; margin-bottom: 6mm;
+          }
+          .cover-sub {
+            font-size: 15pt; font-weight: 300;
+            color: rgba(255,255,255,0.5);
+            letter-spacing: 0.2px; margin-bottom: auto;
+          }
+          .cover-bar {
+            width: 16mm; height: 2px;
+            background: #4d9fff; border-radius: 1px;
+            margin: 13mm 0 9mm;
+          }
+          .ci {
+            display: flex; align-items: baseline;
+            gap: 4mm; margin-bottom: 3.5mm;
+          }
+          .cl {
+            font-size: 6.5pt; letter-spacing: 2.5px;
+            text-transform: uppercase; color: rgba(255,255,255,0.28);
+            min-width: 22mm;
+          }
+          .cv {
+            font-size: 9pt; color: rgba(255,255,255,0.78);
+            font-weight: 500;
+          }
+          .cover-footer {
+            position: relative; z-index: 2;
+            padding: 5mm 28mm;
+            border-top: 1px solid rgba(255,255,255,0.07);
+            display: flex; justify-content: space-between; align-items: center;
+          }
+          .brand {
+            font-size: 7pt; letter-spacing: 3px;
+            text-transform: uppercase; color: rgba(255,255,255,0.18);
+          }
+          .dot {
+            width: 4px; height: 4px; border-radius: 50%;
+            background: #4d9fff; opacity: 0.35;
+          }
+
+          /* ── Contenu ── */
+          .content { padding: 18mm 22mm 22mm; }
+
+          h1, h2, h3, h4 {
+            font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+          }
+          h1 {
+            font-size: 20pt; font-weight: 700; color: #0c1a3d;
+            margin: 12mm 0 5mm; padding-bottom: 3mm;
+            border-bottom: 2.5px solid #4d9fff;
+            page-break-before: always; page-break-after: avoid;
+          }
+          h1:first-child { page-break-before: avoid; margin-top: 0; }
+          h2 {
+            font-size: 14pt; font-weight: 700; color: #132347;
+            margin: 8mm 0 3mm; page-break-after: avoid;
+          }
+          h3 {
+            font-size: 11pt; font-weight: 600; color: #1e3566;
+            margin: 6mm 0 2mm; page-break-after: avoid;
+          }
+          h4 { font-size: 10pt; font-weight: 600; color: #2a4a7c; margin: 4mm 0 1.5mm; }
+          p { font-size: 10pt; line-height: 1.7; color: #252540; margin-bottom: 4mm; }
+          ul, ol { margin: 0 0 4mm 7mm; padding: 0; }
+          li { font-size: 10pt; line-height: 1.6; color: #252540; margin-bottom: 1.5mm; }
+          strong { font-weight: 700; color: #0c1a3d; }
+          em { font-style: italic; color: #2a2a50; }
+          blockquote {
+            border-left: 3px solid #4d9fff; background: #f2f5fb;
+            padding: 3mm 5mm; margin: 5mm 0; border-radius: 0 3px 3px 0;
+          }
+          blockquote p { margin: 0; font-style: italic; color: #3a3a60; }
+          table {
+            width: 100%; border-collapse: collapse;
+            margin: 5mm 0; font-size: 9pt; page-break-inside: avoid;
+          }
+          thead th {
+            background: #0c1a3d; color: #fff;
+            padding: 3mm 4mm; text-align: left;
+            font-weight: 600; font-size: 8.5pt; letter-spacing: 0.3px;
+          }
+          tbody td {
+            padding: 2.5mm 4mm; border-bottom: 1px solid #e5e9f5;
+            vertical-align: top; line-height: 1.5;
+          }
+          tbody tr:nth-child(even) td { background: #f7f9fd; }
+          tbody tr:last-child td { border-bottom: 2px solid #0c1a3d; }
+          code {
+            font-family: 'SF Mono', Menlo, Consolas, monospace;
+            font-size: 8.5pt; background: #eef2fb;
+            color: #1e3566; padding: 1px 4px; border-radius: 3px;
+          }
+          pre {
+            background: #f0f4fd; border: 1px solid #d8e0f0;
+            border-radius: 4px; padding: 4mm; margin: 4mm 0; overflow: hidden;
+          }
+          pre code { background: none; padding: 0; font-size: 8pt; color: #1e3566; }
+          hr { border: none; border-top: 1px solid #dde2f0; margin: 7mm 0; }
+          a { color: #1e3566; text-decoration: none; }
+          section { display: block; }
+          .footnotes {
+            margin-top: 10mm; padding-top: 4mm;
+            border-top: 1px solid #dde2f0;
+            font-size: 8.5pt; color: #5a5a80;
+          }
+        </style>
+        </head>
+        <body>
+
+        <div class="cover">
+          <div class="cover-stripe"></div>
+          <div class="cover-line"></div>
+          <div class="cover-body">
+            <div class="eyebrow">Dossier d&#8217;audit strat&#233;gique</div>
+            <div class="cover-title">\(escapeHTML(subject))</div>
+            <div class="cover-sub">\(escapeHTML(sectionTitle))</div>
+            <div class="cover-bar"></div>
+            <div class="ci">
+              <span class="cl">Date</span>
+              <span class="cv">\(escapeHTML(date))</span>
+            </div>
+            \(sourcesRow)
+          </div>
+          <div class="cover-footer">
+            <span class="brand">AuditViewer</span>
+            <div class="dot"></div>
+            <span class="brand">Confidentiel</span>
+          </div>
+        </div>
+
+        <div class="content">
+        \(bodyHTML)
+        </div>
+
+        </body>
+        </html>
+        """
+    }
+
+    nonisolated private static func escapeHTML(_ s: String) -> String {
+        s.replacingOccurrences(of: "&", with: "&amp;")
+         .replacingOccurrences(of: "<", with: "&lt;")
+         .replacingOccurrences(of: ">", with: "&gt;")
+         .replacingOccurrences(of: "\"", with: "&quot;")
+    }
+
+    nonisolated static func formattedAuditDate(_ raw: String?) -> String {
+        guard let raw, !raw.isEmpty else {
+            let f = DateFormatter()
+            f.dateStyle = .long
+            f.locale = Locale(identifier: "fr_FR")
+            return f.string(from: Date())
+        }
+        let iso = DateFormatter()
+        iso.dateFormat = "yyyy-MM-dd"
+        iso.locale = Locale(identifier: "en_US_POSIX")
+        if let d = iso.date(from: String(raw.prefix(10))) {
+            let f = DateFormatter()
+            f.dateStyle = .long
+            f.locale = Locale(identifier: "fr_FR")
+            return f.string(from: d)
+        }
+        return raw
+    }
+
     // MARK: - Helpers
 
-    private static func loadManifest(from dir: URL) -> AuditManifest? {
+    nonisolated private static func loadManifest(from dir: URL) -> AuditManifest? {
         let url = dir.appendingPathComponent("_manifest.json")
         guard let data = try? Data(contentsOf: url),
               let manifest = try? JSONDecoder().decode(AuditManifest.self, from: data) else { return nil }
@@ -1189,7 +1675,7 @@ final class AuditStore {
         return "\"\(escaped)\""
     }
 
-    private static func subjectFromDir(_ url: URL) -> String {
+    nonisolated private static func subjectFromDir(_ url: URL) -> String {
         var slug = url.lastPathComponent
         for prefix in ["audit-", "audit_"] where slug.hasPrefix(prefix) {
             slug = String(slug.dropFirst(prefix.count))

@@ -33,10 +33,14 @@ affiche chaque section avec un rendu markdown riche (code, math, mermaid), et pr
 
 - **Lecture des rapports** — sidebar des sections (`00_RESUME_EXECUTIF.md` → `RAPPORT_COMPLET.md`),
   rendu markdown dans un `WKWebView` (markdown-it + highlight.js + KaTeX + Mermaid).
+- **Trois vues principales** — sélectionnables via une toolbar segmentée :
+  - **Document** : sections markdown structurées
+  - **Carte** : graphe force-directed interactif des liens entre sections/sources
+  - **Chiffres clés** : grille fullscreen de KPIs présentés en **cartes encadrées** (coins arrondis, bordure fine, ombre douce, barre d'accent — orange si la valeur est estimée)
 - **Output complet du skill** — entrées dédiées pour :
   - **Reconnaissance** (`_recon.json`) — secteur, acteurs clés, mots-clés, sources consultées
   - **Vérification des faits** (`_factcheck.md`)
-  - **Chiffres-clés** (`_data.json`, rendu en markdown)
+  - **Chiffres-clés** (`_data.json`) — affichables en vue dédiée 4-colonnes avec label/valeur/unité/période/badge estimé
   - **Sources** — index agrégé de toutes les URLs citées, groupées par domaine
 - **Carte canvas (Obsidian-like)** — graphe force-directed interactif (pan / zoom / drag) :
   - **Audit courant** : sujet → sections → reliées par sources partagées et acteurs clés communs
@@ -44,7 +48,9 @@ affiche chaque section avec un rendu markdown riche (code, math, mermaid), et pr
 - **Lancer / mettre à jour un audit** depuis l'app (exécute `claude -p "/audit-report …"`),
   avec console temps réel et suivi d'événements (`_events.jsonl`).
 - **Diff** entre deux versions d'un même audit après mise à jour.
-- **Export Word** (`.docx`) de la section courante via `pandoc`.
+- **Export Word** (`.docx`) et **export PDF** de la section courante via `pandoc`, avec une
+  **page de garde professionnelle** (titre, sous-titre de section, date d'extraction, nombre
+  de sources). Le PDF est généré en **A4 vectoriel paginé** (impression WebKit hors-écran).
 - Recherche dans le document, zoom, thème clair/sombre suivant le système.
 
 ---
@@ -54,7 +60,7 @@ affiche chaque section avec un rendu markdown riche (code, math, mermaid), et pr
 - macOS 14+ (cible SwiftPM : macOS 15)
 - Swift 6 / Xcode toolchain
 - `claude` CLI (pour lancer des audits depuis l'app) — détecté dans `~/.local/bin`, `/usr/local/bin`, `/opt/homebrew/bin`
-- `pandoc` (pour l'export `.docx`) — optionnel
+- `pandoc` (pour l'export `.docx` et `.pdf`) — optionnel
 - Le projet voisin **`MarkdownViewer`** doit être présent à côté pour fournir le bundle de rendu web
   (voir [ARCHITECTURE.md](ARCHITECTURE.md))
 

@@ -83,7 +83,32 @@ Ingestion : Bonjour + HTTP LAN (Mac = serveur). Périmètre : reader-only.
 - [x] Audits sans `_manifest.json` (legacy) / « résumé seul » : endpoint serveur `/files`,
       repli du fichier de Rapport, Dimensions construites depuis les fichiers, titre prettifié
 
-## App iOS / iPadOS — Lecteur d'études (lecture seule)
+## App macOS — KPI fullscreen viewer (2026-06-24)
+- [x] Add `.kpis` case to `AuditStore.ViewMode`
+- [x] Create dedicated fullscreen KPI view with 4-column grid layout
+- [x] Add "Chiffres clés" tab to main toolbar picker (Document / Carte / Chiffres clés)
+- [x] Remove right-side KPI sidebar + toggle button (simplify UI)
+- [x] Animation fixes for view mode transitions
+- [x] Build + compile verification (exit code 0)
+- [ ] Visual verification on macOS: open OneStream audit + test "Chiffres clés" tab
+- [ ] Commit + PR: KPI fullscreen mode feature
+
+## App macOS — Export PDF/DOCX + cartes KPI (2026-06-26)
+- [x] Export PDF de la section courante (bouton toolbar `doc.richtext`)
+- [x] Page de garde professionnelle (titre, sous-titre, date d'extraction, nb de sources) — PDF **et** DOCX
+- [x] DOCX : métadonnées via `--metadata` CLI (page de titre Word)
+- [x] PDF : pandoc `--to html5` (fichier temp, anti-deadlock pipe) + `buildPDFHTML` (CSS @page A4)
+- [x] `PDFExporter` réécrit : `WKWebView.printOperation` + `NSWindow` hors-écran + `runModal` async
+      (remplace `WKWebView.pdf()` qui produisait des fichiers multi-GB rastérisés 2x)
+- [x] Fix freeze : `NSPrintOperation.run()` synchrone → `runModal(…didRun:)` asynchrone
+- [x] Fix crash SIGTRAP : `PrintDelegate` `nonisolated` (callback AppKit sur thread d'arrière-plan)
+- [x] Fix rapport complet en markdown brut (cadre gris) : `--from markdown-yaml_metadata_block`
+      (blocs `---`…`---` pris pour du YAML → exit 64 → fallback `<pre>`) — vérifié exit 0 / 163 Ko HTML
+- [x] Écran « Chiffres clés » : chaque KPI dans une carte encadrée (bordure, ombre, barre d'accent, capsule estimé)
+- [x] Build + relance app à chaque étape (vert)
+- [ ] Vérif visuelle utilisateur : export PDF du rapport complet (pagination A4) + cartes KPI en thèmes clair/sombre
+
+## App iOS / iPadAS — Lecteur d'études (lecture seule)
 - [x] Target `AuditViewerIOS` buildable (project.yml : info.properties + entitlements iCloud)
 - [x] Accès au dossier Research via sélecteur Fichiers + security-scoped bookmark persistant
       (`ResearchFolderBookmark`), avec repli `Documents/Research` exposé dans Fichiers
