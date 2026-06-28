@@ -1,5 +1,15 @@
 # CHANGES — Release Notes & Changelog
 
+## 2026-06-29
+
+### Docs
+- **Doc complète mise à jour pour le mode racine multi-audits (macOS)** — Toute la documentation reflète désormais la fonctionnalité livrée le 28/06 (deux modes d'ouverture : direct `⌘O` / racine `⇧⌘O`) :
+  - `README.md` + `README.fr.md` — section « Two ways to open audits » / « Deux modes d'ouverture des audits » (miroir EN/FR).
+  - `ARCHITECTURE.md` (racine) + `mac/ARCHITECTURE.md` — flux d'ouverture à deux modes, routage `ContentView` à 3 états, `AuditStore` mode racine (`discoverAudits`, `loadRoot`, `backToList`, parallélisation `withTaskGroup`, piège iCloud dataless), nouveaux fichiers `AuditEntry.swift` / `AuditListView.swift`, commande menu `⇧⌘O`, bouton `EmptyStateView`.
+  - `mac/README.md` — section Utilisation réécrite (modes direct/racine) + bullet « Navigation multi-audits ».
+  - `docs/getting-started.md` — étape d'ouverture macOS enrichie des deux modes.
+  - `TODOS.md` + `mac/TODOS.md` — feature cochée comme terminée.
+
 ## 2026-06-28
 
 ### Added

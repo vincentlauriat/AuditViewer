@@ -6,7 +6,12 @@ App SwiftUI macOS, paquet SwiftPM exécutable (`Package.swift`, cible `AuditView
 
 ## Vue d'ensemble du flux
 
+L'app prend en charge deux modes d'ouverture :
+- **Mode direct** (`⌘O`) : `openAuditFolder()` (NSOpenPanel) → `loadAuditDir(url)` — charge un dossier d'audit unique.
+- **Mode racine** (`⇧⌘O`) : `openRootFolder()` (NSOpenPanel) → `loadRoot(url)` — scanne un dossier racine (ex. `Research/`), découvre tous les sous-dossiers via `discoverAudits(root:)`, active `browseMode` → `AuditListView` (liste plein écran).
+
 ```
+[mode direct]
 Dossier audit-{sujet}/ ──► AuditStore (état @Observable, @MainActor)
    *.md, _recon.json,            │
    _data.json, _factcheck.md,    ├─► sections + entrées virtuelles ──► SidebarView (sélection)
@@ -28,12 +33,22 @@ Dossier audit-{sujet}/ ──► AuditStore (état @Observable, @MainActor)
   lance/relance les audits (`runAudit`/`rerunAudit`), surveille `_events.jsonl`, calcule les diffs,
   exporte en `.docx` et `.pdf` (`exportCurrentSectionToDocx`/`exportCurrentSectionToPDF`), et
   construit les données de graphe (`graphJSON`, `handleGraphNodeTap`).
+  En **mode racine** : `openRootFolder()` (`⇧⌘O`) → `loadRoot(url)` peuple `audits: [AuditEntry]`
+  et active `browseMode: Bool` ; `discoverAudits(root:)` retient tout sous-dossier contenant
+  `_manifest.json` ou `00_RESUME_EXECUTIF.md` (indépendant du préfixe `audit-`) ; chargement
+  **parallélisé** (`withTaskGroup`, hors MainActor) pour matérialiser les fichiers iCloud *dataless*
+  en quelques secondes (en série : ~0,8 s/fichier → liste gelée ~30 s) ; racine mémorisée dans
+  `KeychainStore.researchRoot` (déjà existant) ; `backToList()` et `refreshRoot()` gèrent la
+  navigation retour et le rafraîchissement.
 - **`AuditOptions`** (`Sources/AuditOptions.swift`) — options de lancement → flags CLI `/audit-report`
   (persistées dans `_options.json`).
 - **`AuditMeta`** (`Sources/AuditMeta.swift`) — décodage de `_recon.json` (`key_players`, `sector`, …).
 - **`AuditEvent`** (`Sources/AuditEvent.swift`) — événements `_events.jsonl` (mode `--app-mode`).
 - **`Models.swift`** — `AuditSection` + liste statique `auditSections` ; `dynamicSectionBaseId = 100`
   pour les sections découvertes dynamiquement ; `LogEntry`.
+- **`AuditEntry`** (`Sources/AuditEntry.swift`) — représentation d'un dossier d'audit découvert en
+  mode racine (slug, titre, date, chemin URL) ; pendant macOS de l'`AuditEntry` iOS (les deux cibles
+  ne partagent pas leurs Sources, sauf `AuditManifest.swift`).
 
 ### Sections et entrées virtuelles
 - Sections réelles : id `0…11` (liste statique), id `100+` (markdown découvert dynamiquement,
@@ -49,14 +64,25 @@ Dossier audit-{sujet}/ ──► AuditStore (état @Observable, @MainActor)
 
 ### Vues
 - **`AuditViewerApp`** — point d'entrée `@main`, scènes `WindowGroup` + `Settings`, menus/raccourcis
-  (postent des `Notification` consommées par les vues).
-- **`ContentView`** — `NavigationSplitView` (sidebar + détail). Le pane détail bascule entre trois modes :
+  (postent des `Notification` consommées par les vues). Inclut la commande menu **`⇧⌘O`** pour
+  `openRootFolder()`.
+- **`ContentView`** — route sur **trois états** selon l'état de `AuditStore` :
+  - `store.auditDir != nil` → `NavigationSplitView` (sidebar + détail) avec, si `browseMode` actif,
+    un bouton toolbar « ‹ Audits » appelant `backToList()`.
+  - `store.auditDir == nil && store.browseMode` → `AuditListView` (liste plein écran).
+  - sinon → `EmptyStateView`.
+
+  Le pane détail du split bascule entre trois sous-modes selon `store.viewMode` :
   - `document` : `WebView` (WKWebView, markdown-it)
   - `graph` : `GraphWebView` (WKWebView, canvas force-directed)
   - `kpis` : `KPIGridView` (SwiftUI native, grille 4 colonnes)
-  
-  Selon `store.viewMode`, sélectionnable via toolbar segmenté **Document/Carte/Chiffres clés** ;
-  toolbar additionnel **Audit courant/Global** pour la vue Carte.
+
+  Sélectionnable via toolbar segmenté **Document/Carte/Chiffres clés** ; toolbar additionnel
+  **Audit courant/Global** pour la vue Carte. Les boutons d'export sont regroupés en
+  `ToolbarItemGroup` (contrainte de 10 items maximum du `ToolbarContentBuilder`).
+- **`AuditListView`** (`Sources/AuditListView.swift`) — liste plein écran des audits découverts en
+  mode racine (`store.audits`) ; sélectionner une entrée appelle `store.loadEntry(_:)` → transition
+  vers le `NavigationSplitView` détail.
 - **`SidebarView`** — `List` liée à `store.selectedSectionId` ; sélectionner une section ramène
   au mode Document.
 - **`WebView`** (`Sources/WebView.swift`) — `NSViewRepresentable` autour d'un `WKWebView` chargeant
@@ -70,7 +96,8 @@ Dossier audit-{sujet}/ ──► AuditStore (état @Observable, @MainActor)
   dans une **carte encadrée** (`KPICellView`) : coins arrondis continus, bordure fine adaptée au thème,
   ombre douce, barre d'accent latérale (bleu / orange si `estimated`), label, valeur+unité, période,
   badge "estimé" en capsule. Responsive : colonnes flexibles adaptées à la largeur.
-- Autres : `EmptyStateView`, `FindBar`, `LiveProgressView`/`AuditProgressView`, `LogsView`,
+- Autres : `EmptyStateView` (boutons « Ouvrir un dossier d'audit… » et « Ouvrir un dossier racine… »),
+  `FindBar`, `LiveProgressView`/`AuditProgressView`, `LogsView`,
   `NewAuditSheet`/`UpdateAuditSheet`/`QuestionSheet`, `SettingsView`, panels (`*PanelController`).
 
 ### Export DOCX / PDF

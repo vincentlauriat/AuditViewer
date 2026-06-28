@@ -50,6 +50,15 @@ et `./build.sh` verts. Reste la vérification visuelle (GUI) — cf. PLAN.md.
 - [ ] **Vérification visuelle de la carte** — non pilotée pendant le dev (extension Chrome non connectée) :
       ouvrir `audit-adcytherix`, tester pan/zoom/drag, clics de nœuds, vues locale et globale, thème clair/sombre.
 
+## App macOS — Deux modes d'ouverture des audits (2026-06-29) ✅
+- [x] Mode direct `⌘O` (inchangé) : ouvre un dossier d'audit précis, ouverture immédiate
+- [x] Mode racine `⇧⌘O` : sélectionne un dossier racine → liste plein écran (titre, date, sources, profondeur, badge de statut) → clic ouvre l'audit → « ‹ Audits » pour revenir
+- [x] `AuditEntry.swift` + `AuditListView.swift` créés ; `AuditStore` étendu : `audits`/`browseMode`/`browseRoot` + `openRootFolder`/`loadRoot`/`backToList`/`discoverAudits`/`loadEntry`
+- [x] Détection des sous-dossiers audit : présence de `_manifest.json` ou `00_RESUME_EXECUTIF.md`
+- [x] Dossier racine mémorisé dans le Keychain (`researchRoot`)
+- [x] Chargement parallélisé (`withTaskGroup`) — évite le gel ~30 s sur dossier iCloud dataless
+- [x] Entrée menu Fichier + bouton écran d'accueil (raccourci `⇧⌘O`)
+
 ## Idées / améliorations possibles
 
 - [ ] Invalider `globalGraphCache` à la création d'un nouvel audit (actuellement persistant par session).

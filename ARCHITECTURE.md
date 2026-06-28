@@ -110,7 +110,7 @@ Le contrat machine v1 (`_manifest.json`, `_data.json`, `_sources.json`, `*.md`) 
 
 | Cible | Plateforme | Périmètre | Accès aux données du contrat |
 |---|---|---|---|
-| **`AuditViewer`** | macOS | App complète (création/màj via CLI `claude`, graphe, export `.docx`) | Lecture/écriture directe du dossier `Research` local |
+| **`AuditViewer`** | macOS | App complète (création/màj via CLI `claude`, graphe, export `.docx`) ; deux modes d'ouverture : **direct** (`⌘O`, un dossier d'audit) et **racine** (`⇧⌘O`, liste de tous les audits d'un dossier racine) | Lecture/écriture directe du dossier `Research` local |
 | **`AuditViewerIOS`** | iOS / iPadOS 17+ | Lecteur seul | Files picker + iCloud Drive (security-scoped bookmark) |
 | **`AuditViewerTVOS`** | tvOS 17+ | Lecteur seul, grand écran (réunions/présentations) | **Réseau local** : le Mac partage `Research` via Bonjour + HTTP read-only |
 
