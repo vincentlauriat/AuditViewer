@@ -108,6 +108,13 @@ Ingestion : Bonjour + HTTP LAN (Mac = serveur). Périmètre : reader-only.
 - [x] Build + relance app à chaque étape (vert)
 - [ ] Vérif visuelle utilisateur : export PDF du rapport complet (pagination A4) + cartes KPI en thèmes clair/sombre
 
+## App macOS — Deux modes d'ouverture des audits (2026-06-29)
+- [x] Mode direct `⌘O` (inchangé) : ouvre un dossier d'audit précis, ouverture immédiate
+- [x] Mode racine `⇧⌘O` : sélectionne un dossier racine → liste plein écran → clic ouvre l'audit → « ‹ Audits » pour revenir à la liste
+- [x] Chargement parallélisé (`withTaskGroup`) — évite le gel ~30 s sur dossier iCloud dataless
+- [x] Nouveaux fichiers : `AuditEntry.swift`, `AuditListView.swift` ; `AuditStore` étendu (mode navigation multi-audits)
+- [x] Dossier racine mémorisé dans le Keychain (`researchRoot`) ; entrée menu Fichier + bouton écran d'accueil
+
 ## App iOS / iPadAS — Lecteur d'études (lecture seule)
 - [x] Target `AuditViewerIOS` buildable (project.yml : info.properties + entitlements iCloud)
 - [x] Accès au dossier Research via sélecteur Fichiers + security-scoped bookmark persistant

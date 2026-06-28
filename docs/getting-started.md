@@ -97,6 +97,11 @@ open build/AuditViewer.app
 
 The Mac app adds a rich Markdown view and an **Obsidian-style map** that shows how your audits connect through shared sources and people.
 
+Once the app is open, you have two ways to open an audit:
+
+- **Direct — `⌘O`:** point to a single audit folder (e.g. `audit-notion/`). The app opens it immediately.
+- **Root folder — `⇧⌘O` "Open root folder…":** point to a parent folder that contains several audits (e.g. your `Research/` folder). The app lists every audit it finds; click one to open it, and use the **‹ Audits** button to return to the list. This is the macOS equivalent of the multi-audit mode on iPhone and iPad.
+
 ### iOS / iPadOS reader — your audits on the go
 
 A native **read-only** app for iPhone & iPad. Build it from source (iOS 17+, Xcode + [XcodeGen](https://github.com/yonaskolb/XcodeGen)):

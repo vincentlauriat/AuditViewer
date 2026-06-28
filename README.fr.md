@@ -168,6 +168,11 @@ Détails : [`web/README.md`](web/README.md).
   </tr>
 </table>
 
+Deux modes d'ouverture des audits :
+
+- **Mode direct** (`⌘O` — « Ouvrir un dossier d'audit… ») — pointez sur un seul dossier d'audit ; le rapport s'ouvre immédiatement.
+- **Mode racine** (`⇧⌘O` — « Ouvrir un dossier racine… », aussi accessible via un bouton sur l'écran d'accueil) — pointez sur un dossier qui contient plusieurs sous-dossiers d'audit ; l'app affiche une liste plein écran de tous les audits trouvés (titre, date, nombre de sources, profondeur, badge de statut). Un clic ouvre l'audit dans la vue détail ; un bouton **« ‹ Audits »** permet de revenir à la liste. C'est l'équivalent macOS du mode multi-audits déjà présent sur iPhone et iPad. Un audit est détecté par la présence de `_manifest.json` ou `00_RESUME_EXECUTIF.md` dans un sous-dossier. Le dossier racine est mémorisé entre les sessions.
+
 Ou compilez depuis les sources (macOS 15+, chaîne d'outils Swift) :
 
 ```bash

@@ -45,6 +45,9 @@ affiche chaque section avec un rendu markdown riche (code, math, mermaid), et pr
 - **Carte canvas (Obsidian-like)** — graphe force-directed interactif (pan / zoom / drag) :
   - **Audit courant** : sujet → sections → reliées par sources partagées et acteurs clés communs
   - **Global** : tous les audits du dossier `Research`, reliés par leurs sources/acteurs partagés
+- **Navigation multi-audits** — deux modes d'ouverture (`⌘O` direct / `⇧⌘O` racine) : le mode
+  racine affiche la liste de tous les audits du dossier (titre, date, sources, profondeur, badge de
+  statut), avec retour à la liste depuis n'importe quel audit. Équivalent macOS du mode multi-audits iOS.
 - **Lancer / mettre à jour un audit** depuis l'app (exécute `claude -p "/audit-report …"`),
   avec console temps réel et suivi d'événements (`_events.jsonl`).
 - **Diff** entre deux versions d'un même audit après mise à jour.
@@ -82,11 +85,19 @@ Pour installer : `cp -r build/AuditViewer.app /Applications/`
 
 ## Utilisation
 
-1. **⌘O** : ouvrir un dossier `audit-…` (par défaut sous `~/Documents/Research/`).
-2. Naviguer dans les sections via la sidebar.
-3. Basculer **Document / Carte** dans la barre d'outils ; en mode Carte, choisir
+### Ouvrir un audit
+
+Deux modes d'ouverture sont disponibles (menu **Fichier**) :
+
+- **⌘O** « Ouvrir un dossier d'audit… » — mode direct : pointe un dossier `audit-…` précis, ouverture immédiate.
+- **⇧⌘O** « Ouvrir un dossier racine… » — mode racine (bouton également présent sur l'écran d'accueil) : pointe un dossier contenant plusieurs audits → affiche une **liste plein écran** (titre, date, sources, profondeur, badge de statut) → clic sur une entrée ouvre l'audit → bouton **‹ Audits** pour revenir à la liste. Le dossier racine est mémorisé dans le Keychain entre les sessions.
+
+### Navigation et outils
+
+1. Naviguer dans les sections via la sidebar.
+2. Basculer **Document / Carte / Chiffres clés** dans la barre d'outils ; en mode Carte, choisir
    **Audit courant** ou **Global**.
-4. **⌘N** : lancer un nouvel audit ; **↻** (toolbar) : mettre à jour l'audit ouvert.
+3. **⌘N** : lancer un nouvel audit ; **↻** (toolbar) : mettre à jour l'audit ouvert.
 
 Raccourcis : `⌘F` recherche · `⌘G` / `⇧⌘G` suivant/précédent · `⌘±` / `⌘0` zoom.
 

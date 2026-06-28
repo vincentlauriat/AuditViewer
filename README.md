@@ -168,6 +168,11 @@ Details: [`web/README.md`](web/README.md).
   </tr>
 </table>
 
+Two ways to open audits:
+
+- **Direct mode** (`⌘O` — "Open an audit folder…") — point to a single audit folder; the report opens immediately.
+- **Root mode** (`⇧⌘O` — "Open a root folder…", also a button on the home screen) — point to a folder that contains several audit sub-folders; the app shows a full-screen list of all audits found (title, date, source count, depth, status badge). Click any audit to open it; a **"‹ Audits"** button returns to the list. This is the macOS equivalent of the multi-audit browser already on iPhone & iPad. An audit is detected by the presence of `_manifest.json` or `00_RESUME_EXECUTIF.md` in a sub-folder. The root folder is remembered between sessions.
+
 Or build from source (macOS 15+, Swift toolchain):
 
 ```bash
