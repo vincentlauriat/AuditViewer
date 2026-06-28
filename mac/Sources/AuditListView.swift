@@ -83,6 +83,11 @@ struct AuditListView: View {
             ProgressView().controlSize(.large)
             Text("Recherche des audits…")
                 .font(.headline)
+            Text("Premier accès à un dossier iCloud : les audits se téléchargent,\ncela peut prendre quelques secondes. Les fois suivantes seront instantanées.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 400)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
