@@ -18,6 +18,14 @@ final class AuditStore {
     var manifest: AuditManifest? = nil   // _manifest.json (contrat v1), nil si legacy
     var diffs: [Int: DiffEngine.Result] = [:]
 
+    // Mode racine (multi-audits) : liste découverte + état de navigation.
+    // `browseMode` vrai → quand `auditDir == nil`, ContentView affiche la liste
+    // (et non l'empty state). `browseRoot` = racine en cours d'exploration.
+    var audits: [AuditEntry] = []
+    var browseMode: Bool = false
+    var browseRoot: URL? = nil
+    var isLoadingAudits: Bool = false
+
     var showNewAudit: Bool = false
     var showUpdateSheet: Bool = false
     var isRunningAudit: Bool = false
@@ -81,6 +89,165 @@ final class AuditStore {
             ?? KeychainStore.researchRoot
         guard panel.runModal() == .OK, let url = panel.url else { return }
         loadAuditDir(url)
+    }
+
+    // MARK: - Mode racine (multi-audits)
+
+    /// Choisit un dossier *racine* contenant plusieurs audits, puis affiche la
+    /// liste. Mémorise la racine dans le Keychain (`researchRoot`). Laisse
+    /// `auditDir = nil` → ContentView bascule sur la liste tant que `browseMode`.
+    func openRootFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.message = "Sélectionner un dossier racine contenant plusieurs audits"
+        panel.prompt = "Ouvrir"
+        panel.directoryURL = browseRoot ?? KeychainStore.researchRoot
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        KeychainStore.researchRoot = url
+        loadRoot(url)
+    }
+
+    /// Scanne la racine, peuple `audits` (triés date↓ puis titre) et active le
+    /// mode liste. La découverte/lecture se fait hors MainActor (I/O disque).
+    func loadRoot(_ url: URL) {
+        stopWatchingEvents()
+        auditDir = nil
+        browseRoot = url
+        browseMode = true
+        audits = []
+        isLoadingAudits = true
+
+        Task { [weak self] in
+            // Découverte (rapide) hors MainActor…
+            let dirs = await Task.detached(priority: .userInitiated) {
+                Self.discoverAudits(root: url)
+            }.value
+            // …puis lecture des entrées EN PARALLÈLE : la 1re lecture d'un fichier
+            // iCloud dataless déclenche une matérialisation bloquante (~0,8 s) ;
+            // en série sur N audits ça gèle la liste plusieurs dizaines de secondes.
+            // Le TaskGroup ramène le mur à ~quelques secondes (puis instantané une
+            // fois les fichiers téléchargés).
+            let entries = await withTaskGroup(of: AuditEntry?.self) { group in
+                for dir in dirs {
+                    group.addTask(priority: .userInitiated) { Self.loadEntry(dir: dir) }
+                }
+                var acc: [AuditEntry] = []
+                for await entry in group { if let entry { acc.append(entry) } }
+                return acc
+            }
+            await MainActor.run {
+                guard let self else { return }
+                self.audits = entries.sorted {
+                    if let d0 = $0.auditDate, let d1 = $1.auditDate, d0 != d1 {
+                        return d0 > d1
+                    }
+                    return $0.title.localizedCompare($1.title) == .orderedAscending
+                }
+                self.isLoadingAudits = false
+            }
+        }
+    }
+
+    /// Recharge la racine courante (bouton « Recharger » de la liste).
+    func refreshRoot() {
+        if let root = browseRoot ?? KeychainStore.researchRoot { loadRoot(root) }
+    }
+
+    /// Revient de la vue détail à la liste (mode racine). Garde `browseRoot`.
+    func backToList() {
+        stopWatchingEvents()
+        auditDir = nil
+        // browseMode reste vrai → ContentView réaffiche la liste.
+    }
+
+    /// Détecte les sous-dossiers de `root` qui sont des audits : présence de
+    /// `_manifest.json` OU `00_RESUME_EXECUTIF.md` (indépendant du préfixe
+    /// `audit-`). Accès filesystem direct (cible macOS non sandboxée).
+    nonisolated static func discoverAudits(root: URL) -> [URL] {
+        let fm = FileManager.default
+        let items = (try? fm.contentsOfDirectory(
+            at: root,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles]
+        )) ?? []
+        return items.filter { url in
+            guard (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true
+            else { return false }
+            return fm.fileExists(atPath: url.appendingPathComponent("_manifest.json").path)
+                || fm.fileExists(atPath: url.appendingPathComponent("00_RESUME_EXECUTIF.md").path)
+        }
+    }
+
+    /// Construit une `AuditEntry` pour un dossier d'audit : `_manifest.json` (v1)
+    /// prioritaire, sinon repli legacy (H1 de `00_RESUME_EXECUTIF.md`).
+    nonisolated static func loadEntry(dir: URL) -> AuditEntry? {
+        let slug = slugFromDir(dir)
+
+        // 1. Manifest v1
+        if let manifest = loadManifest(from: dir) {
+            return AuditEntry(
+                id: slug,
+                dir: dir,
+                manifest: manifest,
+                title: manifest.subject?.isEmpty == false ? manifest.subject! : subjectFromDir(dir),
+                auditDate: manifest.auditDate,
+                status: manifest.status,
+                sourcesCount: manifest.sourcesCount,
+                depth: manifest.depth,
+                options: manifest.options
+            )
+        }
+
+        // 2. Legacy : H1 de 00_RESUME_EXECUTIF.md, sinon nom du dossier.
+        let resumeURL = dir.appendingPathComponent("00_RESUME_EXECUTIF.md")
+        let title: String
+        if let text = try? String(contentsOf: resumeURL, encoding: .utf8) {
+            title = extractH1(from: text) ?? subjectFromDir(dir)
+        } else {
+            title = subjectFromDir(dir)
+        }
+        return AuditEntry(
+            id: slug, dir: dir, manifest: nil, title: title,
+            auditDate: nil, status: nil, sourcesCount: nil, depth: nil, options: nil
+        )
+    }
+
+    /// Slug d'un dossier : nom brut amputé d'un éventuel préfixe `audit-`/`audit_`.
+    nonisolated private static func slugFromDir(_ dir: URL) -> String {
+        var slug = dir.lastPathComponent
+        for prefix in ["audit-", "audit_"] where slug.hasPrefix(prefix) {
+            slug = String(slug.dropFirst(prefix.count))
+            break
+        }
+        return slug
+    }
+
+    /// Premier titre H1 du Markdown (après un frontmatter YAML éventuel).
+    nonisolated private static func extractH1(from text: String) -> String? {
+        let stripped = stripYAMLFrontmatter(text)
+        for line in stripped.split(separator: "\n", omittingEmptySubsequences: false) {
+            let s = String(line)
+            if s.hasPrefix("# ") {
+                return String(s.dropFirst(2)).trimmingCharacters(in: .whitespaces)
+            }
+        }
+        return nil
+    }
+
+    nonisolated private static func stripYAMLFrontmatter(_ text: String) -> String {
+        guard text.hasPrefix("---") else { return text }
+        let lines = text.components(separatedBy: "\n")
+        var i = 1
+        while i < lines.count {
+            if lines[i].trimmingCharacters(in: .whitespaces) == "---" {
+                return lines.dropFirst(i + 1).joined(separator: "\n")
+                    .trimmingCharacters(in: .newlines)
+            }
+            i += 1
+        }
+        return text
     }
 
     func loadAuditDir(_ url: URL) {
@@ -1422,7 +1589,7 @@ final class AuditStore {
 
     // MARK: - Helpers
 
-    private static func loadManifest(from dir: URL) -> AuditManifest? {
+    nonisolated private static func loadManifest(from dir: URL) -> AuditManifest? {
         let url = dir.appendingPathComponent("_manifest.json")
         guard let data = try? Data(contentsOf: url),
               let manifest = try? JSONDecoder().decode(AuditManifest.self, from: data) else { return nil }
@@ -1508,7 +1675,7 @@ final class AuditStore {
         return "\"\(escaped)\""
     }
 
-    private static func subjectFromDir(_ url: URL) -> String {
+    nonisolated private static func subjectFromDir(_ url: URL) -> String {
         var slug = url.lastPathComponent
         for prefix in ["audit-", "audit_"] where slug.hasPrefix(prefix) {
             slug = String(slug.dropFirst(prefix.count))

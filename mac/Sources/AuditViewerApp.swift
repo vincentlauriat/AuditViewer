@@ -27,6 +27,8 @@ struct AuditViewerApp: App {
             CommandGroup(after: .newItem) {
                 Button("Ouvrir un dossier d'audit…") { store.openAuditFolder() }
                     .keyboardShortcut("o", modifiers: .command)
+                Button("Ouvrir un dossier racine…") { store.openRootFolder() }
+                    .keyboardShortcut("o", modifiers: [.command, .shift])
                 Divider()
                 Button("Nouvel audit…") { store.showNewAudit = true }
                     .keyboardShortcut("n", modifiers: .command)

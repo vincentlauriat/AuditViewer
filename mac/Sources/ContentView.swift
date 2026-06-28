@@ -24,7 +24,11 @@ struct ContentView: View {
     var body: some View {
         Group {
             if store.auditDir == nil {
-                EmptyStateView()
+                if store.browseMode {
+                    AuditListView()
+                } else {
+                    EmptyStateView()
+                }
             } else {
                 NavigationSplitView {
                     SidebarView()
@@ -149,6 +153,17 @@ struct ContentView: View {
 
     @ToolbarContentBuilder
     private var toolbarItems: some ToolbarContent {
+        if store.browseMode {
+            ToolbarItem(placement: .navigation) {
+                Button {
+                    store.backToList()
+                } label: {
+                    Label("Audits", systemImage: "chevron.left")
+                }
+                .help("Revenir à la liste des audits")
+            }
+        }
+
         ToolbarItem(placement: .navigation) {
             Picker("Vue", selection: Binding(
                 get: { store.viewMode },
@@ -216,7 +231,7 @@ struct ContentView: View {
             .disabled(store.auditDir == nil)
         }
 
-        ToolbarItem(placement: .primaryAction) {
+        ToolbarItemGroup(placement: .primaryAction) {
             Button {
                 store.exportCurrentSectionToDocx()
             } label: {
@@ -224,9 +239,7 @@ struct ContentView: View {
             }
             .help("Exporter la section en cours au format .docx (Word)")
             .disabled(!store.canExportDocx)
-        }
 
-        ToolbarItem(placement: .primaryAction) {
             Button {
                 store.exportCurrentSectionToPDF()
             } label: {

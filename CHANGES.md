@@ -1,5 +1,19 @@
 # CHANGES — Release Notes & Changelog
 
+## 2026-06-28
+
+### Added
+- **macOS app: mode racine multi-audits** — Second mode d'ouverture (en plus du mode direct `⌘O` qui pointe un dossier d'audit précis). Nouveau « Ouvrir un dossier racine… » (`⇧⌘O`, menu Fichier + bouton de l'écran d'accueil) : on pointe un dossier **racine** contenant plusieurs audits, l'app affiche une **liste plein écran** de tous les audits trouvés (titre, date, sources, profondeur, badge de statut), et un clic ouvre l'audit dans la vue détail habituelle ; un bouton **« ‹ Audits »** dans la toolbar revient à la liste. Détection robuste : tout sous-dossier contenant `_manifest.json` ou `00_RESUME_EXECUTIF.md` (indépendant du préfixe `audit-`). Nouveaux fichiers `Sources/AuditEntry.swift`, `Sources/AuditListView.swift` ; `AuditStore` gagne `audits`/`browseMode`/`browseRoot` + `openRootFolder`/`loadRoot`/`backToList`/`discoverAudits`/`loadEntry`. Racine mémorisée dans le Keychain (`researchRoot`).
+
+### Fixed
+- **macOS app: liste racine figée sur dossier iCloud** — Les fichiers d'un `Research/` synchronisé iCloud sont *dataless* (taille logique visible, mais 1re lecture = matérialisation bloquante ~0,8 s/fichier). Le chargement des entrées en série gelait la liste ~30 s sur la « Recherche des audits… ». Corrigé : lecture des entrées **en parallèle** (`withTaskGroup`, ~16 concurrentes) hors MainActor → mur ramené à quelques secondes au 1er accès, instantané ensuite.
+
+### Added
+- **iOS app: icône d'app** — La cible iOS reçoit enfin une icône, identique à celle de macOS. Générée depuis `AppIcon.icns` (1024×1024) via le nouveau script `Scripts/make-ios-icon.swift` (compose l'icône sur un dégradé indigo opaque — iOS interdit l'alpha et applique son propre masque arrondi). Asset catalog `ios/Assets.xcassets/AppIcon.appiconset`, déclaré dans `project.yml` (`ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon`).
+
+### Fixed
+- **iOS app: audits iCloud manquants dans la liste** — Les dossiers `audit-*` non encore téléchargés (placeholders iCloud, parfois cachés `.audit-x.icloud`) étaient ignorés → certains audits (ADCytherix, Cast Software, Infortive Transition…) n'apparaissaient pas, voire « aucun audit ». `ResearchVaultReader` ne sautait plus `.skipsHiddenFiles` mais surtout le téléchargement iCloud était **fire-and-forget** (`startDownloadingUbiquitousItem` jamais attendu) : le listing/lecture s'exécutait avant la matérialisation. Corrigé : téléchargement **bloquant** avec polling du statut (`downloadAndWait`, timeout 20 s), lecture coordonnée du répertoire racine (`NSFileCoordinator`), résolution des placeholders `.icloud` → nom réel, matérialisation bloquante des dossiers évincés avant lecture interne.
+
 ## 2026-06-26
 
 ### Added

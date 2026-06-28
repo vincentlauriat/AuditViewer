@@ -98,3 +98,46 @@ Runner headless (`claude -p` vs Agent SDK), rendu markdown, UI de pilotage.
 Décision pressentie : Agent SDK pour le streaming, `_events.jsonl` + `_control.json` en canal fichier de secours.
 Prochaines vues macOS : possibilité d'un mode sidebar KPI si demande utilisateur (actuellement fullscreen via onglet dédié).
 
+---
+
+# P5 — Deux modes d'ouverture des audits (macOS) — ✅ complété (2026-06-28)
+
+## Objectif
+Ajouter à l'app macOS un **second mode d'ouverture**, en plus du mode actuel :
+1. **Mode direct (existant)** — on pointe un dossier d'audit précis (`⌘O`) → ouverture immédiate.
+2. **Mode racine (nouveau)** — on pointe un dossier **racine** contenant plusieurs audits → **liste plein écran**
+   (comme iOS) → clic sur un audit → vue détail actuelle → bouton **« ‹ Audits »** pour revenir à la liste.
+
+## Décisions d'UX (validées)
+- **Navigation** : liste plein écran + bouton retour (transition nette, calquée iOS).
+- **Détection d'un audit** : tout sous-dossier de la racine contenant `_manifest.json` **ou**
+  `00_RESUME_EXECUTIF.md` (robuste, indépendant du préfixe `audit-`).
+
+## Points d'ancrage
+1. **`Sources/AuditEntry.swift`** (nouveau) — `struct AuditEntry: Identifiable, Sendable` côté macOS
+   (mêmes champs qu'iOS `ios/Sources/AuditStoreIOS.swift:6`, non partagé entre cibles).
+2. **`Sources/AuditStore.swift`** — nouveaux membres `audits: [AuditEntry]`, `browseMode: Bool`,
+   `browseRoot: URL?` ; méthodes `openRootFolder()`, `loadRoot(_:)`, `backToList()`,
+   `static discoverAudits(root:)` (FileManager natif, pas d'iCloud), `static loadEntry(dir:)`
+   (slug sans présumer du préfixe `audit-`).
+3. **`Sources/AuditListView.swift`** (nouveau) — liste plein écran des `store.audits`, ligne inspirée
+   d'`AuditRowView` iOS (`ios/Sources/AuditListView.swift:129`) : titre, date, sources, profondeur, badge statut.
+   En-tête : racine + bouton « Changer de dossier… ». Clic → `store.loadAuditDir(entry.dir)`.
+4. **`Sources/ContentView.swift`** — routage 3 états : `auditDir != nil` → détail (+ bouton « ‹ Audits »
+   si `browseMode`) ; `auditDir == nil && browseMode` → `AuditListView()` ; sinon → `EmptyStateView()`.
+5. **`Sources/EmptyStateView.swift`** — 3e bouton « Ouvrir un dossier racine… » (`openRootFolder`).
+6. **`Sources/AuditViewerApp.swift`** — commande menu « Ouvrir un dossier racine… » (`⇧⌘O`).
+
+## Persistance / sandbox
+- Réutiliser `KeychainStore.researchRoot` pour mémoriser la dernière racine.
+- À vérifier au build : si la cible macOS est sandboxée, le `NSOpenPanel` sur la racine accorde l'accès
+  security-scoped à toute la hiérarchie ; ajouter un bookmark seulement si nécessaire.
+
+## Hors périmètre (inchangé)
+Mode direct `⌘O`, exécution/annulation, diffs, export PDF/DOCX, carte/graphe, KPIs ; iOS/tvOS.
+
+## Étapes
+1. `AuditEntry.swift` → 2. `AuditStore` (état + découverte) → 3. `AuditListView.swift` →
+4. `ContentView` (routage + retour) → 5. `EmptyStateView` (bouton) → 6. `AuditViewerApp` (menu) →
+7. `swift build` + `./build.sh` + tests manuels.
+
