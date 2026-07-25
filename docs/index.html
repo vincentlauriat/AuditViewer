@@ -67,6 +67,14 @@
   footer{border-top:1px solid var(--line);padding:34px 0;color:var(--dim);font-size:14px;text-align:center}
   footer a{color:var(--accent)}
   @media(max-width:760px){.g3,.g2,.trust{grid-template-columns:1fr}.nav-links a:not(.btn){display:none}}
+
+  /* a11y : respecter la préférence système de mouvement réduit */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms !important;animation-iteration-count:1 !important;
+      transition-duration:.01ms !important;scroll-behavior:auto !important;
+    }
+  }
 </style>
 </head>
 <body>
