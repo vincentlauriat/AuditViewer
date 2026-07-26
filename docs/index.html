@@ -11,10 +11,14 @@
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/og-banner.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="assets/base.css">
 <style>
   :root{
     --bg:#0b1020; --bg2:#0f172a; --card:#151c30; --line:#22304d;
-    --txt:#e7ecf5; --dim:#9fb0cc; --accent:#a78bfa; --accent2:#7c3aed; --ok:#34d399;
+    --txt:#e7ecf5; --dim:#9fb0cc; --accent:#e879f9; --accent2:#c026d3; --on-accent:#08090d; --ok:#34d399;
     --maxw:1080px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -31,15 +35,15 @@
   .nav-links a:hover{color:var(--txt)}
   .btn{display:inline-block;padding:11px 20px;border-radius:11px;font-weight:600;font-size:15px;transition:transform .12s ease,box-shadow .12s ease}
   .btn:hover{transform:translateY(-1px)}
-  .btn-primary{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;box-shadow:0 6px 24px rgba(124,58,237,.35)}
+  .btn-primary{background:linear-gradient(135deg,#d946ef,#e879f9);color:var(--on-accent);box-shadow:0 6px 24px rgba(192,38,211,.35)}
   .btn-ghost{border:1px solid var(--line);color:var(--txt)}
   .btn-sm{padding:8px 15px;font-size:14px;border-radius:9px}
   /* hero */
-  header{padding:84px 0 40px;text-align:center;background:radial-gradient(900px 420px at 50% -10%,rgba(124,58,237,.28),transparent 70%)}
+  header{padding:84px 0 40px;text-align:center;background:radial-gradient(900px 420px at 50% -10%,rgba(192,38,211,.28),transparent 70%)}
   .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);color:var(--dim);padding:6px 14px;border-radius:999px;font-size:13px;margin-bottom:26px}
   .pill b{color:var(--accent)}
   h1{font-size:clamp(40px,7vw,76px);line-height:1.04;font-weight:800;letter-spacing:-1.5px}
-  h1 .grad{background:linear-gradient(120deg,#c4b5fd,#7c3aed);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  h1 .grad{background:linear-gradient(120deg,#f5d0fe,#e879f9);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
   .sub{max-width:680px;margin:22px auto 0;font-size:clamp(17px,2.2vw,21px);color:var(--dim)}
   .cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:34px 0 10px}
   .meta{color:var(--dim);font-size:13px;margin-top:6px}
@@ -56,28 +60,21 @@
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
   .card h3{font-size:17px;margin-bottom:6px}
   .card p{color:var(--dim);font-size:15px}
-  .ico{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:rgba(124,58,237,.16);color:var(--accent);font-size:20px;margin-bottom:14px}
+  .ico{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:rgba(192,38,211,.16);color:var(--accent);font-size:20px;margin-bottom:14px}
   .gallery img{width:100%;border:1px solid var(--line);border-radius:12px;display:block}
   .cap{color:var(--dim);font-size:13px;margin-top:8px}
   .trust{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:820px;margin:0 auto}
   .trust .card{display:flex;gap:13px;align-items:flex-start}
   .check{color:var(--ok);font-weight:800;flex:none;margin-top:1px}
-  .final{text-align:center;background:radial-gradient(700px 320px at 50% 120%,rgba(124,58,237,.25),transparent 70%)}
-  code{background:#0a0f1f;border:1px solid var(--line);border-radius:7px;padding:3px 8px;font:14px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;color:#c4b5fd}
+  .final{text-align:center;background:radial-gradient(700px 320px at 50% 120%,rgba(192,38,211,.25),transparent 70%)}
+  code{background:#0a0f1f;border:1px solid var(--line);border-radius:7px;padding:3px 8px;font:14px/1.4 var(--font-mono);color:#f5d0fe}
   footer{border-top:1px solid var(--line);padding:34px 0;color:var(--dim);font-size:14px;text-align:center}
   footer a{color:var(--accent)}
   @media(max-width:760px){.g3,.g2,.trust{grid-template-columns:1fr}.nav-links a:not(.btn){display:none}}
-
-  /* a11y : respecter la préférence système de mouvement réduit */
-  @media (prefers-reduced-motion: reduce){
-    *,*::before,*::after{
-      animation-duration:.01ms !important;animation-iteration-count:1 !important;
-      transition-duration:.01ms !important;scroll-behavior:auto !important;
-    }
-  }
 </style>
 </head>
 <body>
+<a class="skip" href="#top">Skip to content</a>
 
 <nav><div class="wrap">
   <a class="brand" href="#top"><img src="https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/og-banner.png" alt="">AuditViewer</a>
