@@ -71,84 +71,124 @@
   footer{border-top:1px solid var(--line);padding:34px 0;color:var(--dim);font-size:14px;text-align:center}
   footer a{color:var(--accent)}
   @media(max-width:760px){.g3,.g2,.trust{grid-template-columns:1fr}.nav-links a:not(.btn){display:none}}
+
+  .langtog{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;flex:none}
+  .langtog button{background:transparent;border:0;color:var(--muted);font:600 12.5px/1 var(--font-mono);
+    padding:0 10px;min-height:36px;cursor:pointer}
+  .langtog button+button{border-left:1px solid var(--line)}
+  .langtog button:hover{color:var(--txt)}
+  .langtog button.on{background:var(--accent);color:var(--on-accent)}
 </style>
 </head>
 <body>
-<a class="skip" href="#top">Skip to content</a>
+<a class="skip" href="#top"><span class="en">Skip to content</span><span class="fr">Aller au contenu</span><span class="zh">跳至內容</span></a>
 
 <nav><div class="wrap">
   <a class="brand" href="#top"><img src="https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/og-banner.png" alt="">AuditViewer</a>
   <div class="nav-links">
-    <a href="#features">Features</a>
-    <a href="#screens">Screens</a>
-    <a href="https://github.com/vincentlauriat/AuditViewer">Docs</a>
+    <a href="#features"><span class="en">Features</span><span class="fr">Fonctions</span><span class="zh">功能</span></a>
+    <a href="#screens"><span class="en">Screens</span><span class="fr">Aperçu</span><span class="zh">畫面</span></a>
+    <a href="https://github.com/vincentlauriat/AuditViewer"><span class="en">Docs</span><span class="fr">Doc</span><span class="zh">說明文件</span></a>
+    <div class="langtog" role="group" aria-label="Language / Langue / 語言">
+    <button type="button" data-lang="en" class="on" onclick="setLang('en')">EN</button>
+    <button type="button" data-lang="fr" onclick="setLang('fr')">FR</button>
+    <button type="button" data-lang="zh" onclick="setLang('zh')">中文</button>
+  </div>
     <a class="btn btn-ghost btn-sm" href="https://github.com/vincentlauriat/AuditViewer">GitHub ★</a>
   </div>
 </div></nav>
 
 <header id="top"><div class="wrap">
-  <span class="pill">🤝 Works with <b>Claude</b> &amp; <b>Gemini</b></span>
-  <h1>Turn any company into a<br><span class="grad">complete strategic dossier</span></h1>
-  <p class="sub">Type a name — a company, product, market or technology. Minutes later you have a structured, <strong>sourced</strong> and fact-checked research dossier. Every figure backed by a dated source.</p>
+  <span class="pill">🤝 <span class="en">Works with <b>Claude</b> &amp; <b>Gemini</b></span><span class="fr">Fonctionne avec <b>Claude</b> et <b>Gemini</b></span><span class="zh">支援 <b>Claude</b> 與 <b>Gemini</b></span></span>
+  <h1><span class="en">Turn any company into a<br><span class="grad">complete strategic dossier</span></span><span class="fr">Transformez une entreprise en<br><span class="grad">dossier stratégique complet</span></span><span class="zh">把任何一家公司，變成<span class="grad">一份完整的策略檔案</span></span></h1>
+  <p class="sub"><span class="en">Type a name — a company, product, market or technology. Minutes later you have a structured, <strong>sourced</strong> and fact-checked research dossier. Every figure backed by a dated source.</span><span class="fr">Tapez un nom — entreprise, produit, marché ou technologie. Quelques minutes plus tard, vous avez un dossier de recherche structuré, <strong>sourcé</strong> et vérifié. Chaque chiffre adossé à une source datée.</span><span class="zh">輸入一個名字——公司、產品、市場或技術。幾分鐘後你就得到一份結構化、<strong>有出處</strong>且經過查核的研究檔案。每個數字都有一則註明日期的來源支撐。</span></p>
   <div class="cta">
-    <a class="btn btn-primary" href="https://github.com/vincentlauriat/AuditViewer/releases/latest">⬇︎ Download for macOS</a>
-    <a class="btn btn-ghost" href="https://github.com/vincentlauriat/AuditViewer">View on GitHub</a>
+    <a class="btn btn-primary" href="https://github.com/vincentlauriat/AuditViewer/releases/latest">⬇︎ <span class="en">Download for macOS</span><span class="fr">Télécharger pour macOS</span><span class="zh">下載 macOS 版</span></a>
+    <a class="btn btn-ghost" href="https://github.com/vincentlauriat/AuditViewer"><span class="en">View on GitHub</span><span class="fr">Voir sur GitHub</span><span class="zh">在 GitHub 上檢視</span></a>
   </div>
-  <p class="meta">Free &amp; open-source (MIT) · signed &amp; notarized · macOS 15+</p>
+  <p class="meta"><span class="en">Free &amp; open-source (MIT) · signed &amp; notarized · macOS 15+</span><span class="fr">Gratuit et open source (MIT) · signé et notarié · macOS 15+</span><span class="zh">免費開源（MIT）· 已簽章與公證 · macOS 15+</span></p>
   <div class="shot"><img src="https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/demo.gif" alt="AuditViewer in action"></div>
 </div></header>
 
 <section id="features"><div class="wrap">
-  <p class="eyebrow">What you get</p>
-  <h2>A consulting-grade dossier, in one command</h2>
-  <p class="lead">Run <code>/audit-report Tesla</code> and get a folder of ready-to-read documents — seven angles of analysis, each figure sourced and dated.</p>
+  <p class="eyebrow"><span class="en">What you get</span><span class="fr">Ce que vous obtenez</span><span class="zh">你會得到什麼</span></p>
+  <h2><span class="en">A consulting-grade dossier, in one command</span><span class="fr">Un dossier de niveau cabinet de conseil, en une commande</span><span class="zh">一道指令，一份顧問等級的檔案</span></h2>
+  <p class="lead"><span class="en">Run <code>/audit-report Tesla</code> and get a folder of ready-to-read documents — seven angles of analysis, each figure sourced and dated.</span><span class="fr">Lancez <code>/audit-report Tesla</code> et récupérez un dossier de documents prêts à lire — sept angles d'analyse, chaque chiffre sourcé et daté.</span><span class="zh">執行 <code>/audit-report Tesla</code>，就得到一整個資料夾可直接閱讀的文件——七個分析角度，每個數字都有出處與日期。</span></p>
   <div class="grid g3">
-    <div class="card"><div class="ico">📜</div><h3>History</h3><p>Origins, milestones, pivots, acquisitions, controversies.</p></div>
-    <div class="card"><div class="ico">📊</div><h3>Market</h3><p>Market size (TAM/SAM/SOM), growth, geography, regulation.</p></div>
-    <div class="card"><div class="ico">⚙️</div><h3>Technology</h3><p>Product, architecture, features, differentiators, patents.</p></div>
-    <div class="card"><div class="ico">💵</div><h3>Pricing</h3><p>Tiers, business model, sector comparison.</p></div>
-    <div class="card"><div class="ico">🥊</div><h3>Competition</h3><p>Competitive map, market shares, positioning, SWOT.</p></div>
-    <div class="card"><div class="ico">📈</div><h3>Financials &amp; outlook</h3><p>Revenue, funding, valuation, roadmap, risks, scenarios.</p></div>
+    <div class="card"><div class="ico">📜</div><h3><span class="en">History</span><span class="fr">Historique</span><span class="zh">歷史</span></h3><p><span class="en">Origins, milestones, pivots, acquisitions, controversies.</span><span class="fr">Origines, jalons, pivots, acquisitions, controverses.</span><span class="zh">起源、里程碑、轉型、收購、爭議。</span></p></div>
+    <div class="card"><div class="ico">📊</div><h3><span class="en">Market</span><span class="fr">Marché</span><span class="zh">市場</span></h3><p><span class="en">Market size (TAM/SAM/SOM), growth, geography, regulation.</span><span class="fr">Taille de marché (TAM/SAM/SOM), croissance, géographie, réglementation.</span><span class="zh">市場規模（TAM/SAM/SOM）、成長、地理分布、法規。</span></p></div>
+    <div class="card"><div class="ico">⚙️</div><h3><span class="en">Technology</span><span class="fr">Technologie</span><span class="zh">技術</span></h3><p><span class="en">Product, architecture, features, differentiators, patents.</span><span class="fr">Produit, architecture, fonctionnalités, différenciateurs, brevets.</span><span class="zh">產品、架構、功能、差異化優勢、專利。</span></p></div>
+    <div class="card"><div class="ico">💵</div><h3><span class="en">Pricing</span><span class="fr">Tarification</span><span class="zh">定價</span></h3><p><span class="en">Tiers, business model, sector comparison.</span><span class="fr">Paliers, modèle économique, comparaison sectorielle.</span><span class="zh">方案級距、商業模式、同業比較。</span></p></div>
+    <div class="card"><div class="ico">🥊</div><h3><span class="en">Competition</span><span class="fr">Concurrence</span><span class="zh">競爭</span></h3><p><span class="en">Competitive map, market shares, positioning, SWOT.</span><span class="fr">Cartographie concurrentielle, parts de marché, positionnement, SWOT.</span><span class="zh">競爭版圖、市佔率、定位、SWOT。</span></p></div>
+    <div class="card"><div class="ico">📈</div><h3><span class="en">Financials &amp; outlook</span><span class="fr">Finances et perspectives</span><span class="zh">財務與展望</span></h3><p><span class="en">Revenue, funding, valuation, roadmap, risks, scenarios.</span><span class="fr">Chiffre d'affaires, levées, valorisation, roadmap, risques, scénarios.</span><span class="zh">營收、募資、估值、藍圖、風險、情境推演。</span></p></div>
   </div>
 </div></section>
 
 <section><div class="wrap">
-  <p class="eyebrow">Why you can trust it</p>
-  <h2>Sourced, or it doesn't ship</h2>
-  <p class="lead">The difference from asking a chatbot: method and proof. It searches the live web and never invents a number.</p>
+  <p class="eyebrow"><span class="en">Why you can trust it</span><span class="fr">Pourquoi s'y fier</span><span class="zh">為什麼可以信任它</span></p>
+  <h2><span class="en">Sourced, or it doesn't ship</span><span class="fr">Sourcé, ou rien</span><span class="zh">沒有出處，就不出貨</span></h2>
+  <p class="lead"><span class="en">The difference from asking a chatbot: method and proof. It searches the live web and never invents a number.</span><span class="fr">La différence avec une question posée à un chatbot : la méthode et la preuve. Il cherche sur le web en direct et n'invente jamais un chiffre.</span><span class="zh">與直接問聊天機器人的差別在於：方法與證據。它會即時搜尋網路，且從不編造數字。</span></p>
   <div class="trust">
-    <div class="card"><span class="check">✓</span><div><h3>Every figure sourced &amp; dated</h3><p>Each quantitative claim links to where it came from, with a publication date.</p></div></div>
-    <div class="card"><span class="check">✓</span><div><h3>Reliability visible</h3><p>Sources tagged Official / Analyst / Press; data older than a year is flagged.</p></div></div>
-    <div class="card"><span class="check">✓</span><div><h3>Key numbers cross-checked</h3><p>The most important figures are verified against at least two independent sources.</p></div></div>
-    <div class="card"><span class="check">✓</span><div><h3>No fabrication</h3><p>If a number isn't public, it says so — estimates are labelled as estimates.</p></div></div>
+    <div class="card"><span class="check">✓</span><div><h3><span class="en">Every figure sourced &amp; dated</span><span class="fr">Chaque chiffre sourcé et daté</span><span class="zh">每個數字都有出處與日期</span></h3><p><span class="en">Each quantitative claim links to where it came from, with a publication date.</span><span class="fr">Chaque affirmation chiffrée renvoie à sa provenance, avec une date de publication.</span><span class="zh">每一項量化陳述都連回它的來源，並附上發布日期。</span></p></div></div>
+    <div class="card"><span class="check">✓</span><div><h3><span class="en">Reliability visible</span><span class="fr">Fiabilité visible</span><span class="zh">可靠度看得見</span></h3><p><span class="en">Sources tagged Official / Analyst / Press; data older than a year is flagged.</span><span class="fr">Sources étiquetées Officiel / Analyste / Presse ; les données de plus d'un an sont signalées.</span><span class="zh">來源標示為官方／分析師／媒體；超過一年的資料會被標記。</span></p></div></div>
+    <div class="card"><span class="check">✓</span><div><h3><span class="en">Key numbers cross-checked</span><span class="fr">Chiffres clés recoupés</span><span class="zh">關鍵數字經過交叉查證</span></h3><p><span class="en">The most important figures are verified against at least two independent sources.</span><span class="fr">Les chiffres les plus importants sont vérifiés contre au moins deux sources indépendantes.</span><span class="zh">最重要的數字會以至少兩個獨立來源進行查證。</span></p></div></div>
+    <div class="card"><span class="check">✓</span><div><h3><span class="en">No fabrication</span><span class="fr">Aucune invention</span><span class="zh">不編造</span></h3><p><span class="en">If a number isn't public, it says so — estimates are labelled as estimates.</span><span class="fr">Si un chiffre n'est pas public, il le dit — les estimations sont étiquetées comme telles.</span><span class="zh">如果某個數字並未公開，它會直說——估計值會標明為估計值。</span></p></div></div>
   </div>
 </div></section>
 
 <section id="screens"><div class="wrap">
-  <p class="eyebrow">A look inside</p>
-  <h2>Read, follow and explore</h2>
-  <p class="lead">A web viewer, a native macOS app and an iOS / iPadOS reader, all reading the same audits.</p>
+  <p class="eyebrow"><span class="en">A look inside</span><span class="fr">Un aperçu</span><span class="zh">內部一覽</span></p>
+  <h2><span class="en">Read, follow and explore</span><span class="fr">Lire, suivre et explorer</span><span class="zh">閱讀、追蹤與探索</span></h2>
+  <p class="lead"><span class="en">A web viewer, a native macOS app and an iOS / iPadOS reader, all reading the same audits.</span><span class="fr">Un visualiseur web, une app macOS native et un lecteur iOS / iPadOS, qui lisent tous les mêmes audits.</span><span class="zh">網頁檢視器、原生 macOS 應用程式，以及 iOS／iPadOS 閱讀器，讀的都是同一批稽核報告。</span></p>
   <div class="grid g2 gallery">
-    <div><img src="https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/screenshot-web-summary.png" alt="Summary"><p class="cap"><b>Summary</b> — every figure a sourced, dated KPI.</p></div>
-    <div><img src="https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/screenshot-web-graph.png" alt="Knowledge map"><p class="cap"><b>Knowledge map</b> — subject, dimensions &amp; ~180 sources, linked.</p></div>
-    <div><img src="https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/screenshot-mac-factcheck.png" alt="Fact-check"><p class="cap"><b>Fact-check</b> — key figures re-verified.</p></div>
-    <div><img src="https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/screenshot-web-timeline.png" alt="Live timeline"><p class="cap"><b>Live timeline</b> — watch an audit run, event by event.</p></div>
+    <div><img src="https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/screenshot-web-summary.png" alt="Summary"><p class="cap"><span class="en"><b>Summary</b> — every figure a sourced, dated KPI.</span><span class="fr"><b>Synthèse</b> — chaque chiffre est un KPI sourcé et daté.</span><span class="zh"><b>摘要</b> — 每個數字都是有出處、有日期的 KPI。</span></p></div>
+    <div><img src="https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/screenshot-web-graph.png" alt="Knowledge map"><p class="cap"><span class="en"><b>Knowledge map</b> — subject, dimensions &amp; ~180 sources, linked.</span><span class="fr"><b>Carte de connaissance</b> — sujet, dimensions et ~180 sources, reliés.</span><span class="zh"><b>知識圖譜</b> — 主題、面向與約 180 個來源，彼此相連。</span></p></div>
+    <div><img src="https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/screenshot-mac-factcheck.png" alt="Fact-check"><p class="cap"><span class="en"><b>Fact-check</b> — key figures re-verified.</span><span class="fr"><b>Fact-check</b> — chiffres clés revérifiés.</span><span class="zh"><b>事實查核</b> — 關鍵數字重新驗證。</span></p></div>
+    <div><img src="https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/screenshot-web-timeline.png" alt="Live timeline"><p class="cap"><span class="en"><b>Live timeline</b> — watch an audit run, event by event.</span><span class="fr"><b>Timeline en direct</b> — suivez un audit se dérouler, événement par événement.</span><span class="zh"><b>即時時間軸</b> — 逐一事件地觀看稽核執行過程。</span></p></div>
   </div>
 </div></section>
 
 <section class="final"><div class="wrap">
-  <h2>Start your first audit in minutes</h2>
-  <p class="lead">Install the skill in Claude Code or Gemini, or download the Mac app. It's free and open-source.</p>
+  <h2><span class="en">Start your first audit in minutes</span><span class="fr">Lancez votre premier audit en quelques minutes</span><span class="zh">幾分鐘內開始你的第一份稽核</span></h2>
+  <p class="lead"><span class="en">Install the skill in Claude Code or Gemini, or download the Mac app. It's free and open-source.</span><span class="fr">Installez le skill dans Claude Code ou Gemini, ou téléchargez l'app Mac. C'est gratuit et open source.</span><span class="zh">在 Claude Code 或 Gemini 中安裝這個 skill，或下載 Mac 應用程式。免費且開源。</span></p>
   <div class="cta">
-    <a class="btn btn-primary" href="https://github.com/vincentlauriat/AuditViewer/releases/latest">⬇︎ Download for macOS</a>
-    <a class="btn btn-ghost" href="https://github.com/vincentlauriat/AuditViewer#readme">Read the docs</a>
+    <a class="btn btn-primary" href="https://github.com/vincentlauriat/AuditViewer/releases/latest">⬇︎ <span class="en">Download for macOS</span><span class="fr">Télécharger pour macOS</span><span class="zh">下載 macOS 版</span></a>
+    <a class="btn btn-ghost" href="https://github.com/vincentlauriat/AuditViewer#readme"><span class="en">Read the docs</span><span class="fr">Lire la doc</span><span class="zh">閱讀說明文件</span></a>
   </div>
 </div></section>
 
 <footer><div class="wrap">
-  AuditViewer · MIT License · © 2026 Vincent Lauriat ·
+  AuditViewer · <span class="en">MIT License</span><span class="fr">Licence MIT</span><span class="zh">MIT 授權</span> · © 2026 Vincent Lauriat ·
   <a href="https://github.com/vincentlauriat/AuditViewer">github.com/vincentlauriat/AuditViewer</a>
 </div></footer>
 
+<script>
+  /* zh-Hant et non zh : sur un système configuré en chinois simplifié, un
+     simple `zh` laisse le navigateur choisir une fonte Han simplifiée, qui
+     rend certains caractères traditionnels dans la mauvaise forme. */
+  var LANG_TAG={en:'en',fr:'fr',zh:'zh-Hant'};
+  function setLang(l){
+    if(!LANG_TAG[l]) l='en';
+    document.body.classList.remove('lang-en','lang-fr','lang-zh');
+    document.body.classList.add('lang-'+l);
+    document.documentElement.lang=LANG_TAG[l];
+    /* On boucle sur les boutons au lieu de les nommer un par un : ajouter une
+       4e langue ne demandera alors aucune retouche de ce script. */
+    document.querySelectorAll('.langtog button').forEach(function(b){
+      var on=b.dataset.lang===l;
+      b.classList.toggle('on',on);
+      b.setAttribute('aria-pressed',on?'true':'false');
+    });
+    try{localStorage.setItem('vl-lang',l)}catch(e){}
+  }
+  (function(){
+    var saved;try{saved=localStorage.getItem('vl-lang')}catch(e){}
+    var n=(navigator.language||'en').slice(0,2).toLowerCase();
+    /* Le traditionnel est servi a tout visiteur sinophone, y compris zh-CN :
+       c'est la seule variante chinoise disponible, et la renvoyer vaut mieux
+       que de rabattre ce visiteur sur l'anglais. */
+    setLang(saved||(n==='zh'?'zh':(n==='fr'?'fr':'en')));
+  })();
+</script>
 </body>
 </html>
