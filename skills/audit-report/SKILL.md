@@ -1,7 +1,7 @@
 ---
 name: audit-report
 description: "Recherche exhaustive sur un sujet et génération d'un dossier d'audit complet (marché, concurrence, financier, technique, historique, futur, tarifaire) — comme un cabinet conseil."
-trigger: /audit-report
+argument-hint: "<sujet> [--depth quick|full] [--lang en|fr] [--mode parallel|sequential|solo] [--brief] [--swot] [--esg] [--rh] [--app-mode]"
 allowed-tools:
   - Bash
   - Read

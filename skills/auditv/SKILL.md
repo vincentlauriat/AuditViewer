@@ -1,7 +1,7 @@
 ---
 name: auditv
 description: "Lit et explore en mode terminal (CLI) les dossiers d'audit générés par /audit-report : liste de tous les audits, fiche synthèse (KPIs), rendu markdown coloré de n'importe quelle dimension (00–10, ESG/SWOT/RH inclus), et recherche plein-texte. Pendant CLI léger de l'application AuditViewer et du TUI audit-view."
-trigger: /auditv
+argument-hint: "[<sujet|slug>] [<dimension 00-10|nom|report|changelog>] [--search <terme>] [--root <chemin>] [--raw]"
 allowed-tools:
   - Bash
   - Read

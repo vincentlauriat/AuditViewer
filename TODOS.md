@@ -1,5 +1,10 @@
 # TODOS — Contrat machine v1 (P0 + P1)
 
+## Bugs (2026-08-31)
+- [x] Crash à l'export Word/PDF quand pandoc est absent (`Process.terminationStatus` sur un process jamais lancé) — corrigé, alerte utilisateur + `do/catch`
+- [x] `mac/project.yml` : exclure `.omc/**` et `.claude/**` des sources (conflit « Multiple commands produce »)
+- [ ] Vérifier le rendu du repli PDF « texte brut » (sans pandoc) sur un rapport complet
+
 ## P0 — Contrat machine
 - [x] 1. Helper `_emit.py` (émission fiable via argv)
 - [x] 2. `_events.jsonl` versionné + émission par dimension en parallel
