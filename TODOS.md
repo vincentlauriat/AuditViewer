@@ -5,7 +5,7 @@
 - [x] `mac/project.yml` : exclure `.omc/**` et `.claude/**` des sources (conflit « Multiple commands produce »)
 - [x] Release macOS v1.0.1 (build 2) — DMG notarisé, GitHub Release, appcast Sparkle
 - [ ] Vérifier le rendu du repli PDF « texte brut » (sans pandoc) sur un rapport complet
-- [ ] `mac/Scripts/release.sh` : écrire le DMG et les notes dans `release/` (règle DevApps), pas à la racine de `mac/`
+- [x] `mac/Scripts/release.sh` : écrire le DMG dans `release/` (règle DevApps), pas à la racine de `mac/`
 
 ## P0 — Contrat machine
 - [x] 1. Helper `_emit.py` (émission fiable via argv)

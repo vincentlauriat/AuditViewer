@@ -24,10 +24,11 @@ Variables surchargeables : `SIGNING_IDENTITY`, `NOTARY_PROFILE`, `SPARKLE_ACCOUN
    cd mac
    ./Scripts/release.sh 1.0.0
    ```
-   Produit `AuditViewer-1.0.0.dmg` (signé, notarisé, agrafé) et met à jour `appcast.xml`.
+   Produit `release/AuditViewer-1.0.0.dmg` (signé, notarisé, agrafé) et met à jour `appcast.xml`.
+   Tous les artefacts de release sont regroupés dans `release/` — jamais à la racine du projet.
 3. **Publier la GitHub Release** (le `.dmg` doit être attaché — c'est l'URL référencée par l'appcast) :
    ```bash
-   gh release create v1.0.0 ./AuditViewer-1.0.0.dmg --title "v1.0.0" --notes "Notes de version…"
+   gh release create v1.0.0 ./release/AuditViewer-1.0.0.dmg --title "v1.0.0" --notes "Notes de version…"
    ```
 4. **Pousser l'appcast** (c'est lui que les apps installées interrogent) :
    ```bash
@@ -45,6 +46,7 @@ Variables surchargeables : `SIGNING_IDENTITY`, `NOTARY_PROFILE`, `SPARKLE_ACCOUN
 
 - `Info.plist` est **généré** par XcodeGen depuis `project.yml` — ne pas l'éditer à la main.
 - `AuditViewer.xcodeproj`, `build/`, `*.dmg` et `.sparkle-tools/` sont gitignorés (régénérables).
+  Le motif `*.dmg` est écrit **sans slash initial**, donc il couvre aussi bien la racine que `release/`.
 - Ce pipeline ne concerne que l'app **macOS**. Les lecteurs **iOS/iPadOS** (`AuditViewerIOS`) et
   **Apple TV / tvOS** (`AuditViewerTVOS`) sont des cibles à part, **sans Sparkle**, buildées via
   `ios/build.sh` et `tvos/build.sh` (cf. [README.md](README.md)) — pas de DMG ni d'appcast pour elles.

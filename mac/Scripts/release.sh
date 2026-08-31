@@ -57,7 +57,11 @@ echo "→ Codesign app"
 codesign_ts "$STAGING"
 codesign --verify --strict --deep "$STAGING"
 
-DMG="$ROOT/AuditViewer-$VERSION.dmg"
+# Artefacts de release regroupés dans release/ (convention DevApps), jamais à la
+# racine du projet. Ignorés par git via les motifs *.dmg / *.zip du .gitignore.
+RELEASE_DIR="$ROOT/release"
+mkdir -p "$RELEASE_DIR"
+DMG="$RELEASE_DIR/AuditViewer-$VERSION.dmg"
 rm -f "$DMG"
 DMG_VOLNAME="AuditViewer $VERSION"
 DMG_LAYOUT="$STAGING_DIR/dmg-layout"
@@ -135,9 +139,9 @@ APPCAST
 
 DMG_SIZE=$(ls -lh "$DMG" | awk '{print $5}')
 echo ""
-echo "✅ AuditViewer-$VERSION.dmg ($DMG_SIZE) — signé, notarisé, Sparkle-signé"
+echo "✅ release/AuditViewer-$VERSION.dmg ($DMG_SIZE) — signé, notarisé, Sparkle-signé"
 echo "✅ appcast.xml mis à jour pour v$VERSION"
 echo ""
 echo "Étapes suivantes :"
-echo "  1. gh release create v$VERSION ./AuditViewer-$VERSION.dmg --title \"v$VERSION\" --notes \"…\""
+echo "  1. gh release create v$VERSION ./release/AuditViewer-$VERSION.dmg --title \"v$VERSION\" --notes \"…\""
 echo "  2. git add appcast.xml && git commit -m 'chore: appcast v$VERSION' && git push"
