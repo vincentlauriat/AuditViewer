@@ -1,5 +1,10 @@
 # CHANGES — Release Notes & Changelog
 
+## 2026-08-31 (suite)
+
+### Changed
+- **Artefacts de release regroupés dans `mac/release/`** — `Scripts/release.sh` écrit désormais le DMG dans `release/` (`RELEASE_DIR="$ROOT/release"`) au lieu de la racine de `mac/`, conformément à la convention DevApps. Toutes les étapes du pipeline (notarisation, staple, signature Sparkle, taille affichée) passaient déjà par la variable `$DMG` : un seul point de définition à changer. Les DMG 1.0.0 et 1.0.1 existants ont été déplacés ; le motif `*.dmg` du `.gitignore`, écrit sans slash initial, les couvre à leur nouvel emplacement. `RELEASE.md` mis à jour.
+
 ## 2026-08-31 — AuditViewer macOS v1.0.1
 
 ### Fixed
