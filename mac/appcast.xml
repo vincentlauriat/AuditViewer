@@ -6,16 +6,16 @@
     <description>AuditViewer release feed</description>
     <language>en</language>
     <item>
-      <title>v1.0.0</title>
-      <pubDate>Sun, 14 Jun 2026 16:26:09 +0200</pubDate>
-      <sparkle:version>1</sparkle:version>
-      <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+      <title>v1.0.1</title>
+      <pubDate>Mon, 31 Aug 2026 11:06:38 +0200</pubDate>
+      <sparkle:version>2</sparkle:version>
+      <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-      <sparkle:releaseNotesLink>https://github.com/vincentlauriat/AuditViewer/releases/tag/v1.0.0</sparkle:releaseNotesLink>
+      <sparkle:releaseNotesLink>https://github.com/vincentlauriat/AuditViewer/releases/tag/v1.0.1</sparkle:releaseNotesLink>
       <enclosure
-        url="https://github.com/vincentlauriat/AuditViewer/releases/download/v1.0.0/AuditViewer-1.0.0.dmg"
+        url="https://github.com/vincentlauriat/AuditViewer/releases/download/v1.0.1/AuditViewer-1.0.1.dmg"
         type="application/octet-stream"
-        sparkle:edSignature="DxILw9nH4CpmJVN0CluDdBPICSb3Tgi3b1JbLaqwJPexdEhRdj8XTWj569wiKcAHF0aVoi0dw1axrhb5zDVmDQ==" length="4602927" />
+        sparkle:edSignature="+ElVKsfhhbQFH8JbnhcsP9tEIF5DBDWtGS8YsivxME4o2r7p6X80/gPYR80D1XakBFvZQxmHx7qA7g3+8z0SAQ==" length="4744018" />
     </item>
   </channel>
 </rss>
