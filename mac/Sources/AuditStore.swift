@@ -320,7 +320,6 @@ final class AuditStore {
         }
         selectedSectionId = 0
         loadSection(0)
-        saveOptions(lastOptions, in: url)
         startWatchingEvents(in: url)
     }
 
@@ -508,6 +507,10 @@ final class AuditStore {
         let auditDir = outputDir.appendingPathComponent("audit-\(slug)")
         try? FileManager.default.createDirectory(at: auditDir, withIntermediateDirectories: true)
 
+        // Seul un lancement justifie d'écrire les options ; `loadAuditDir` ne
+        // doit rien écrire sur le disque (un chargement est en lecture seule).
+        saveOptions(options, in: auditDir)
+
         // Dossier de l'audit en cours, mémorisé pour l'annulation (_control.json).
         activeWatchDir = activeWatchDir ?? auditDir
 
@@ -629,10 +632,29 @@ final class AuditStore {
 
     // MARK: - Persistance des options
 
+    /// Écrit les options dans `_options.json` **sans perdre** les champs que
+    /// `AuditOptions` ne modélise pas. Le skill `/audit-report` y écrit aussi la
+    /// métadonnée du contrat machine v1 (`v`, `subject`, `slug`, `output_dir`,
+    /// `invoked_at`, `app_mode`…) : un `JSONEncoder().encode` nu les effacerait.
+    /// La sortie est indentée et à clés triées pour rester lisible en diff git.
     func saveOptions(_ options: AuditOptions, in dir: URL) {
-        if let data = try? JSONEncoder().encode(options) {
-            try? data.write(to: dir.appendingPathComponent("_options.json"), options: .atomic)
+        let url = dir.appendingPathComponent("_options.json")
+        guard let encoded = try? JSONEncoder().encode(options),
+              var fields = (try? JSONSerialization.jsonObject(with: encoded)) as? [String: Any]
+        else { return }
+
+        // Les champs déjà présents sont conservés ; seuls ceux d'AuditOptions
+        // sont remplacés.
+        if let existing = try? Data(contentsOf: url),
+           let previous = (try? JSONSerialization.jsonObject(with: existing)) as? [String: Any] {
+            fields = previous.merging(fields) { _, new in new }
         }
+
+        guard let merged = try? JSONSerialization.data(
+            withJSONObject: fields,
+            options: [.prettyPrinted, .sortedKeys]
+        ) else { return }
+        try? merged.write(to: url, options: .atomic)
     }
 
     static func loadSavedOptions(from dir: URL?) -> AuditOptions? {
