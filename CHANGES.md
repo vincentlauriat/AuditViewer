@@ -1,5 +1,13 @@
 # CHANGES — Release Notes & Changelog
 
+## 2026-08-31
+
+### Fixed
+- **Crash à l'export Word (.docx) quand pandoc n'est pas installé (macOS)** — `findPandoc()` retombait sur la chaîne `"pandoc"`, un chemin relatif invalide comme `Process.executableURL` : `run()` échouait (erreur avalée par `try?`), puis la lecture de `terminationStatus` sur un process jamais lancé levait `NSInvalidArgumentException` — non rattrapable en Swift → `SIGABRT`. `findPandoc()` retourne désormais `String?`, `run()` est encadré par `do/catch`, et l'absence de pandoc affiche une alerte (« `brew install pandoc` ») **avant** le panneau d'enregistrement.
+- **Même crash sur l'export PDF** — chemin de code identique (`AuditStore.exportCurrentSectionToPDF`). Sans pandoc, le PDF reste exportable via le repli texte brut, après confirmation explicite de l'utilisateur.
+- **Échecs d'export silencieux** — un code de retour pandoc non nul ou une erreur de `PDFExporter` ne produisaient aucun message ; l'utilisateur constatait seulement l'absence de fichier. Les deux remontent maintenant une alerte, avec la sortie d'erreur de pandoc quand elle existe.
+- **Build cassé par l'état transitoire des outils** — un dossier `.omc/state/sessions/*` déposé dans `mac/Sources/` était embarqué comme ressource par XcodeGen, provoquant `Multiple commands produce …/pre-tool-advisory-throttle.json`. `mac/project.yml` exclut désormais `.omc/**` et `.claude/**` des sources.
+
 ## 2026-06-29
 
 ### Docs

@@ -1223,6 +1223,13 @@ final class AuditStore {
         let sourceURL = dir.appendingPathComponent(filename)
         guard FileManager.default.fileExists(atPath: sourceURL.path) else { return }
 
+        // Vérifier pandoc AVANT le panneau : inutile de demander une destination
+        // qu'on ne saura pas écrire.
+        guard let pandoc = Self.findPandoc() else {
+            Self.alertPandocMissing(format: "Word (.docx)")
+            return
+        }
+
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.init(filenameExtension: "docx") ?? .data]
         panel.nameFieldStringValue = filename.replacingOccurrences(of: ".md", with: ".docx")
@@ -1230,8 +1237,6 @@ final class AuditStore {
         panel.message = "Exporter en document Word"
         panel.prompt = "Exporter"
         guard panel.runModal() == .OK, let destURL = panel.url else { return }
-
-        let pandoc = Self.findPandoc()
         let capturedSubject = subject.isEmpty ? "Audit" : subject
         let capturedSection = sectionTitle
         let capturedDate = Self.formattedAuditDate(manifest?.auditDate ?? meta?.auditDate)
@@ -1264,11 +1269,36 @@ final class AuditStore {
             let process = Process()
             process.executableURL = URL(fileURLWithPath: pandoc)
             process.arguments = args
-            try? process.run()
-            process.waitUntilExit()
-            if process.terminationStatus == 0 {
-                _ = await MainActor.run { NSWorkspace.shared.open(destURL) }
+            let errPipe = Pipe()
+            process.standardError = errPipe
+
+            do {
+                try process.run()
+            } catch {
+                // Sans ce catch, `terminationStatus` ci-dessous lèverait
+                // NSInvalidArgumentException sur un process jamais lancé → crash.
+                await MainActor.run {
+                    Self.alertExportFailed("Impossible de lancer pandoc : \(error.localizedDescription)")
+                }
+                return
             }
+
+            let errData = errPipe.fileHandleForReading.readDataToEndOfFile()
+            process.waitUntilExit()
+
+            guard process.terminationStatus == 0 else {
+                let detail = String(data: errData, encoding: .utf8)?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                await MainActor.run {
+                    Self.alertExportFailed(
+                        detail.isEmpty
+                            ? "pandoc a échoué (code \(process.terminationStatus))."
+                            : "pandoc a échoué (code \(process.terminationStatus)) :\n\n\(String(detail.prefix(600)))"
+                    )
+                }
+                return
+            }
+            _ = await MainActor.run { NSWorkspace.shared.open(destURL) }
         }
     }
 
@@ -1278,6 +1308,12 @@ final class AuditStore {
         let sourceURL = dir.appendingPathComponent(filename)
         guard FileManager.default.fileExists(atPath: sourceURL.path) else { return }
 
+        // Sans pandoc le PDF reste produisible, mais en texte brut (repli <pre>).
+        // On le dit avant d'aller plus loin plutôt que de livrer un document
+        // dégradé sans explication.
+        let pandoc = Self.findPandoc()
+        if pandoc == nil, !Self.confirmDegradedPDFExport() { return }
+
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.pdf]
         panel.nameFieldStringValue = filename.replacingOccurrences(of: ".md", with: ".pdf")
@@ -1285,8 +1321,6 @@ final class AuditStore {
         panel.message = "Exporter en PDF"
         panel.prompt = "Exporter"
         guard panel.runModal() == .OK, let destURL = panel.url else { return }
-
-        let pandoc = Self.findPandoc()
         let capturedSubject = subject.isEmpty ? "Audit" : subject
         let capturedSection = sectionTitle
         let capturedDate = Self.formattedAuditDate(manifest?.auditDate ?? meta?.auditDate)
@@ -1295,6 +1329,13 @@ final class AuditStore {
         Task {
             // Pandoc écrit dans un fichier temp pour éviter le deadlock pipe sur gros fichiers
             let htmlBody = await Task.detached(priority: .userInitiated) { () -> String in
+                // Repli : contenu brut préformaté (pandoc absent ou en échec).
+                func rawFallback() -> String {
+                    let raw = (try? String(contentsOf: sourceURL, encoding: .utf8)) ?? ""
+                    return "<pre>\(raw.replacingOccurrences(of: "<", with: "&lt;"))</pre>"
+                }
+                guard let pandoc else { return rawFallback() }
+
                 let htmlTmp = FileManager.default.temporaryDirectory
                     .appendingPathComponent(UUID().uuidString + ".html")
                 let process = Process()
@@ -1309,16 +1350,20 @@ final class AuditStore {
                     "--to", "html5",
                     "--output", htmlTmp.path
                 ]
-                try? process.run()
-                process.waitUntilExit()
                 defer { try? FileManager.default.removeItem(at: htmlTmp) }
+                // do/catch obligatoire : lire `terminationStatus` sur un process
+                // jamais lancé lève NSInvalidArgumentException → crash.
+                do {
+                    try process.run()
+                } catch {
+                    return rawFallback()
+                }
+                process.waitUntilExit()
                 if process.terminationStatus == 0,
                    let html = try? String(contentsOf: htmlTmp, encoding: .utf8) {
                     return html
                 }
-                // Repli : contenu brut préformaté
-                let raw = (try? String(contentsOf: sourceURL, encoding: .utf8)) ?? ""
-                return "<pre>\(raw.replacingOccurrences(of: "<", with: "&lt;"))</pre>"
+                return rawFallback()
             }.value
 
             let fullHTML = Self.buildPDFHTML(
@@ -1333,9 +1378,53 @@ final class AuditStore {
                 try await PDFExporter.export(html: fullHTML, to: destURL)
                 NSWorkspace.shared.open(destURL)
             } catch {
-                // Échec silencieux — l'utilisateur voit que le fichier n'est pas créé
+                Self.alertExportFailed("La génération du PDF a échoué : \(error.localizedDescription)")
             }
         }
+    }
+
+    // MARK: - Alertes d'export
+
+    /// pandoc introuvable : on nomme l'outil manquant et la commande d'installation.
+    @MainActor
+    private static func alertPandocMissing(format: String) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "pandoc est requis pour l'export \(format)"
+        alert.informativeText = """
+        pandoc n'est pas installé sur ce Mac. Installez-le puis relancez l'export :
+
+            brew install pandoc
+        """
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+    }
+
+    /// pandoc absent pour le PDF : l'export reste possible, en texte brut.
+    /// Retourne `true` si l'utilisateur accepte le rendu dégradé.
+    @MainActor
+    private static func confirmDegradedPDFExport() -> Bool {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "pandoc est introuvable"
+        alert.informativeText = """
+        Sans pandoc, le PDF sera généré en texte brut, sans mise en forme du Markdown.
+        Installez pandoc (brew install pandoc) pour un rendu complet.
+        """
+        alert.addButton(withTitle: "Exporter quand même")
+        alert.addButton(withTitle: "Annuler")
+        return alert.runModal() == .alertFirstButtonReturn
+    }
+
+    /// Échec d'export : le remonter au lieu de laisser l'utilisateur devant un fichier absent.
+    @MainActor
+    private static func alertExportFailed(_ message: String) {
+        let alert = NSAlert()
+        alert.alertStyle = .critical
+        alert.messageText = "L'export a échoué"
+        alert.informativeText = message
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 
     var canExportDocx: Bool {
@@ -1707,13 +1796,19 @@ final class AuditStore {
         return candidates.first { FileManager.default.fileExists(atPath: $0) } ?? "claude"
     }
 
-    private static func findPandoc() -> String {
+    /// Chemin absolu de pandoc, ou `nil` s'il n'est pas installé.
+    ///
+    /// Ne jamais retomber sur `"pandoc"` : un chemin relatif est invalide comme
+    /// `Process.executableURL`, `run()` échoue, et lire `terminationStatus` sur
+    /// un process jamais lancé lève `NSInvalidArgumentException` (non
+    /// rattrapable en Swift) → crash de l'app.
+    private static func findPandoc() -> String? {
         let candidates = [
             "/opt/homebrew/bin/pandoc",
             "/usr/local/bin/pandoc",
             "/usr/bin/pandoc",
         ]
-        return candidates.first { FileManager.default.fileExists(atPath: $0) } ?? "pandoc"
+        return candidates.first { FileManager.default.fileExists(atPath: $0) }
     }
 
     private static func findNewAuditDir(in parent: URL, for subject: String) -> URL? {

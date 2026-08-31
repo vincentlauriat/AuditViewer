@@ -29,6 +29,12 @@ targets:
     platform: macOS
     sources:
       - path: Sources
+        # L'état transitoire des outils (OMC, Claude Code) atterrit parfois dans
+        # Sources/ selon le cwd ; sans exclusion XcodeGen l'embarque en ressource
+        # et le build casse ("Multiple commands produce …").
+        excludes:
+          - ".omc/**"
+          - ".claude/**"
       - path: Resources/web
         type: folder
         buildPhase: resources
