@@ -1,6 +1,6 @@
 # CHANGES — Release Notes & Changelog
 
-## 2026-08-31
+## 2026-08-31 — AuditViewer macOS v1.0.1
 
 ### Fixed
 - **Crash à l'export Word (.docx) quand pandoc n'est pas installé (macOS)** — `findPandoc()` retombait sur la chaîne `"pandoc"`, un chemin relatif invalide comme `Process.executableURL` : `run()` échouait (erreur avalée par `try?`), puis la lecture de `terminationStatus` sur un process jamais lancé levait `NSInvalidArgumentException` — non rattrapable en Swift → `SIGABRT`. `findPandoc()` retourne désormais `String?`, `run()` est encadré par `do/catch`, et l'absence de pandoc affiche une alerte (« `brew install pandoc` ») **avant** le panneau d'enregistrement.
