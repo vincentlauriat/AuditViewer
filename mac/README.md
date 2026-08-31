@@ -63,7 +63,8 @@ affiche chaque section avec un rendu markdown riche (code, math, mermaid), et pr
 - macOS 14+ (cible SwiftPM : macOS 15)
 - Swift 6 / Xcode toolchain
 - `claude` CLI (pour lancer des audits depuis l'app) — détecté dans `~/.local/bin`, `/usr/local/bin`, `/opt/homebrew/bin`
-- `pandoc` (pour l'export `.docx` et `.pdf`) — optionnel
+- `pandoc` (pour l'export `.docx` et `.pdf`) — optionnel. Sans lui, l'export Word affiche une alerte
+  indiquant `brew install pandoc` ; l'export PDF reste possible en texte brut, après confirmation.
 - Le projet voisin **`MarkdownViewer`** doit être présent à côté pour fournir le bundle de rendu web
   (voir [ARCHITECTURE.md](ARCHITECTURE.md))
 

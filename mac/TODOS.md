@@ -2,6 +2,10 @@
 
 ## État
 
+🚀 **v1.0.1 publiée le 2026-08-31** — DMG signé Developer ID, notarisé, distribué via GitHub
+Releases et Sparkle (`appcast.xml`). Corrige le crash à l'export Word/PDF quand `pandoc`
+est absent (`Process.terminationStatus` sur un process jamais lancé). Détail dans `CHANGES.md`.
+
 ✅ **Réaligné sur le contrat machine v1** du skill `audit-report`
 (branche `feat/realign-contrat-v1`). P0 + P1 + P2 implémentés, `swift build`
 et `./build.sh` verts. Reste la vérification visuelle (GUI) — cf. PLAN.md.

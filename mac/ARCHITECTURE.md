@@ -114,6 +114,16 @@ Dossier audit-{sujet}/ ──► AuditStore (état @Observable, @MainActor)
   l'UI ne gèle pas). Le `PrintDelegate` est `nonisolated`/`@unchecked Sendable` car AppKit rappelle le
   callback `didRun` sur un thread d'arrière-plan (un delegate `@MainActor` → assertion d'isolation
   Swift 6 → `SIGTRAP`).
+- **Résolution de `pandoc`** : `findPandoc()` renvoie `String?` — le chemin absolu du binaire, ou
+  `nil` s'il est introuvable. **Ne jamais retomber sur la chaîne `"pandoc"`** : un chemin relatif est
+  invalide comme `Process.executableURL`, `run()` échoue, et lire ensuite `terminationStatus` sur un
+  process jamais lancé lève `NSInvalidArgumentException` — exception Objective-C **non rattrapable en
+  Swift** → `SIGABRT`. C'est la cause du crash corrigé en v1.0.1 ; pour la même raison, `run()` est
+  encadré par `do`/`catch` sur les deux chemins d'export, jamais par `try?`.
+- **Absence de pandoc** : le DOCX est impossible → alerte (`brew install pandoc`) affichée **avant** le
+  `NSSavePanel`. Le PDF reste produisible via le repli `<pre>` → alerte de confirmation
+  (« Exporter quand même » / « Annuler »). Les échecs de conversion (code de retour ≠ 0, erreur
+  `PDFExporter`) remontent une alerte portant la sortie d'erreur de pandoc, au lieu d'échouer en silence.
 - ⚠️ Les deux conversions lisent avec `--from markdown-yaml_metadata_block` : `RAPPORT_COMPLET.md`
   contient des blocs `---` … `---` (séparateurs entourant des notes) que pandoc prendrait pour des
   métadonnées YAML → erreur de parsing (exit 64) → fallback `<pre>` (markdown brut).
