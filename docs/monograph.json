@@ -1,0 +1,87 @@
+{
+  "name": "AuditViewer",
+  "no": "03",
+  "repo": "vincentlauriat/AuditViewer",
+  "url": "https://vincentlauriat.github.io/AuditViewer/",
+  "accent": "#e879f9",
+  "meta": {
+    "title": "AuditViewer — sourced strategic dossiers, in minutes",
+    "description": "Type a company, product or market and get a complete, sourced, fact-checked strategic dossier in minutes. AI audit skill, web viewer, native macOS app, and iOS/iPadOS reader. Works with Claude & Gemini. Free & open-source.",
+    "og_image": "https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/og-banner.png",
+    "favicon": "https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/og-banner.png"
+  },
+  "role": {"en": "AI audit skill · web viewer · macOS app · iOS / iPadOS reader",
+           "fr": "Skill d'audit IA · visualiseur web · app macOS · lecteur iOS / iPadOS",
+           "zh": "AI 稽核 skill · 網頁檢視器 · macOS 應用程式 · iOS／iPadOS 閱讀器"},
+  "thesis": {"en": "Turn any company into a complete strategic dossier.",
+             "fr": "Transformez une entreprise en dossier stratégique complet.",
+             "zh": "把任何一家公司，變成一份完整的策略檔案。"},
+  "lede": {"en": "Type a name — a company, product, market or technology. Minutes later you have a structured, <b>sourced</b> and fact-checked research dossier. Every figure backed by a dated source.",
+           "fr": "Tapez un nom — entreprise, produit, marché ou technologie. Quelques minutes plus tard, vous avez un dossier de recherche structuré, <b>sourcé</b> et vérifié. Chaque chiffre adossé à une source datée.",
+           "zh": "輸入一個名字——公司、產品、市場或技術。幾分鐘後你就得到一份結構化、<b>有出處</b>且經過查核的研究檔案。每個數字都有一則註明日期的來源支撐。"},
+  "actions": [
+    {"primary": true, "href": "https://github.com/vincentlauriat/AuditViewer/releases/latest",
+     "label": {"en": "Download for macOS", "fr": "Télécharger pour macOS", "zh": "下載 macOS 版"}},
+    {"href": "https://github.com/vincentlauriat/AuditViewer",
+     "label": {"en": "View on GitHub", "fr": "Voir sur GitHub", "zh": "在 GitHub 上檢視"}}
+  ],
+  "facts": [
+    {"k": {"en": "Works with", "fr": "Fonctionne avec", "zh": "支援"}, "v": "Claude · Gemini"},
+    {"k": {"en": "Platforms", "fr": "Plateformes", "zh": "平台"}, "v": {"en": "macOS 15+ · web · iOS / iPadOS", "fr": "macOS 15+ · web · iOS / iPadOS", "zh": "macOS 15+ · 網頁 · iOS／iPadOS"}},
+    {"k": {"en": "Distribution", "fr": "Distribution", "zh": "發行"}, "v": {"en": "Signed &amp; notarized", "fr": "Signé et notarié", "zh": "已簽章與公證"}},
+    {"k": {"en": "Licence", "fr": "Licence", "zh": "授權"}, "v": {"en": "Free &amp; open source (MIT)", "fr": "Gratuit et open source (MIT)", "zh": "免費開源（MIT）"}}
+  ],
+  "hero": {"src": "https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/demo.gif", "w": 1100, "h": 688, "dark": true,
+           "alt": "AuditViewer in action",
+           "caption": {"en": "An audit running, from the first query to the finished dossier.",
+                       "fr": "Un audit en cours, de la première requête au dossier terminé.",
+                       "zh": "一份稽核從第一個查詢到完成檔案的過程。"}},
+  "opener": {"h": {"en": "A consulting-grade dossier, in one command", "fr": "Un dossier de niveau cabinet de conseil, en une commande", "zh": "一道指令，一份顧問等級的檔案"},
+             "p": {"en": "Run <code>/audit-report Tesla</code> and get a folder of ready-to-read documents — seven angles of analysis, each figure sourced and dated.",
+                   "fr": "Lancez <code>/audit-report Tesla</code> et récupérez un dossier de documents prêts à lire — sept angles d'analyse, chaque chiffre sourcé et daté.",
+                   "zh": "執行 <code>/audit-report Tesla</code>，就得到一整個資料夾可直接閱讀的文件——七個分析角度，每個數字都有出處與日期。"}},
+  "features": [
+    {"h": {"en": "History", "fr": "Historique", "zh": "歷史"}, "p": {"en": "Origins, milestones, pivots, acquisitions, controversies.", "fr": "Origines, jalons, pivots, acquisitions, controverses.", "zh": "起源、里程碑、轉型、收購、爭議。"}},
+    {"h": {"en": "Market", "fr": "Marché", "zh": "市場"}, "p": {"en": "Market size (TAM/SAM/SOM), growth, geography, regulation.", "fr": "Taille de marché (TAM/SAM/SOM), croissance, géographie, réglementation.", "zh": "市場規模（TAM/SAM/SOM）、成長、地理分布、法規。"}},
+    {"h": {"en": "Technology", "fr": "Technologie", "zh": "技術"}, "p": {"en": "Product, architecture, features, differentiators, patents.", "fr": "Produit, architecture, fonctionnalités, différenciateurs, brevets.", "zh": "產品、架構、功能、差異化優勢、專利。"}},
+    {"h": {"en": "Pricing", "fr": "Tarification", "zh": "定價"}, "p": {"en": "Tiers, business model, sector comparison.", "fr": "Paliers, modèle économique, comparaison sectorielle.", "zh": "方案級距、商業模式、同業比較。"}},
+    {"h": {"en": "Competition", "fr": "Concurrence", "zh": "競爭"}, "p": {"en": "Competitive map, market shares, positioning, SWOT.", "fr": "Cartographie concurrentielle, parts de marché, positionnement, SWOT.", "zh": "競爭版圖、市佔率、定位、SWOT。"}},
+    {"h": {"en": "Financials &amp; outlook", "fr": "Finances et perspectives", "zh": "財務與展望"}, "p": {"en": "Revenue, funding, valuation, roadmap, risks, scenarios.", "fr": "Chiffre d'affaires, levées, valorisation, roadmap, risques, scénarios.", "zh": "營收、募資、估值、藍圖、風險、情境推演。"}}
+  ],
+  "chapters": [
+    {"id": "trust",
+     "h": {"en": "Sourced, or it doesn't ship", "fr": "Sourcé, ou rien", "zh": "沒有出處，就不出貨"},
+     "p": {"en": "The difference from asking a chatbot: method and proof. It searches the live web and never invents a number.",
+           "fr": "La différence avec une question posée à un chatbot : la méthode et la preuve. Il cherche sur le web en direct et n'invente jamais un chiffre.",
+           "zh": "與直接問聊天機器人的差別在於：方法與證據。它會即時搜尋網路，且從不編造數字。"},
+     "blocks": [{"type": "specs", "items": [
+       {"h": {"en": "Every figure sourced &amp; dated", "fr": "Chaque chiffre sourcé et daté", "zh": "每個數字都有出處與日期"}, "p": {"en": "Each quantitative claim links to where it came from, with a publication date.", "fr": "Chaque affirmation chiffrée renvoie à sa provenance, avec une date de publication.", "zh": "每一項量化陳述都連回它的來源，並附上發布日期。"}},
+       {"h": {"en": "Reliability visible", "fr": "Fiabilité visible", "zh": "可靠度看得見"}, "p": {"en": "Sources tagged Official / Analyst / Press; data older than a year is flagged.", "fr": "Sources étiquetées Officiel / Analyste / Presse ; les données de plus d'un an sont signalées.", "zh": "來源標示為官方／分析師／媒體；超過一年的資料會被標記。"}},
+       {"h": {"en": "Key numbers cross-checked", "fr": "Chiffres clés recoupés", "zh": "關鍵數字經過交叉查證"}, "p": {"en": "The most important figures are verified against at least two independent sources.", "fr": "Les chiffres les plus importants sont vérifiés contre au moins deux sources indépendantes.", "zh": "最重要的數字會以至少兩個獨立來源進行查證。"}},
+       {"h": {"en": "No fabrication", "fr": "Aucune invention", "zh": "不編造"}, "p": {"en": "If a number isn't public, it says so — estimates are labelled as estimates.", "fr": "Si un chiffre n'est pas public, il le dit — les estimations sont étiquetées comme telles.", "zh": "如果某個數字並未公開，它會直說——估計值會標明為估計值。"}}
+     ]}]},
+    {"id": "screens",
+     "h": {"en": "Read, follow and explore", "fr": "Lire, suivre et explorer", "zh": "閱讀、追蹤與探索"},
+     "p": {"en": "A web viewer, a native macOS app and an iOS / iPadOS reader, all reading the same audits.",
+           "fr": "Un visualiseur web, une app macOS native et un lecteur iOS / iPadOS, qui lisent tous les mêmes audits.",
+           "zh": "網頁檢視器、原生 macOS 應用程式，以及 iOS／iPadOS 閱讀器，讀的都是同一批稽核報告。"},
+     "blocks": [{"type": "plates", "items": [
+       {"src": "https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/screenshot-web-summary.png", "w": 3572, "h": 2108, "wide": true, "alt": "Summary",
+        "caption": {"en": "<b>Summary</b> — every figure a sourced, dated KPI.", "fr": "<b>Synthèse</b> — chaque chiffre est un KPI sourcé et daté.", "zh": "<b>摘要</b> — 每個數字都是有出處、有日期的 KPI。"}},
+       {"src": "https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/screenshot-web-graph.png", "w": 2234, "h": 2044, "alt": "Knowledge map",
+        "caption": {"en": "<b>Knowledge map</b> — subject, dimensions &amp; ~180 sources, linked.", "fr": "<b>Carte de connaissance</b> — sujet, dimensions et ~180 sources, reliés.", "zh": "<b>知識圖譜</b> — 主題、面向與約 180 個來源，彼此相連。"}},
+       {"src": "https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/screenshot-web-timeline.png", "w": 1874, "h": 2096, "alt": "Live timeline",
+        "caption": {"en": "<b>Live timeline</b> — watch an audit run, event by event.", "fr": "<b>Timeline en direct</b> — suivez un audit se dérouler, événement par événement.", "zh": "<b>即時時間軸</b> — 逐一事件地觀看稽核執行過程。"}},
+       {"src": "https://raw.githubusercontent.com/vincentlauriat/AuditViewer/main/images/screenshot-mac-factcheck.png", "w": 2756, "h": 1788, "wide": true, "alt": "Fact-check",
+        "caption": {"en": "<b>Fact-check</b> — key figures re-verified.", "fr": "<b>Fact-check</b> — chiffres clés revérifiés.", "zh": "<b>事實查核</b> — 關鍵數字重新驗證。"}}
+     ]}]}
+  ],
+  "close": {"h": {"en": "Start your first audit in minutes", "fr": "Lancez votre premier audit en quelques minutes", "zh": "幾分鐘內開始你的第一份稽核"},
+            "p": {"en": "Install the skill in Claude Code or Gemini, or download the Mac app. It's free and open-source.",
+                  "fr": "Installez le skill dans Claude Code ou Gemini, ou téléchargez l'app Mac. C'est gratuit et open source.",
+                  "zh": "在 Claude Code 或 Gemini 中安裝這個 skill，或下載 Mac 應用程式。免費且開源。"},
+            "actions": [
+              {"primary": true, "href": "https://github.com/vincentlauriat/AuditViewer/releases/latest", "label": {"en": "Download for macOS", "fr": "Télécharger pour macOS", "zh": "下載 macOS 版"}},
+              {"href": "https://github.com/vincentlauriat/AuditViewer#readme", "label": {"en": "Read the docs", "fr": "Lire la doc", "zh": "閱讀說明文件"}}
+            ]}
+}
